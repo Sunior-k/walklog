@@ -1,0 +1,156 @@
+tasks.register('projectDependencyGraph') {
+    doLast {
+        def dotFileName = 'project.dot'
+        def dot = new File(rootProject.rootDir, dotFileName)
+        dot.parentFile.mkdirs()
+        dot.delete()
+
+        dot << 'digraph {\n'
+        dot << "  graph [label=\"${rootProject.name}\\n \",labelloc=t,fontsize=30,ranksep=1.4];\n"
+        dot << '  node [style=filled, fillcolor="#bbbbbb"];\n'  // 기본 노드 색상
+        dot << '  rankdir=TB;\n'
+
+        def rootProjects = []
+        def queue = [rootProject]
+        while (!queue.isEmpty()) {
+            def project = queue.remove(0)
+            rootProjects.add(project)
+            queue.addAll(project.childProjects.values())
+        }
+
+        def projects = new LinkedHashSet<Project>()
+        def dependencies = new LinkedHashMap<Tuple2<Project, Project>, List<String>>()
+        def multiplatformProjects = []
+        def jsProjects = []
+        def androidProjects = []
+        def androidLibraryProjects = []
+        def androidDynamicFeatureProjects = []
+        def javaProjects = []
+
+        // --- 모듈 유형을 저장할 리스트 추가 ---
+        def featureModules = []
+        def coreModules = []
+        def dataModules = []
+        def domainModules = [] // domain 모듈 리스트 추가
+
+        queue = [rootProject]
+        while (!queue.isEmpty()) {
+            def project = queue.remove(0)
+            queue.addAll(project.childProjects.values())
+
+            // --- 모듈 경로/이름을 기반으로 모듈 유형 식별 ---
+            // 프로젝트의 모듈 명명 규칙에 맞게 조건을 수정하세요.
+            // 우선순위를 고려하여 배치 (더 구체적인 조건이 위로)
+            if (project.path.startsWith(':feature')) {
+                featureModules.add(project)
+            } else if (project.path.contains(':domain')) { // domain 모듈 식별 조건 (예: ':user:domain', ':product:domain')
+                domainModules.add(project)
+            } else if (project.path.contains(':core')) {
+                coreModules.add(project)
+            } else if (project.path.startsWith(':data')) {
+                dataModules.add(project)
+            }
+            // --- 기존 플러그인 기반 식별 로직 유지 ---
+            else if (project.plugins.hasPlugin('org.jetbrains.kotlin.multiplatform')) {
+                multiplatformProjects.add(project)
+            } else if (project.plugins.hasPlugin('kotlin2js')) {
+                jsProjects.add(project)
+            } else if (project.plugins.hasPlugin('com.android.application')) {
+                androidProjects.add(project)
+            } else if (project.plugins.hasPlugin('com.android.library')) {
+                androidLibraryProjects.add(project)
+            } else if (project.plugins.hasPlugin('com.android.dynamic-feature')) {
+                androidDynamicFeatureProjects.add(project)
+            } else if (project.plugins.hasPlugin('java-library') || project.plugins.hasPlugin('java')) {
+                javaProjects.add(project)
+            }
+
+            project.configurations.configureEach { config ->
+                if (config.name.toLowerCase().contains("test")) return
+                config.dependencies
+                    .withType(ProjectDependency)
+                    .collect { it.dependencyProject }
+                    .each { dependency ->
+                        projects.add(project)
+                        projects.add(dependency)
+                        rootProjects.remove(dependency)
+
+                        def graphKey = new Tuple2<Project, Project>(project, dependency)
+                        def traits = dependencies.computeIfAbsent(graphKey) { new ArrayList<String>() }
+
+                        if (config.name.toLowerCase().endsWith('implementation')) {
+                            traits.add('style=dotted')
+                        }
+                    }
+            }
+        }
+
+        projects = projects.sort { it.path }
+
+        dot << '\n  # Projects\n\n'
+        for (project in projects) {
+            def traits = []
+
+            if (rootProjects.contains(project)) {
+                traits.add('shape=box')
+            }
+
+            // --- 특정 모듈 유형 색상 우선 지정 ---
+            if (featureModules.contains(project)) {
+                traits.add('fillcolor="#FFC0CB"') // 핑크 (Feature)
+            } else if (domainModules.contains(project)) {
+                traits.add('fillcolor="#DAF7A6"') // 예: 라이트 그린/옐로우 (Domain) - 색상 변경 가능
+            } else if (coreModules.contains(project)) {
+                traits.add('fillcolor="#ADD8E6"') // 라이트 블루 (Core)
+            } else if (dataModules.contains(project)) {
+                traits.add('fillcolor="#90EE90"') // 라이트 그린 (Data)
+            }
+            // --- 기존 플러그인 기반 색상 지정 로직 ---
+            else if (multiplatformProjects.contains(project)) {
+                traits.add('fillcolor="#ffd2b3"')
+            } else if (jsProjects.contains(project)) {
+                traits.add('fillcolor="#ffffba"')
+            } else if (androidProjects.contains(project)) {
+                traits.add('fillcolor="#baffc9"')
+            } else if (androidLibraryProjects.contains(project)) {
+                traits.add('fillcolor="#81D4FA"')
+            } else if (androidDynamicFeatureProjects.contains(project)) {
+                traits.add('fillcolor="#c9baff"')
+            } else if (javaProjects.contains(project)) {
+                traits.add('fillcolor="#ffb3ba"')
+            } else {
+                traits.add('fillcolor="#eeeeee"') // 그 외 기본 색상
+            }
+
+            dot << "  \"${project.path}\" [${traits.join(", ")}];\n"
+        }
+
+        dot << '\n  {rank = same;'
+        for (project in projects) {
+            if (rootProjects.contains(project)) {
+                dot << " \"${project.path}\";"
+            }
+        }
+        dot << '}\n'
+
+        dot << '\n  # Dependencies\n\n'
+        dependencies.forEach { key, traits ->
+            dot << "  \"${key.first.path}\" -> \"${key.second.path}\""
+            if (!traits.isEmpty()) {
+                dot << " [${traits.join(", ")}]"
+            }
+            dot << '\n'
+        }
+
+        dot << '}\n'
+
+        def p = "dot -Tpng -O ${dotFileName}".execute([], dot.parentFile)
+        p.waitFor()
+        if (p.exitValue() != 0) {
+            throw new RuntimeException(p.errorStream.text)
+        }
+        dot.delete()
+
+        println("Project module dependency graph created at ${dot.absolutePath}.png")
+    }
+}
