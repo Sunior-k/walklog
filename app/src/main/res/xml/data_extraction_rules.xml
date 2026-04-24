@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Data Extraction Rules (API 31+)
+    참고: https://developer.android.com/about/versions/12/backup-restore#xml-changes
+
+    cloud-backup : Google One 백업 대상
+    device-transfer : 기기 간 이전(Quick Switch) 대상
+    캐시(cache/external-cache)는 시스템이 자동으로 백업에서 제외하므로 별도 규칙 불필요.
+-->
+<data-extraction-rules>
+
+    <cloud-backup>
+        <!-- Room DB: 걸음 수 이력 (개인 건강 데이터) — 클라우드 백업 제외 -->
+        <exclude domain="database" path="." />
+        <!-- DataStore: 앱 설정값 — 기기 고유 상태 -->
+        <exclude domain="file" path="datastore" />
+    </cloud-backup>
+
+    <device-transfer>
+        <!-- 기기 이전 시에도 DB는 신선한 상태로 시작 (센서 기준값 재보정 필요) -->
+        <exclude domain="database" path="." />
+        <exclude domain="file" path="datastore" />
+    </device-transfer>
+
+</data-extraction-rules>

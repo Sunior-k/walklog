@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Auto Backup 규칙 (API 30 이하 / API 31+ 의 fullBackupContent 폴백)
+    참고: https://developer.android.com/guide/topics/data/autobackup
+
+    보안 원칙: 개인 건강 데이터(걸음 수 이력)와 앱 상태는 클라우드 백업에서 제외.
+    복원 시 데이터 불일치가 발생할 수 있고, 다른 기기·계정으로 유출될 위험이 있음.
+    캐시(cache/external-cache)는 시스템이 자동으로 백업에서 제외하므로 별도 규칙 불필요.
+-->
+<full-backup-content>
+
+    <!-- Room DB: 걸음 수 이력 (개인 건강 데이터) — 백업 제외 -->
+    <exclude domain="database" path="." />
+
+    <!-- DataStore: 앱 설정값 — 기기 고유 상태, 복원 시 불일치 위험 -->
+    <exclude domain="file" path="datastore" />
+
+</full-backup-content>

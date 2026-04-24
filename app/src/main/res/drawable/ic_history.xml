@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <!-- Calendar outline -->
+    <path
+        android:fillColor="@android:color/transparent"
+        android:pathData="M5,4H19C19.552,4 20,4.448 20,5V19C20,19.552 19.552,20 19,20H5C4.448,20 4,19.552 4,19V5C4,4.448 4.448,4 5,4Z"
+        android:strokeColor="@color/walklog_text_primary"
+        android:strokeWidth="2"
+        android:strokeLineJoin="round"
+        android:strokeLineCap="round" />
+    <!-- Header line -->
+    <path
+        android:fillColor="@android:color/transparent"
+        android:pathData="M4,9H20"
+        android:strokeColor="@color/walklog_text_primary"
+        android:strokeWidth="2"
+        android:strokeLineCap="round" />
+    <!-- Dots -->
+    <path
+        android:fillColor="@color/walklog_text_primary"
+        android:pathData="M8,13m-1,0a1,1 0,1 1,2 0a1,1 0,1 1,-2 0" />
+    <path
+        android:fillColor="@color/walklog_text_primary"
+        android:pathData="M12,13m-1,0a1,1 0,1 1,2 0a1,1 0,1 1,-2 0" />
+    <path
+        android:fillColor="@color/walklog_text_primary"
+        android:pathData="M16,13m-1,0a1,1 0,1 1,2 0a1,1 0,1 1,-2 0" />
+</vector>

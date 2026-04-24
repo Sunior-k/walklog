@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Network Security Configuration
+    참고: https://developer.android.com/training/articles/security-config
+
+    - base-config: 모든 연결에서 평문(HTTP) 트래픽 차단
+    - 시스템 CA만 신뢰 (사용자 설치 CA 제외 → 임의 프록시 MitM 방어)
+    - debug-overrides: 개발 환경에서만 사용자 CA 추가 허용 (Charles, Proxy 디버깅)
+-->
+<network-security-config>
+
+    <base-config cleartextTrafficPermitted="false">
+        <trust-anchors>
+            <!-- 시스템 인증서만 신뢰 — 사용자 설치 CA 제외 -->
+            <certificates src="system" />
+        </trust-anchors>
+    </base-config>
+
+    <!-- Debug 빌드 전용: 프록시 디버깅을 위해 사용자 CA 추가 허용 -->
+    <debug-overrides>
+        <trust-anchors>
+            <certificates src="system" />
+            <certificates src="user" />
+        </trust-anchors>
+    </debug-overrides>
+
+</network-security-config>

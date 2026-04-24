@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/nav_graph"
+    app:startDestination="@id/homeFragment">
+
+    <!-- ===================== 바텀 내비게이션 탭 ===================== -->
+
+    <fragment
+        android:id="@+id/homeFragment"
+        android:name="com.river.walklog.navigation.HomeFragment"
+        android:label="홈">
+        <action
+            android:id="@+id/action_home_to_weeklyReport"
+            app:destination="@id/weeklyReportFragment" />
+        <action
+            android:id="@+id/action_home_to_missionDetail"
+            app:destination="@id/missionDetailFragment" />
+        <action
+            android:id="@+id/action_home_to_recap"
+            app:destination="@id/recapFragment" />
+    </fragment>
+
+    <!-- XML 기반 월간 캘린더 화면 — Fragment가 feature:history 모듈에 직접 정의됨 -->
+    <fragment
+        android:id="@+id/historyFragment"
+        android:name="com.river.walklog.feature.history.HistoryFragment"
+        android:label="기록" />
+
+    <fragment
+        android:id="@+id/settingsFragment"
+        android:name="com.river.walklog.feature.settings.SettingsFragment"
+        android:label="설정" />
+
+    <!-- ===================== 디테일 화면 (바텀 내비 없음) ===================== -->
+
+    <fragment
+        android:id="@+id/weeklyReportFragment"
+        android:name="com.river.walklog.navigation.WeeklyReportFragment"
+        android:label="WeeklyReport">
+        <action
+            android:id="@+id/action_weeklyReport_pop"
+            app:popUpTo="@id/homeFragment"
+            app:popUpToInclusive="false" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/missionDetailFragment"
+        android:name="com.river.walklog.navigation.MissionDetailFragment"
+        android:label="MissionDetail">
+        <action
+            android:id="@+id/action_missionDetail_pop"
+            app:popUpTo="@id/homeFragment"
+            app:popUpToInclusive="false" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/recapFragment"
+        android:name="com.river.walklog.navigation.RecapFragment"
+        android:label="Recap">
+        <action
+            android:id="@+id/action_recap_pop"
+            app:popUpTo="@id/homeFragment"
+            app:popUpToInclusive="false" />
+    </fragment>
+
+    <!-- ===================== 온보딩 (최초 실행 시 한 번만) ===================== -->
+
+    <fragment
+        android:id="@+id/onboardingFragment"
+        android:name="com.river.walklog.navigation.OnboardingFragment"
+        android:label="Onboarding">
+        <action
+            android:id="@+id/action_onboarding_to_home"
+            app:destination="@id/homeFragment"
+            app:popUpTo="@id/onboardingFragment"
+            app:popUpToInclusive="true" />
+    </fragment>
+
+</navigation>
