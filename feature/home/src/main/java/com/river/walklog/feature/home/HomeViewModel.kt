@@ -1,0 +1,435 @@
+package com.river.walklog.feature.home
+
+import android.app.NotificationChannel
+import android.app.NotificationManager
+import android.content.Context
+import androidx.core.app.NotificationCompat
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import com.river.walklog.core.analytics.CrashKeys
+import com.river.walklog.core.analytics.CrashReporter
+import com.river.walklog.core.domain.usecase.GetCurrentWeatherUseCase
+import com.river.walklog.core.domain.usecase.GetHourlyStepsForRangeUseCase
+import com.river.walklog.core.domain.usecase.GetMonthlyRecapUseCase
+import com.river.walklog.core.domain.usecase.GetUserSettingsUseCase
+import com.river.walklog.core.domain.usecase.GetWeeklyStepSummaryUseCase
+import com.river.walklog.core.domain.usecase.IsHealthConnectAvailableUseCase
+import com.river.walklog.core.domain.usecase.ObserveCurrentStepsUseCase
+import com.river.walklog.core.engine.ActivityClassifier
+import com.river.walklog.core.engine.ActivityState
+import com.river.walklog.core.engine.WalkingInsightsEngine
+import com.river.walklog.core.engine.WalkingInsightsResult
+import com.river.walklog.core.model.WeatherSummary
+import com.river.walklog.core.model.WeeklyStepSummary
+import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
+import java.time.LocalDate
+import java.time.LocalTime
+import java.time.format.DateTimeFormatter
+import java.util.Locale
+import javax.inject.Inject
+
+@HiltViewModel
+class HomeViewModel @Inject constructor(
+    private val observeCurrentSteps: ObserveCurrentStepsUseCase,
+    private val getWeeklyStepSummary: GetWeeklyStepSummaryUseCase,
+    private val getMonthlyRecap: GetMonthlyRecapUseCase,
+    private val getCurrentWeather: GetCurrentWeatherUseCase,
+    private val getHourlyStepsForRange: GetHourlyStepsForRangeUseCase,
+    private val isHealthConnectAvailable: IsHealthConnectAvailableUseCase,
+    private val walkingInsightsEngine: WalkingInsightsEngine,
+    private val activityClassifier: ActivityClassifier,
+    private val getUserSettings: GetUserSettingsUseCase,
+    private val crashReporter: CrashReporter,
+    @ApplicationContext private val context: Context,
+) : ViewModel() {
+
+    private val _state = MutableStateFlow(HomeState())
+    val state: StateFlow<HomeState> = _state.asStateFlow()
+
+    private var liveStepsJob: Job? = null
+    private var activityJob: Job? = null
+    private var weatherJob: Job? = null
+    private var stationaryReminderJob: Job? = null
+    private var latestWeeklySummary: WeeklyStepSummary? = null
+
+    // 오늘 날짜와 알림 발송 이력 추적
+    private var reminderSentDate: LocalDate? = null
+    private var reminderCountToday: Int = 0
+    private var lastReminderSentTimeMs: Long = 0L
+
+    init {
+        crashReporter.setKey(CrashKeys.SCREEN, CrashKeys.Screens.HOME)
+        crashReporter.setKey(CrashKeys.SENSOR_STATUS, CrashKeys.SensorValues.LOADING)
+        initDateText()
+        initSensorStatus()
+        observeUserSettings()
+        collectWeeklySummary()
+        loadRecapPreview()
+        loadWalkingInsights()
+        loadWeather()
+        ensureNotificationChannel()
+    }
+
+    fun handleIntent(intent: HomeIntent) {
+        when (intent) {
+            HomeIntent.OnClickForecast -> {
+                crashReporter.log("Navigate → forecast bottom sheet")
+            }
+            HomeIntent.OnClickTodayMission -> {
+                crashReporter.log("Navigate → mission detail")
+                crashReporter.setKey(CrashKeys.SCREEN, CrashKeys.Screens.MISSION_DETAIL)
+            }
+            HomeIntent.OnClickWeeklyReport -> {
+                crashReporter.log("Navigate → weekly report")
+                crashReporter.setKey(CrashKeys.SCREEN, CrashKeys.Screens.WEEKLY_REPORT)
+            }
+            HomeIntent.OnRefresh -> refresh()
+            HomeIntent.OnRefreshWeather -> loadWeather(forceRefresh = true)
+            is HomeIntent.OnPermissionResult -> handlePermissionResult(intent.granted)
+        }
+    }
+
+    // ─── Private ───────────────────────────────────────────────────────────
+
+    private fun initDateText() {
+        val formatter = DateTimeFormatter.ofPattern("M월 d일 EEEE", Locale.KOREAN)
+        _state.update { it.copy(todayDateText = LocalDate.now().format(formatter)) }
+    }
+
+    private fun initSensorStatus() {
+        if (!isHealthConnectAvailable()) {
+            crashReporter.setKey(CrashKeys.SENSOR_STATUS, CrashKeys.SensorValues.UNAVAILABLE)
+            crashReporter.log("Health Connect unavailable on this device")
+            _state.update { it.copy(sensorStatus = SensorStatus.Unavailable) }
+        }
+    }
+
+    private fun observeUserSettings() {
+        getUserSettings()
+            .catch { throwable ->
+                crashReporter.log("User settings query failed: ${throwable.message}")
+                crashReporter.recordException(throwable)
+            }
+            .onEach { settings ->
+                _state.update { state ->
+                    val updatedState = state.copy(
+                        targetSteps = settings.dailyStepGoal,
+                        mission = state.mission.copy(targetSteps = settings.dailyStepGoal),
+                    )
+                    latestWeeklySummary?.let { summary ->
+                        updatedState.applyWeeklySummary(summary, settings.dailyStepGoal)
+                    } ?: updatedState
+                }
+            }
+            .launchIn(viewModelScope)
+    }
+
+    private fun handlePermissionResult(granted: Boolean) {
+        if (_state.value.sensorStatus == SensorStatus.Unavailable) return
+
+        crashReporter.log("Health Connect READ_STEPS permission result: granted=$granted")
+
+        if (granted) {
+            crashReporter.setKey(CrashKeys.SENSOR_STATUS, CrashKeys.SensorValues.AVAILABLE)
+            _state.update { it.copy(sensorStatus = SensorStatus.Available) }
+            startLiveSteps()
+            startObservingActivity()
+        } else {
+            crashReporter.setKey(CrashKeys.SENSOR_STATUS, CrashKeys.SensorValues.PERMISSION_DENIED)
+            _state.update { it.copy(sensorStatus = SensorStatus.PermissionRequired) }
+            liveStepsJob?.cancel()
+            liveStepsJob = null
+            activityJob?.cancel()
+            activityJob = null
+        }
+    }
+
+    private fun startLiveSteps() {
+        crashReporter.log("Health Connect step polling started")
+        liveStepsJob?.cancel()
+        liveStepsJob = observeCurrentSteps()
+            .catch { throwable ->
+                crashReporter.log("Live step sensor error: ${throwable.message}")
+                crashReporter.recordException(throwable)
+            }
+            .onEach { steps ->
+                crashReporter.setKey(CrashKeys.CURRENT_STEPS, steps)
+                _state.update { state ->
+                    state.copy(
+                        currentSteps = steps,
+                        mission = state.mission.copy(currentSteps = steps),
+                    )
+                }
+            }
+            .launchIn(viewModelScope)
+    }
+
+    private fun startObservingActivity() {
+        activityJob?.cancel()
+        activityJob = activityClassifier.observeActivityState()
+            .catch { throwable ->
+                crashReporter.log("Activity classifier error: ${throwable.message}")
+            }
+            .onEach { activityState ->
+                _state.update { it.copy(activityState = activityState) }
+                handleActivityStateForReminder(activityState)
+            }
+            .launchIn(viewModelScope)
+    }
+
+    // STATIONARY가 1시간 지속되면 알림 발송. WALKING으로 돌아오면 타이머 초기화.
+    private fun handleActivityStateForReminder(activityState: ActivityState) {
+        when (activityState) {
+            ActivityState.WALKING -> {
+                stationaryReminderJob?.cancel()
+                stationaryReminderJob = null
+            }
+            ActivityState.STATIONARY -> {
+                if (stationaryReminderJob?.isActive == true) return
+                stationaryReminderJob = viewModelScope.launch {
+                    delay(STATIONARY_TRIGGER_DELAY_MS)
+                    tryFireReminder()
+                }
+            }
+            ActivityState.UNKNOWN -> Unit
+        }
+    }
+
+    private suspend fun tryFireReminder() {
+        val now = LocalDate.now()
+        val currentHour = LocalTime.now().hour
+
+        // 발송 가능 시간대 (오전 9시 ~ 오후 9시) 밖이면 스킵
+        if (currentHour !in REMINDER_HOUR_START until REMINDER_HOUR_END) return
+
+        // 날짜가 바뀌면 카운터 리셋
+        if (reminderSentDate != now) {
+            reminderSentDate = now
+            reminderCountToday = 0
+        }
+
+        // 하루 최대 3회 초과 시 스킵
+        if (reminderCountToday >= REMINDER_MAX_PER_DAY) return
+
+        // 직전 알림 후 2시간 cooldown
+        val elapsedSinceLast = System.currentTimeMillis() - lastReminderSentTimeMs
+        if (lastReminderSentTimeMs > 0L && elapsedSinceLast < REMINDER_COOLDOWN_MS) return
+
+        val notificationsEnabled = runCatching {
+            getUserSettings().first().notificationsEnabled
+        }.getOrDefault(true)
+        if (!notificationsEnabled) return
+
+        sendStationaryReminderNotification()
+        lastReminderSentTimeMs = System.currentTimeMillis()
+        reminderCountToday++
+    }
+
+    private fun sendStationaryReminderNotification() {
+        val manager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        val notification = NotificationCompat.Builder(context, CHANNEL_ID)
+            .setSmallIcon(com.river.walklog.core.designsystem.R.drawable.ic_default)
+            .setContentTitle("지금 걸어볼까요?")
+            .setContentText("1시간째 움직임이 없어요. 잠깐 걷고 오세요!")
+            .setPriority(NotificationCompat.PRIORITY_DEFAULT)
+            .setAutoCancel(true)
+            .build()
+        manager.notify(NOTIFICATION_ID, notification)
+        crashReporter.log("Stationary reminder sent (today: $reminderCountToday)")
+    }
+
+    private fun ensureNotificationChannel() {
+        val manager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        if (manager.getNotificationChannel(CHANNEL_ID) != null) return
+        val channel = NotificationChannel(
+            CHANNEL_ID,
+            "걷기 알림",
+            NotificationManager.IMPORTANCE_DEFAULT,
+        ).apply {
+            description = "장시간 정지 시 걷기를 권유하는 알림"
+        }
+        manager.createNotificationChannel(channel)
+    }
+
+    private fun loadWalkingInsights() {
+        viewModelScope.launch {
+            runCatching {
+                val today = LocalDate.now()
+                val toEpochDay = today.toEpochDay()
+                val fromEpochDay = toEpochDay - 6
+                val hourlySteps = getHourlyStepsForRange(fromEpochDay, toEpochDay)
+
+                // Peak-hour detection requires at least 3 days of real data to be reliable.
+                // With sparse data the first recorded event of a day absorbs all accumulated
+                // steps from that hour, producing a spurious early-morning spike.
+                val daysWithData = (0..6).count { dayOffset ->
+                    val start = dayOffset * 24
+                    (start until start + 24).any { hourlySteps[it] > 0f }
+                }
+
+                if (daysWithData >= 3) {
+                    val result = walkingInsightsEngine.analyze(
+                        hourlySteps = hourlySteps,
+                        targetStepsPerDay = _state.value.targetSteps,
+                        currentHour = LocalTime.now().hour,
+                    )
+                    _state.update { state ->
+                        state.copy(
+                            // Only trust peakHour if it falls in a waking window (6 am – 10 pm).
+                            forecastDescription = if (result.peakHour in 6..22) {
+                                buildForecastDescription(result)
+                            } else {
+                                state.forecastDescription
+                            },
+                            streakRiskLevel = StreakRiskLevel.from(result.streakRisk),
+                        )
+                    }
+                }
+            }.onFailure { e ->
+                crashReporter.log("Walking insights load failed: ${e.message}")
+                crashReporter.recordException(e)
+            }
+        }
+    }
+
+    private fun buildForecastDescription(result: WalkingInsightsResult): String {
+        val period = if (result.peakHour < 12) "오전" else "오후"
+        val displayHour = when {
+            result.peakHour == 0 -> 12
+            result.peakHour <= 12 -> result.peakHour
+            else -> result.peakHour - 12
+        }
+        return "오늘 $period ${displayHour}시는 평소 가장 많이 걷는 시간이에요"
+    }
+
+    private fun collectWeeklySummary() {
+        getWeeklyStepSummary()
+            .catch { throwable ->
+                crashReporter.log("Weekly summary query failed: ${throwable.message}")
+                crashReporter.recordException(throwable)
+            }
+            .onEach { summary ->
+                latestWeeklySummary = summary
+                _state.update { state -> state.applyWeeklySummary(summary, state.targetSteps) }
+            }
+            .launchIn(viewModelScope)
+    }
+
+    private fun loadRecapPreview() {
+        val today = LocalDate.now()
+        getMonthlyRecap(today.year, today.monthValue)
+            .catch { throwable ->
+                crashReporter.log("Monthly recap query failed: ${throwable.message}")
+                crashReporter.recordException(throwable)
+            }
+            .onEach { recap ->
+                _state.update { state ->
+                    state.copy(
+                        recapMonthLabel = recap.monthLabel,
+                        recapTotalStepsText = "%,d보".format(recap.totalSteps),
+                    )
+                }
+            }
+            .launchIn(viewModelScope)
+    }
+
+    private fun refresh() {
+        viewModelScope.launch {
+            crashReporter.log("Manual refresh triggered")
+            _state.update { it.copy(isLoading = true) }
+            collectWeeklySummary()
+            loadWalkingInsights()
+            loadWeather(forceRefresh = true)
+            _state.update { it.copy(isLoading = false) }
+        }
+    }
+
+    private fun loadWeather(forceRefresh: Boolean = false) {
+        weatherJob?.cancel()
+        weatherJob = viewModelScope.launch {
+            val weather = loadWeatherWithRetry(forceRefresh = forceRefresh)
+            _state.update { state -> state.applyWeather(weather) }
+        }
+    }
+
+    private suspend fun loadWeatherWithRetry(forceRefresh: Boolean): WeatherSummary {
+        var fallback = WeatherSummary.unavailable()
+        repeat(WEATHER_LOAD_MAX_ATTEMPTS) { attempt ->
+            runCatching { getCurrentWeather(forceRefresh = forceRefresh || attempt > 0) }
+                .onSuccess { weather ->
+                    if (weather.isAvailable) return weather
+                    fallback = weather
+                }
+                .onFailure { e ->
+                    crashReporter.log("Weather load failed: ${e.message}")
+                    crashReporter.recordException(e)
+                }
+
+            if (attempt < WEATHER_LOAD_MAX_ATTEMPTS - 1) {
+                delay(WEATHER_RETRY_DELAY_MS)
+            }
+        }
+        return fallback
+    }
+
+    // ─── Mapper ────────────────────────────────────────────────────────────
+
+    private fun HomeState.applyWeeklySummary(
+        summary: WeeklyStepSummary,
+        targetSteps: Int,
+    ): HomeState {
+        val bestDayName = summary.bestDay?.let { best ->
+            LocalDate.ofEpochDay(best.dateEpochDay)
+                .format(DateTimeFormatter.ofPattern("EEEE", Locale.KOREAN))
+        } ?: "-"
+        val achievementPct = if (summary.dailyCounts.isEmpty() || targetSteps <= 0) {
+            0
+        } else {
+            summary.dailyCounts.count { it.steps >= targetSteps } * 100 / summary.dailyCounts.size
+        }
+
+        return copy(
+            weeklyTotalStepsText = "%,d보".format(summary.totalSteps),
+            weeklyAchievementRateText = "$achievementPct%",
+            bestDayText = bestDayName,
+        )
+    }
+
+    private fun HomeState.applyWeather(weather: WeatherSummary): HomeState = copy(
+        weatherLocationText = "${weather.locationName} 기준",
+        weatherTemperatureText = weather.temperatureText,
+        weatherConditionText = weather.conditionText,
+        weatherAdviceText = weather.walkingAdvice,
+        weatherSupportingText = buildWeatherSupportingText(weather),
+    )
+
+    private fun buildWeatherSupportingText(weather: WeatherSummary): String = listOfNotNull(
+        weather.precipitationProbability?.let { "강수 $it%" },
+        weather.humidity?.let { "습도 $it%" },
+        weather.windSpeedMetersPerSecond?.let { "풍속 ${String.format(Locale.KOREAN, "%.1f", it)}m/s" },
+    ).joinToString(" · ")
+
+    companion object {
+        private const val CHANNEL_ID = "walk_reminder"
+        private const val NOTIFICATION_ID = 1001
+        private const val WEATHER_LOAD_MAX_ATTEMPTS = 3
+        private const val WEATHER_RETRY_DELAY_MS = 1_500L
+        private const val STATIONARY_TRIGGER_DELAY_MS = 60 * 60 * 1000L // 정지 1시간 후 트리거
+        private const val REMINDER_COOLDOWN_MS = 2 * 60 * 60 * 1000L // 발송 후 2시간 재발송 금지
+        private const val REMINDER_MAX_PER_DAY = 3 // 하루 최대 3회
+        private const val REMINDER_HOUR_START = 9 // 오전 9시부터
+        private const val REMINDER_HOUR_END = 21 // 오후 9시까지 (21 exclusive)
+    }
+}
