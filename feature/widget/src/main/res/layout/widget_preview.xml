@@ -1,0 +1,121 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    위젯 picker 미리보기 레이아웃.
+    RemoteViews 허용 뷰만 사용해야 한다: LinearLayout, TextView, ImageView 등.
+    <View> 는 허용되지 않으므로 간격·프로그레스 바 모두 <TextView> 로 대체한다.
+-->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#FFFFFFFF"
+    android:orientation="vertical"
+    android:padding="16dp">
+
+    <!-- 헤더 -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal">
+
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="워크로그"
+            android:textColor="#FF00C853"
+            android:textSize="13sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="오늘 미션"
+            android:textColor="#FF9E9E9E"
+            android:textSize="11sp" />
+
+    </LinearLayout>
+
+    <!-- 간격: TextView 빈 텍스트로 View 대체 -->
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="10dp" />
+
+    <!-- 걸음 수 -->
+    <TextView
+        android:id="@+id/tv_preview_steps"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="4,200보"
+        android:textColor="#FF1A1A1A"
+        android:textSize="26sp"
+        android:textStyle="bold" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="목표 6,000보"
+        android:textColor="#FF9E9E9E"
+        android:textSize="11sp" />
+
+    <!-- 간격 -->
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="10dp" />
+
+    <!--
+        프로그레스 바.
+        LinearLayout + layout_weight 로 구현.
+        <View> 불가 → 빈 텍스트 <TextView> 로 대체한다.
+    -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="10dp"
+        android:orientation="horizontal">
+
+        <!-- 달성 부분 (70%) -->
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="70"
+            android:background="#FF00C853" />
+
+        <!-- 미달성 부분 (30%) -->
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="30"
+            android:background="#FFDCF5E4" />
+
+    </LinearLayout>
+
+    <!-- 간격 -->
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="8dp" />
+
+    <!-- 상태 / 보상 -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal">
+
+        <TextView
+            android:id="@+id/tv_preview_remaining"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="1,800보 남았어요"
+            android:textColor="#FF9E9E9E"
+            android:textSize="12sp" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="+20 캐시"
+            android:textColor="#FF00C853"
+            android:textSize="12sp"
+            android:textStyle="bold" />
+
+    </LinearLayout>
+
+</LinearLayout>

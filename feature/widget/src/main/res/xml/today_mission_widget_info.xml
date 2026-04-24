@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    오늘 미션 위젯 AppWidgetProviderInfo.
+    targetCellWidth/Height: Android 12+ 그리드 셀 기준 (4x2).
+    minWidth/Height: 이전 Android 버전 호환을 위한 최소 크기.
+    updatePeriodMillis="0": 시스템 자동 업데이트 비활성화 — WorkManager가 직접 관리한다.
+    resizeMode: 사용자가 홈화면에서 가로·세로 방향으로 크기를 조절할 수 있다.
+-->
+<appwidget-provider xmlns:android="http://schemas.android.com/apk/res/android"
+    android:initialLayout="@layout/widget_loading"
+    android:minHeight="110dp"
+    android:minWidth="250dp"
+    android:previewLayout="@layout/widget_preview"
+    android:resizeMode="horizontal|vertical"
+    android:targetCellHeight="2"
+    android:targetCellWidth="4"
+    android:updatePeriodMillis="0"
+    android:widgetCategory="home_screen" />

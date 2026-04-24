@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Glance가 최초 렌더링 전에 표시하는 플레이스홀더. API 26 이하 호환용. -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#FFFFFFFF"
+    android:gravity="center"
+    android:orientation="vertical"
+    android:padding="16dp">
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="워크로그"
+        android:textColor="#FF00C853"
+        android:textSize="14sp"
+        android:textStyle="bold" />
+
+</LinearLayout>

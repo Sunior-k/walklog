@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <application>
+        <!--
+            오늘 미션 Glance 홈화면 위젯.
+            android:exported="true" : 시스템이 APPWIDGET_UPDATE 브로드캐스트를 직접 전달해야 한다.
+        -->
+        <receiver
+            android:name=".TodayMissionWidgetReceiver"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/today_mission_widget_info" />
+        </receiver>
+    </application>
+
+</manifest>
