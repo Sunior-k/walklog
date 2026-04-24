@@ -1,0 +1,418 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/walklog_background">
+
+    <!-- 월 네비게이션 헤더 -->
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/month_header"
+        android:layout_width="0dp"
+        android:layout_height="56dp"
+        android:paddingHorizontal="8dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent">
+
+        <ImageButton
+            android:id="@+id/btn_prev_month"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:contentDescription="이전 달"
+            android:src="@drawable/ic_chevron_left"
+            android:tint="@color/walklog_gray_400"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <TextView
+            android:id="@+id/tv_month_label"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:textColor="@color/walklog_text_primary"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toStartOf="@id/btn_next_month"
+            app:layout_constraintStart_toEndOf="@id/btn_prev_month"
+            app:layout_constraintTop_toTopOf="parent"
+            tools:text="2026년 4월" />
+
+        <ImageButton
+            android:id="@+id/btn_next_month"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:contentDescription="다음 달"
+            android:src="@drawable/ic_chevron_right"
+            android:tint="@color/walklog_gray_400"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+    <!-- 로딩 인디케이터 -->
+    <ProgressBar
+        android:id="@+id/progress_bar"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:visibility="gone"
+        app:layout_constraintBottom_toTopOf="@id/stats_container"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/month_header"
+        tools:visibility="visible" />
+
+    <!-- 캘린더 그리드 (요일 헤더 + 날짜 셀) -->
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/rv_calendar"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:clipToPadding="false"
+        android:paddingHorizontal="8dp"
+        android:paddingBottom="8dp"
+        app:layout_constraintBottom_toTopOf="@id/selected_day_container"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/month_header" />
+
+    <!-- 빈 상태 -->
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/empty_state"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:visibility="gone"
+        app:layout_constraintBottom_toTopOf="@id/selected_day_container"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/month_header">
+
+        <TextView
+            android:id="@+id/tv_empty_icon"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="📭"
+            android:textSize="48sp"
+            app:layout_constraintBottom_toTopOf="@id/tv_empty_title"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintVertical_chainStyle="packed" />
+
+        <TextView
+            android:id="@+id/tv_empty_title"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:text="이번 달 걸음 기록이 없어요"
+            android:textColor="@color/walklog_text_secondary"
+            android:textSize="15sp"
+            app:layout_constraintBottom_toTopOf="@id/tv_empty_description"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/tv_empty_icon" />
+
+        <TextView
+            android:id="@+id/tv_empty_description"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:text="걸음 수를 측정하면 여기에 표시돼요"
+            android:textColor="@color/walklog_gray_400"
+            android:textSize="13sp"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/tv_empty_title" />
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+    <!-- 선택 날짜 상세 -->
+    <LinearLayout
+        android:id="@+id/selected_day_container"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:background="@drawable/bg_selected_day_panel"
+        android:orientation="vertical"
+        android:paddingHorizontal="20dp"
+        android:paddingTop="16dp"
+        android:paddingBottom="18dp"
+        android:visibility="gone"
+        app:layout_constraintBottom_toTopOf="@id/stats_container"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        tools:visibility="visible">
+
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:paddingBottom="12dp">
+
+            <TextView
+                android:id="@+id/tv_selected_date"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:textColor="@color/walklog_text_primary"
+                android:textSize="16sp"
+                android:textStyle="bold"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent"
+                tools:text="4월 23일 (목)" />
+
+            <TextView
+                android:id="@+id/tv_selected_target_status"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="5dp"
+                android:textColor="@color/walklog_text_primary"
+                android:textSize="13sp"
+                android:textStyle="bold"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@id/tv_selected_date"
+                tools:text="목표까지 1,580보" />
+
+            <TextView
+                android:id="@+id/tv_selected_comparison"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="2dp"
+                android:textColor="@color/walklog_text_secondary"
+                android:textSize="13sp"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@id/tv_selected_target_status"
+                tools:text="전날보다 +1,200보" />
+
+        </androidx.constraintlayout.widget.ConstraintLayout>
+
+        <View
+            android:id="@+id/selected_metrics_divider"
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:background="@color/walklog_gray_100" />
+
+        <LinearLayout
+            android:id="@+id/selected_metrics_row"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:baselineAligned="false"
+            android:orientation="horizontal"
+            android:paddingTop="14dp">
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:gravity="center"
+                android:orientation="vertical">
+
+                <ImageView
+                    android:layout_width="28dp"
+                    android:layout_height="28dp"
+                    android:background="@drawable/bg_selected_metric_icon_primary"
+                    android:contentDescription="@null"
+                    android:padding="7dp"
+                    android:src="@drawable/ic_history_steps"
+                    android:tint="@color/walklog_primary" />
+
+                <TextView
+                    android:id="@+id/tv_selected_steps"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="7dp"
+                    android:gravity="center"
+                    android:textColor="@color/walklog_text_primary"
+                    android:textSize="18sp"
+                    android:textStyle="bold"
+                    tools:text="8,420 보" />
+
+                <TextView
+                    android:id="@+id/tv_selected_steps_label"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center"
+                    android:text="걸음"
+                    android:textColor="@color/walklog_text_secondary"
+                    android:textSize="12sp" />
+
+            </LinearLayout>
+
+            <View
+                android:layout_width="1dp"
+                android:layout_height="58dp"
+                android:layout_gravity="center_vertical"
+                android:background="@color/walklog_gray_100" />
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:gravity="center"
+                android:orientation="vertical">
+
+                <ImageView
+                    android:layout_width="28dp"
+                    android:layout_height="28dp"
+                    android:background="@drawable/bg_selected_metric_icon_warning"
+                    android:contentDescription="@null"
+                    android:padding="7dp"
+                    android:src="@drawable/ic_history_calories"
+                    android:tint="@color/walklog_warning" />
+
+                <TextView
+                    android:id="@+id/tv_selected_calories"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="7dp"
+                    android:gravity="center"
+                    android:textColor="@color/walklog_text_primary"
+                    android:textSize="18sp"
+                    android:textStyle="bold"
+                    tools:text="336 kcal" />
+
+                <TextView
+                    android:id="@+id/tv_selected_calories_label"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center"
+                    android:text="칼로리"
+                    android:textColor="@color/walklog_text_secondary"
+                    android:textSize="12sp" />
+
+            </LinearLayout>
+
+            <View
+                android:layout_width="1dp"
+                android:layout_height="58dp"
+                android:layout_gravity="center_vertical"
+                android:background="@color/walklog_gray_100" />
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:gravity="center"
+                android:orientation="vertical">
+
+                <ImageView
+                    android:layout_width="28dp"
+                    android:layout_height="28dp"
+                    android:background="@drawable/bg_selected_metric_icon_secondary"
+                    android:contentDescription="@null"
+                    android:padding="7dp"
+                    android:src="@drawable/ic_history_distance"
+                    android:tint="@color/walklog_secondary" />
+
+                <TextView
+                    android:id="@+id/tv_selected_distance"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="7dp"
+                    android:gravity="center"
+                    android:textColor="@color/walklog_text_primary"
+                    android:textSize="18sp"
+                    android:textStyle="bold"
+                    tools:text="6.3 km" />
+
+                <TextView
+                    android:id="@+id/tv_selected_distance_label"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center"
+                    android:text="거리"
+                    android:textColor="@color/walklog_text_secondary"
+                    android:textSize="12sp" />
+
+            </LinearLayout>
+
+        </LinearLayout>
+
+    </LinearLayout>
+
+    <!-- 월간 통계 -->
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/stats_container"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:background="@color/walklog_surface_variant"
+        android:paddingHorizontal="20dp"
+        android:paddingVertical="16dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent">
+
+        <androidx.constraintlayout.widget.Guideline
+            android:id="@+id/stats_center_guideline"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            app:layout_constraintGuide_percent="0.5" />
+
+        <TextView
+            android:id="@+id/tv_total_steps_label"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="이달 총 걸음"
+            android:textColor="@color/walklog_text_secondary"
+            android:textSize="12sp"
+            app:layout_constraintEnd_toStartOf="@id/stats_center_guideline"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <TextView
+            android:id="@+id/tv_total_steps"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:textColor="@color/walklog_text_primary"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            app:layout_constraintEnd_toEndOf="@id/tv_total_steps_label"
+            app:layout_constraintStart_toStartOf="@id/tv_total_steps_label"
+            app:layout_constraintTop_toBottomOf="@id/tv_total_steps_label"
+            tools:text="128,450 보" />
+
+        <View
+            android:id="@+id/stats_divider"
+            android:layout_width="1dp"
+            android:layout_height="0dp"
+            android:background="@color/walklog_gray_100"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="@id/stats_center_guideline"
+            app:layout_constraintStart_toStartOf="@id/stats_center_guideline"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <TextView
+            android:id="@+id/tv_achievement_rate_label"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="목표 달성률"
+            android:textColor="@color/walklog_text_secondary"
+            android:textSize="12sp"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toEndOf="@id/stats_center_guideline"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <TextView
+            android:id="@+id/tv_achievement_rate"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:textColor="@color/walklog_primary"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            app:layout_constraintEnd_toEndOf="@id/tv_achievement_rate_label"
+            app:layout_constraintStart_toStartOf="@id/tv_achievement_rate_label"
+            app:layout_constraintTop_toBottomOf="@id/tv_achievement_rate_label"
+            tools:text="72%" />
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+</androidx.constraintlayout.widget.ConstraintLayout>
