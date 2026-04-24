@@ -1,0 +1,280 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/walklog_background"
+    android:clipToPadding="false"
+    android:fillViewport="true">
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:paddingHorizontal="16dp"
+        android:paddingTop="20dp"
+        android:paddingBottom="32dp">
+
+        <TextView
+            android:id="@+id/tv_title"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:paddingHorizontal="4dp"
+            android:paddingBottom="20dp"
+            android:text="설정"
+            android:textColor="@color/walklog_text_primary"
+            android:textSize="22sp"
+            android:textStyle="bold"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <TextView
+            android:id="@+id/tv_daily_step_goal_section"
+            style="@style/WalkLogSettingsSectionLabel"
+            android:text="걸음 목표"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/tv_title" />
+
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:id="@+id/daily_step_goal_card"
+            style="@style/WalkLogSettingsCard"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/tv_daily_step_goal_section">
+
+            <TextView
+                android:id="@+id/tv_daily_step_goal_title"
+                style="@style/WalkLogSettingsPrimaryText"
+                android:layout_width="0dp"
+                android:text="하루 목표 걸음 수"
+                app:layout_constraintBaseline_toBaselineOf="@id/tv_daily_step_goal"
+                app:layout_constraintEnd_toStartOf="@id/tv_daily_step_goal"
+                app:layout_constraintStart_toStartOf="parent" />
+
+            <TextView
+                android:id="@+id/tv_daily_step_goal"
+                style="@style/WalkLogSettingsValueTextPrimary"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintTop_toTopOf="parent"
+                tools:text="10,000 보" />
+
+            <SeekBar
+                android:id="@+id/seek_daily_step_goal"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:max="30"
+                android:progressTint="@color/walklog_primary"
+                android:thumbTint="@color/walklog_primary"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@id/tv_daily_step_goal" />
+
+            <TextView
+                android:id="@+id/tv_daily_step_goal_min"
+                style="@style/WalkLogSettingsRangeText"
+                android:text="5,000"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@id/seek_daily_step_goal" />
+
+            <TextView
+                android:id="@+id/tv_daily_step_goal_max"
+                style="@style/WalkLogSettingsRangeText"
+                android:text="20,000"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintTop_toBottomOf="@id/seek_daily_step_goal" />
+
+        </androidx.constraintlayout.widget.ConstraintLayout>
+
+        <TextView
+            android:id="@+id/tv_recovery_mission_section"
+            style="@style/WalkLogSettingsSectionLabel"
+            android:layout_marginTop="20dp"
+            android:text="회복 미션"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/daily_step_goal_card" />
+
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:id="@+id/recovery_mission_card"
+            style="@style/WalkLogSettingsCard"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/tv_recovery_mission_section">
+
+            <TextView
+                android:id="@+id/tv_recovery_mission_title"
+                style="@style/WalkLogSettingsPrimaryText"
+                android:layout_width="0dp"
+                android:text="회복 미션 걸음 수"
+                app:layout_constraintBaseline_toBaselineOf="@id/tv_recovery_mission_steps"
+                app:layout_constraintEnd_toStartOf="@id/tv_recovery_mission_steps"
+                app:layout_constraintStart_toStartOf="parent" />
+
+            <TextView
+                android:id="@+id/tv_recovery_mission_steps"
+                style="@style/WalkLogSettingsValueTextSecondary"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintTop_toTopOf="parent"
+                tools:text="6,000 보" />
+
+            <SeekBar
+                android:id="@+id/seek_recovery_mission_steps"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:max="14"
+                android:progressTint="@color/walklog_secondary"
+                android:thumbTint="@color/walklog_secondary"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@id/tv_recovery_mission_steps" />
+
+            <TextView
+                android:id="@+id/tv_recovery_mission_min"
+                style="@style/WalkLogSettingsRangeText"
+                android:text="3,000"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@id/seek_recovery_mission_steps" />
+
+            <TextView
+                android:id="@+id/tv_recovery_mission_max"
+                style="@style/WalkLogSettingsRangeText"
+                android:text="10,000"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintTop_toBottomOf="@id/seek_recovery_mission_steps" />
+
+        </androidx.constraintlayout.widget.ConstraintLayout>
+
+        <TextView
+            android:id="@+id/tv_notifications_section"
+            style="@style/WalkLogSettingsSectionLabel"
+            android:layout_marginTop="20dp"
+            android:text="알림"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/recovery_mission_card" />
+
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:id="@+id/notifications_card"
+            style="@style/WalkLogSettingsCard"
+            android:paddingVertical="14dp"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/tv_notifications_section">
+
+            <TextView
+                android:id="@+id/tv_notifications_title"
+                style="@style/WalkLogSettingsPrimaryText"
+                android:layout_width="0dp"
+                android:text="걷기 예보 알림"
+                app:layout_constraintBottom_toTopOf="@id/tv_notifications_description"
+                app:layout_constraintEnd_toStartOf="@id/switch_notifications"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintVertical_chainStyle="packed" />
+
+            <TextView
+                android:id="@+id/tv_notifications_description"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="2dp"
+                android:text="행동 확률이 높은 시간대에 알림을 보내요"
+                android:textColor="@color/walklog_text_secondary"
+                android:textSize="13sp"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toStartOf="@id/switch_notifications"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@id/tv_notifications_title" />
+
+            <Switch
+                android:id="@+id/switch_notifications"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:showText="false"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintTop_toTopOf="parent" />
+
+        </androidx.constraintlayout.widget.ConstraintLayout>
+
+        <TextView
+            android:id="@+id/tv_theme_section"
+            style="@style/WalkLogSettingsSectionLabel"
+            android:layout_marginTop="20dp"
+            android:text="테마"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/notifications_card" />
+
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:id="@+id/theme_card"
+            style="@style/WalkLogSettingsCard"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/tv_theme_section">
+
+            <TextView
+                android:id="@+id/tv_theme_title"
+                style="@style/WalkLogSettingsPrimaryText"
+                android:text="화면 테마"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent" />
+
+            <TextView
+                android:id="@+id/tv_theme_description"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="2dp"
+                android:text="앱 화면 색상을 선택해요"
+                android:textColor="@color/walklog_text_secondary"
+                android:textSize="13sp"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@id/tv_theme_title" />
+
+            <RadioButton
+                android:id="@+id/radio_theme_system"
+                style="@style/WalkLogSettingsRadioButton"
+                android:layout_marginTop="10dp"
+                android:text="시스템 설정"
+                app:layout_constraintEnd_toStartOf="@id/radio_theme_light"
+                app:layout_constraintHorizontal_chainStyle="spread"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@id/tv_theme_description" />
+
+            <RadioButton
+                android:id="@+id/radio_theme_light"
+                style="@style/WalkLogSettingsRadioButton"
+                android:text="라이트"
+                app:layout_constraintBaseline_toBaselineOf="@id/radio_theme_system"
+                app:layout_constraintEnd_toStartOf="@id/radio_theme_dark"
+                app:layout_constraintStart_toEndOf="@id/radio_theme_system" />
+
+            <RadioButton
+                android:id="@+id/radio_theme_dark"
+                style="@style/WalkLogSettingsRadioButton"
+                android:text="다크"
+                app:layout_constraintBaseline_toBaselineOf="@id/radio_theme_system"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toEndOf="@id/radio_theme_light" />
+
+        </androidx.constraintlayout.widget.ConstraintLayout>
+
+        <TextView
+            android:id="@+id/tv_app_version"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="32dp"
+            android:text="WalkLog v1.0.0"
+            android:textColor="@color/walklog_text_secondary"
+            android:textSize="12sp"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/theme_card" />
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+</ScrollView>
