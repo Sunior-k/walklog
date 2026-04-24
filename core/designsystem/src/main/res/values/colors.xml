@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <!-- Primary -->
+    <color name="walklog_primary">#F5C400</color>
+    <color name="walklog_primary_dark">#E0B000</color>
+    <color name="walklog_primary_light">#FFE066</color>
+    <color name="walklog_primary_container">#FFF3C4</color>
+
+    <!-- Secondary -->
+    <color name="walklog_secondary">#4666A8</color>
+    <color name="walklog_secondary_container">#E4E9F4</color>
+
+    <!-- Accent -->
+    <color name="walklog_accent">#C79B79</color>
+
+    <!-- Semantic -->
+    <color name="walklog_error">#FF3131</color>
+    <color name="walklog_error_dark">#CC0000</color>
+    <color name="walklog_error_container">#FFE5E5</color>
+    <color name="walklog_success">#4CAF50</color>
+    <color name="walklog_success_dark">#388E3C</color>
+    <color name="walklog_success_container">#E8F5E9</color>
+    <color name="walklog_warning">#F5C400</color>
+
+    <!-- Gray scale -->
+    <color name="walklog_gray_50">#F8F8F8</color>
+    <color name="walklog_gray_100">#EDEDED</color>
+    <color name="walklog_gray_200">#DADADA</color>
+    <color name="walklog_gray_300">#C4C4C4</color>
+    <color name="walklog_gray_400">#9E9E9E</color>
+    <color name="walklog_gray_500">#757575</color>
+    <color name="walklog_gray_700">#4F4F4F</color>
+    <color name="walklog_gray_900">#212121</color>
+
+    <!-- Background / Surface -->
+    <color name="walklog_background">#FFFFFF</color>
+    <color name="walklog_surface">#FFFFFF</color>
+    <color name="walklog_surface_variant">#F8F8F8</color>
+
+    <!-- Text -->
+    <color name="walklog_text_primary">#212121</color>
+    <color name="walklog_text_secondary">#757575</color>
+    <color name="walklog_text_disabled">#C4C4C4</color>
+
+    <!-- Static -->
+    <color name="walklog_static_black">#000000</color>
+    <color name="walklog_static_white">#FFFFFF</color>
+
+</resources>

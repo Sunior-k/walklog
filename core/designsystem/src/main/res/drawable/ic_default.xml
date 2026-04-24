@@ -1,0 +1,9 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="12dp"
+    android:height="16dp"
+    android:viewportWidth="12"
+    android:viewportHeight="16">
+  <path
+      android:pathData="M9,1H0V15H12V4L9,1ZM11,14H1V2H8L11,5V14Z"
+      android:fillColor="@color/walklog_static_black"/>
+</vector>
