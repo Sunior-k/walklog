@@ -3,6 +3,7 @@
 
     <!-- Primary -->
     <color name="walklog_primary">#F5C400</color>
+    <color name="walklog_primary_30">#4DF5C400</color>
     <color name="walklog_primary_dark">#E0B000</color>
     <color name="walklog_primary_light">#FFE066</color>
     <color name="walklog_primary_container">#FFF3C4</color>
