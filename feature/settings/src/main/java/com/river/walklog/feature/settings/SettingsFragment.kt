@@ -1,5 +1,6 @@
 package com.river.walklog.feature.settings
 
+import android.content.Intent
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -13,6 +14,7 @@ import androidx.fragment.app.viewModels
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
+import com.google.android.gms.oss.licenses.OssLicensesMenuActivity
 import com.river.walklog.core.model.ThemeMode
 import com.river.walklog.feature.settings.databinding.FragmentSettingsBinding
 import dagger.hilt.android.AndroidEntryPoint
@@ -86,6 +88,9 @@ class SettingsFragment : Fragment() {
         radioThemeSystem.setOnClickListener { updateThemeMode(ThemeMode.SYSTEM) }
         radioThemeLight.setOnClickListener { updateThemeMode(ThemeMode.LIGHT) }
         radioThemeDark.setOnClickListener { updateThemeMode(ThemeMode.DARK) }
+        layoutOssLicenses.setOnClickListener {
+            startActivity(Intent(requireContext(), OssLicensesMenuActivity::class.java))
+        }
     }
 
     private fun observeState() {
