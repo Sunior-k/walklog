@@ -22,7 +22,6 @@ graph TB
     :feature:recap[recap]:::android-feature
     :feature:report[report]:::android-feature
     :feature:history[history]:::android-feature
-    :feature:forecast[forecast]:::android-feature
     :feature:onboarding[onboarding]:::android-feature
     :feature:settings[settings]:::android-feature
     :feature:widget[widget]:::android-feature
@@ -45,7 +44,6 @@ graph TB
   :app -.-> :feature:recap
   :app -.-> :feature:report
   :app -.-> :feature:history
-  :app -.-> :feature:forecast
   :app -.-> :feature:onboarding
   :app -.-> :feature:settings
   :app -.-> :feature:widget
@@ -60,7 +58,6 @@ graph TB
   :feature:recap -.-> :core:domain
   :feature:report -.-> :core:domain
   :feature:history -.-> :core:domain
-  :feature:forecast -.-> :core:domain
   :feature:widget -.-> :core:domain
   :feature:onboarding -.-> :core:data
   :feature:settings -.-> :core:data

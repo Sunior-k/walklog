@@ -57,7 +57,6 @@ dependencies {
     implementation(projects.feature.recap)
     implementation(projects.feature.home)
     implementation(projects.feature.mission)
-    implementation(projects.feature.forecast)
     implementation(projects.feature.report)
     implementation(projects.feature.widget)
     implementation(projects.feature.onboarding)

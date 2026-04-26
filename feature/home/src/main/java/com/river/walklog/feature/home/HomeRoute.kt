@@ -121,6 +121,13 @@ fun HomeRoute(
 
     if (showForecastSheet) {
         ForecastBottomSheet(
+            title = state.forecastTitle,
+            recommendedTimeText = state.forecastRecommendedTimeText.ifEmpty { "오늘 오후 3시가 최적이에요" },
+            description = state.forecastDescription,
+            averageStepsAtThisTime = state.forecastAverageStepsText.ifEmpty { "-" },
+            activeDays = state.forecastActiveDaysText.ifEmpty { "-" },
+            hourlyAverages = state.forecastHourlyAverages,
+            peakHour = state.forecastPeakHour,
             onDismiss = { showForecastSheet = false },
             onClickStartWalking = { showForecastSheet = false },
         )
