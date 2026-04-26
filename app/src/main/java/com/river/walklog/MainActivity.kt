@@ -19,15 +19,15 @@ import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.fragment.NavHostFragment
 import androidx.navigation.navOptions
 import com.google.android.material.bottomnavigation.BottomNavigationView
+import com.river.walklog.core.analytics.CrashReporter
 import com.river.walklog.core.data.repository.UserSettingsRepository
-import com.river.walklog.core.datastore.readStoredThemeMode
 import com.river.walklog.core.model.ThemeMode
+import com.river.walklog.core.model.UserSettings
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
 import javax.inject.Inject
 
 /**
@@ -41,74 +41,83 @@ class MainActivity : AppCompatActivity() {
 
     @Inject
     lateinit var userSettingsRepository: UserSettingsRepository
+    @Inject
+    lateinit var crashReporter: CrashReporter
 
     private val bottomNavDestinations = setOf(
         R.id.homeFragment,
         R.id.historyFragment,
         R.id.settingsFragment,
     )
+    private var navController: NavController? = null
+    private var isStartupReady = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
-        installSplashScreen()
-        applySavedThemeBeforeCreate()
+        installSplashScreen().setKeepOnScreenCondition { !isStartupReady }
         super.onCreate(savedInstanceState)
 
-        val startDestination = if (savedInstanceState == null) {
-            runBlocking {
-                if (userSettingsRepository.settings.first().isOnboardingCompleted) {
-                    R.id.homeFragment
-                } else {
-                    R.id.onboardingFragment
-                }
-            }
-        } else {
-            null
+        lifecycleScope.launch {
+            val initialSettings = userSettingsRepository.settings.first()
+            applyThemeMode(initialSettings.themeMode)
+            setupContent(
+                savedInstanceState = savedInstanceState,
+                initialSettings = initialSettings,
+            )
+            observeThemeMode()
+            isStartupReady = true
         }
-        val restoredDestination = savedInstanceState
-            ?.getInt(KEY_CURRENT_DESTINATION_ID)
-            ?.takeIf { it != 0 }
+    }
 
+    override fun onSaveInstanceState(outState: Bundle) {
+        navController
+            ?.currentDestination
+            ?.id
+            ?.also { destinationId ->
+                outState.putInt(KEY_CURRENT_DESTINATION_ID, destinationId)
+            }
+        super.onSaveInstanceState(outState)
+    }
+
+    private fun setupContent(
+        savedInstanceState: Bundle?,
+        initialSettings: UserSettings,
+    ) {
         enableEdgeToEdge()
         setContentView(R.layout.activity_main)
         applySystemBarAppearance()
+        setupNavigation(
+            savedInstanceState = savedInstanceState,
+            initialSettings = initialSettings,
+        )
+    }
+
+    private fun setupNavigation(
+        savedInstanceState: Bundle?,
+        initialSettings: UserSettings,
+    ) {
+        val restoredDestination = savedInstanceState.restoredDestinationId()
+        val firstLaunchDestination = resolveFirstLaunchDestination(
+            savedInstanceState = savedInstanceState,
+            initialSettings = initialSettings,
+        )
+        val graphStartDestination = resolveGraphStartDestination(
+            firstLaunchDestination = firstLaunchDestination,
+            restoredDestination = restoredDestination,
+        )
 
         val navController = findNavController()
-        if (startDestination != null) {
-            setStartDestination(navController, startDestination)
-        }
+        this.navController = navController
+        setStartDestination(navController, graphStartDestination)
 
         val bottomNav = findViewById<BottomNavigationView>(R.id.bottom_navigation)
         bindBottomNavigation(bottomNav, navController)
         applyBottomNavigationInsets(bottomNav)
-
-        navController.addOnDestinationChangedListener { _, destination, _ ->
-            bottomNav.isVisible = destination.id in bottomNavDestinations
-            if (destination.id in bottomNavDestinations) {
-                bottomNav.menu.findItem(destination.id)?.isChecked = true
-            }
-        }
-
-        bottomNav.post {
-            if (navController.currentDestination == null) {
-                val fallbackDestination = restoredDestination ?: startDestination ?: R.id.homeFragment
-                setStartDestination(navController, fallbackDestination)
-            }
-        }
-
-        observeThemeMode()
-    }
-
-    override fun onSaveInstanceState(outState: Bundle) {
-        findNavControllerOrNull()
-            ?.currentDestination
-            ?.id
-            ?.also { destinationId -> outState.putInt(KEY_CURRENT_DESTINATION_ID, destinationId) }
-        super.onSaveInstanceState(outState)
-    }
-
-    private fun applySavedThemeBeforeCreate() {
-        val savedTheme = runBlocking { applicationContext.readStoredThemeMode() }
-        AppCompatDelegate.setDefaultNightMode(savedTheme.toNightMode())
+        syncBottomNavigationWithDestination(bottomNav, navController)
+        restoreVisibleDestinationAfterRecreation(
+            bottomNav = bottomNav,
+            navController = navController,
+            restoredDestination = restoredDestination,
+        )
     }
 
     private fun findNavController(): NavController {
@@ -117,11 +126,34 @@ class MainActivity : AppCompatActivity() {
         return navHost.navController
     }
 
-    private fun findNavControllerOrNull(): NavController? {
-        val navHost = supportFragmentManager.findFragmentById(R.id.nav_host_fragment) as? NavHostFragment
-        return navHost?.navController
+    // BottomNav popUpTo 기준이 흔들리지 않도록 그래프 시작점과 복원 탭을 분리.
+    private fun resolveGraphStartDestination(
+        firstLaunchDestination: Int?,
+        restoredDestination: Int?,
+    ): Int =
+        firstLaunchDestination
+            ?: if (restoredDestination == R.id.onboardingFragment) {
+                R.id.onboardingFragment
+            } else {
+                R.id.homeFragment
+            }
+
+    private fun resolveFirstLaunchDestination(
+        savedInstanceState: Bundle?,
+        initialSettings: UserSettings,
+    ): Int? {
+        if (savedInstanceState != null) return null
+        return if (initialSettings.isOnboardingCompleted) {
+            R.id.homeFragment
+        } else {
+            R.id.onboardingFragment
+        }
     }
 
+    private fun Bundle?.restoredDestinationId(): Int? =
+        this?.getInt(KEY_CURRENT_DESTINATION_ID)?.takeIf { it != 0 }
+
+    // 요청된 시작점으로 NavGraph 재설정
     private fun setStartDestination(
         navController: NavController,
         destinationId: Int,
@@ -131,30 +163,97 @@ class MainActivity : AppCompatActivity() {
         navController.setGraph(graph, null)
     }
 
+    private fun syncBottomNavigationWithDestination(
+        bottomNav: BottomNavigationView,
+        navController: NavController,
+    ) {
+        navController.addOnDestinationChangedListener { _, destination, _ ->
+            syncBottomNavigationState(bottomNav, destination.id)
+        }
+        syncBottomNavigationState(bottomNav, navController.currentDestination?.id)
+    }
+
+    private fun restoreVisibleDestinationAfterRecreation(
+        bottomNav: BottomNavigationView,
+        navController: NavController,
+        restoredDestination: Int?,
+    ) {
+        bottomNav.post {
+            if (
+                restoredDestination != null &&
+                restoredDestination != navController.currentDestination?.id
+            ) {
+                navigateToRestoredDestination(navController, restoredDestination)
+            }
+            syncBottomNavigationState(bottomNav, navController.currentDestination?.id)
+        }
+    }
+
+    // 테마 재생성과 탭 복원 모두 같은 옵션으로 이동하도록 BottomNav 처리.
     private fun bindBottomNavigation(
         bottomNav: BottomNavigationView,
         navController: NavController,
     ) {
-        bottomNav.setOnItemReselectedListener { }
         bottomNav.setOnItemSelectedListener { item ->
-            val currentDestination = navController.currentDestination
-                ?: return@setOnItemSelectedListener false
-            if (currentDestination.id == item.itemId) {
-                return@setOnItemSelectedListener true
+            if (item.itemId in bottomNavDestinations) {
+                navigateToBottomNavDestination(navController, item.itemId)
+            } else {
+                false
             }
-
-            val options = navOptions {
-                launchSingleTop = true
-                restoreState = true
-                popUpTo(navController.graph.findStartDestination().id) {
-                    saveState = true
-                }
-            }
-
-            runCatching {
-                navController.navigate(item.itemId, null, options)
-            }.isSuccess
         }
+        bottomNav.setOnItemReselectedListener { item ->
+            if (item.itemId in bottomNavDestinations) {
+                navigateToBottomNavDestination(navController, item.itemId)
+            }
+        }
+    }
+
+    // 그래프 변경이나 복원 이동 후 현재 destination을 BottomNav에 반영.
+    private fun syncBottomNavigationState(
+        bottomNav: BottomNavigationView,
+        destinationId: Int?,
+    ) {
+        bottomNav.isVisible = destinationId in bottomNavDestinations
+        if (destinationId in bottomNavDestinations) {
+            bottomNav.menu.findItem(destinationId ?: return)?.isChecked = true
+        }
+    }
+
+    // 각 탭의 백스택 상태를 보존하면서 루트 탭 사이 이동
+    private fun navigateToBottomNavDestination(
+        navController: NavController,
+        destinationId: Int,
+    ): Boolean {
+        if (navController.currentDestination?.id == destinationId) {
+            return true
+        }
+        val options = navOptions {
+            launchSingleTop = true
+            restoreState = true
+            popUpTo(navController.graph.findStartDestination().id) {
+                saveState = true
+            }
+        }
+        return try {
+            navController.navigate(destinationId, null, options)
+            true
+        } catch (e: IllegalArgumentException) {
+            crashReporter.log("Bottom navigation failed: destinationId=$destinationId")
+            crashReporter.recordException(e)
+            false
+        } catch (e: IllegalStateException) {
+            crashReporter.log("Bottom navigation failed: destinationId=$destinationId")
+            crashReporter.recordException(e)
+            false
+        }
+    }
+
+    // 그래프 시작점은 유지한 채 recreate 전 보이던 탭을 복원
+    private fun navigateToRestoredDestination(
+        navController: NavController,
+        destinationId: Int,
+    ) {
+        navController.navigate(destinationId)
     }
 
     private fun applyBottomNavigationInsets(bottomNav: BottomNavigationView) {
@@ -185,11 +284,15 @@ class MainActivity : AppCompatActivity() {
                     .collect { themeMode ->
                         val nightMode = themeMode.toNightMode()
                         if (AppCompatDelegate.getDefaultNightMode() != nightMode) {
-                            AppCompatDelegate.setDefaultNightMode(nightMode)
+                            applyThemeMode(themeMode)
                         }
                     }
             }
         }
+    }
+
+    private fun applyThemeMode(themeMode: ThemeMode) {
+        AppCompatDelegate.setDefaultNightMode(themeMode.toNightMode())
     }
 
     private companion object {
