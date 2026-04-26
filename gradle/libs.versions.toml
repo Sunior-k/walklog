@@ -120,6 +120,11 @@ healthConnect = "1.1.0-rc01"
 # https://github.com/google-ai-edge/LiteRT
 litert = "1.0.1"
 
+## OSS Licenses
+# https://developers.google.com/android/guides/opensource
+ossLicenses = "17.5.1"
+ossLicensesPlugin = "0.10.6"
+
 [libraries]
 android-gradlePlugin = { group = "com.android.tools.build", name = "gradle", version.ref = "androidGradlePlugin" }
 kotlin-gradlePlugin = { module = "org.jetbrains.kotlin:kotlin-gradle-plugin", version.ref = "kotlin" }
@@ -215,6 +220,9 @@ androidx-health-connect = { group = "androidx.health.connect", name = "connect-c
 androidx-benchmark-macro = { group = "androidx.benchmark", name = "benchmark-macro-junit4", version.ref = "androidxBenchmark" }
 androidx-profileinstaller = { group = "androidx.profileinstaller", name = "profileinstaller", version.ref = "androidxProfileinstaller" }
 androidx-uiautomator = { group = "androidx.test.uiautomator", name = "uiautomator", version.ref = "androidxUiAutomator" }
+
+oss-licenses = { group = "com.google.android.gms", name = "play-services-oss-licenses", version.ref = "ossLicenses" }
+oss-licenses-plugin = { group = "com.google.android.gms", name = "oss-licenses-plugin", version.ref = "ossLicensesPlugin" }
 
 [bundles]
 

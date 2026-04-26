@@ -18,4 +18,5 @@ dependencies {
     implementation(projects.core.analytics)
     implementation(libs.androidx.constraintlayout)
     implementation(libs.androidx.fragment.ktx)
+    implementation(libs.oss.licenses)
 }
