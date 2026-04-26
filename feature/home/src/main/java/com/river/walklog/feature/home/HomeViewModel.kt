@@ -294,6 +294,11 @@ class HomeViewModel @Inject constructor(
                                 state.forecastDescription
                             },
                             streakRiskLevel = StreakRiskLevel.from(result.streakRisk),
+                            forecastRecommendedTimeText = "오늘 ${peakHourToText(result.peakHour)}",
+                            forecastAverageStepsText = avgStepsAtPeakHour(hourlySteps, result.peakHour),
+                            forecastActiveDaysText = activeDaysText(hourlySteps),
+                            forecastHourlyAverages = computeHourlyAverages(hourlySteps),
+                            forecastPeakHour = result.peakHour,
                         )
                     }
                 }
@@ -312,6 +317,40 @@ class HomeViewModel @Inject constructor(
             else -> result.peakHour - 12
         }
         return "오늘 $period ${displayHour}시는 평소 가장 많이 걷는 시간이에요"
+    }
+
+    private fun peakHourToText(hour: Int): String {
+        val period = if (hour < 12) "오전" else "오후"
+        val displayHour = when {
+            hour == 0 -> 12
+            hour <= 12 -> hour
+            else -> hour - 12
+        }
+        return "$period ${displayHour}시"
+    }
+
+    private fun avgStepsAtPeakHour(hourlySteps: FloatArray, peakHour: Int): String {
+        val days = hourlySteps.size / 24
+        var total = 0f
+        for (d in 0 until days) total += hourlySteps[d * 24 + peakHour]
+        return "평균 %,d보".format((total / days).toInt())
+    }
+
+    private fun computeHourlyAverages(hourlySteps: FloatArray): List<Float> {
+        val days = hourlySteps.size / 24
+        return (0 until 24).map { hour ->
+            var total = 0f
+            for (d in 0 until days) total += hourlySteps[d * 24 + hour]
+            total / days
+        }
+    }
+
+    private fun activeDaysText(hourlySteps: FloatArray): String {
+        val days = hourlySteps.size / 24
+        val activeDays = (0 until days).count { d ->
+            (0 until 24).any { h -> hourlySteps[d * 24 + h] > 0f }
+        }
+        return "최근 ${days}일 중 ${activeDays}일"
     }
 
     private fun collectWeeklySummary() {
