@@ -41,12 +41,14 @@ class MainActivity : AppCompatActivity() {
 
     @Inject
     lateinit var userSettingsRepository: UserSettingsRepository
+
     @Inject
     lateinit var crashReporter: CrashReporter
 
     private val bottomNavDestinations = setOf(
         R.id.homeFragment,
         R.id.historyFragment,
+        R.id.rewardFragment,
         R.id.settingsFragment,
     )
     private var navController: NavController? = null

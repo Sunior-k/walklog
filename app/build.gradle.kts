@@ -62,6 +62,7 @@ dependencies {
     implementation(projects.feature.onboarding)
     implementation(projects.feature.settings)
     implementation(projects.feature.history)
+    implementation(projects.feature.reward)
 
     // Hilt + WorkManager (WalkLogApplication Configuration.Provider)
     implementation(libs.androidx.work.runtime)
