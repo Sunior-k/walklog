@@ -30,6 +30,7 @@ object RecapColors {
 
     val BestDayGradientStart = Color(0xFF3A0CA3)
     val BestDayGradientEnd = Color(0xFF7209B7)
+    val BestDayProgress = Color(0xFFD8FF6A)
 
     val StreakGradientStart = Color(0xFF005F73)
     val StreakGradientEnd = Color(0xFF0A9396)
