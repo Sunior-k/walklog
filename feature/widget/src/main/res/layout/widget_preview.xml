@@ -7,7 +7,7 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#FFFFFFFF"
+    android:background="@color/walklog_surface"
     android:orientation="vertical"
     android:padding="16dp">
 
@@ -22,7 +22,7 @@
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:text="워크로그"
-            android:textColor="#FF00C853"
+            android:textColor="@color/walklog_primary"
             android:textSize="13sp"
             android:textStyle="bold" />
 
@@ -30,7 +30,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="오늘 미션"
-            android:textColor="#FF9E9E9E"
+            android:textColor="@color/walklog_gray_400"
             android:textSize="11sp" />
 
     </LinearLayout>
@@ -46,7 +46,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="4,200보"
-        android:textColor="#FF1A1A1A"
+        android:textColor="@color/walklog_text_primary"
         android:textSize="26sp"
         android:textStyle="bold" />
 
@@ -54,7 +54,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="목표 6,000보"
-        android:textColor="#FF9E9E9E"
+        android:textColor="@color/walklog_gray_400"
         android:textSize="11sp" />
 
     <!-- 간격 -->
@@ -77,14 +77,14 @@
             android:layout_width="0dp"
             android:layout_height="match_parent"
             android:layout_weight="70"
-            android:background="#FF00C853" />
+            android:background="@color/walklog_primary" />
 
         <!-- 미달성 부분 (30%) -->
         <TextView
             android:layout_width="0dp"
             android:layout_height="match_parent"
             android:layout_weight="30"
-            android:background="#FFDCF5E4" />
+            android:background="@color/walklog_primary_30" />
 
     </LinearLayout>
 
@@ -105,14 +105,14 @@
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:text="1,800보 남았어요"
-            android:textColor="#FF9E9E9E"
+            android:textColor="@color/walklog_gray_400"
             android:textSize="12sp" />
 
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="+20 캐시"
-            android:textColor="#FF00C853"
+            android:textColor="@color/walklog_success"
             android:textSize="12sp"
             android:textStyle="bold" />
 
