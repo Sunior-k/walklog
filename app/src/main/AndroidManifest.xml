@@ -67,6 +67,10 @@
                 tools:node="remove" />
         </provider>
 
+        <receiver
+            android:name="com.river.walklog.feature.home.notification.PeakHourAlarmReceiver"
+            android:exported="false" />
+
         <!-- 메인 Activity -->
         <activity
             android:name=".MainActivity"

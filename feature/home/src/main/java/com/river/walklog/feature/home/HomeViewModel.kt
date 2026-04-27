@@ -1,9 +1,5 @@
 package com.river.walklog.feature.home
 
-import android.app.NotificationChannel
-import android.app.NotificationManager
-import android.content.Context
-import androidx.core.app.NotificationCompat
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.river.walklog.core.analytics.CrashKeys
@@ -16,13 +12,12 @@ import com.river.walklog.core.domain.usecase.GetWeeklyStepSummaryUseCase
 import com.river.walklog.core.domain.usecase.IsHealthConnectAvailableUseCase
 import com.river.walklog.core.domain.usecase.ObserveCurrentStepsUseCase
 import com.river.walklog.core.engine.ActivityClassifier
-import com.river.walklog.core.engine.ActivityState
 import com.river.walklog.core.engine.WalkingInsightsEngine
 import com.river.walklog.core.engine.WalkingInsightsResult
 import com.river.walklog.core.model.WeatherSummary
 import com.river.walklog.core.model.WeeklyStepSummary
+import com.river.walklog.feature.home.notification.WalkingReminderScheduler
 import dagger.hilt.android.lifecycle.HiltViewModel
-import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -33,6 +28,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import java.time.LocalDate
 import java.time.LocalTime
@@ -52,7 +48,7 @@ class HomeViewModel @Inject constructor(
     private val activityClassifier: ActivityClassifier,
     private val getUserSettings: GetUserSettingsUseCase,
     private val crashReporter: CrashReporter,
-    @ApplicationContext private val context: Context,
+    private val walkingReminderScheduler: WalkingReminderScheduler,
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(HomeState())
@@ -61,13 +57,7 @@ class HomeViewModel @Inject constructor(
     private var liveStepsJob: Job? = null
     private var activityJob: Job? = null
     private var weatherJob: Job? = null
-    private var stationaryReminderJob: Job? = null
     private var latestWeeklySummary: WeeklyStepSummary? = null
-
-    // 오늘 날짜와 알림 발송 이력 추적
-    private var reminderSentDate: LocalDate? = null
-    private var reminderCountToday: Int = 0
-    private var lastReminderSentTimeMs: Long = 0L
 
     init {
         crashReporter.setKey(CrashKeys.SCREEN, CrashKeys.Screens.HOME)
@@ -79,7 +69,7 @@ class HomeViewModel @Inject constructor(
         loadRecapPreview()
         loadWalkingInsights()
         loadWeather()
-        ensureNotificationChannel()
+        scheduleMidnightRefresh()
     }
 
     fun handleIntent(intent: HomeIntent) {
@@ -177,92 +167,34 @@ class HomeViewModel @Inject constructor(
     }
 
     private fun startObservingActivity() {
+        if (!activityClassifier.isModelAvailable) return
         activityJob?.cancel()
         activityJob = activityClassifier.observeActivityState()
             .catch { throwable ->
                 crashReporter.log("Activity classifier error: ${throwable.message}")
+                crashReporter.recordException(throwable)
             }
             .onEach { activityState ->
                 _state.update { it.copy(activityState = activityState) }
-                handleActivityStateForReminder(activityState)
             }
             .launchIn(viewModelScope)
     }
 
-    // STATIONARY가 1시간 지속되면 알림 발송. WALKING으로 돌아오면 타이머 초기화.
-    private fun handleActivityStateForReminder(activityState: ActivityState) {
-        when (activityState) {
-            ActivityState.WALKING -> {
-                stationaryReminderJob?.cancel()
-                stationaryReminderJob = null
+    private fun schedulePeakHourAlarm(peakHour: Int) {
+        viewModelScope.launch {
+            val notificationsEnabled = runCatching {
+                getUserSettings().first().notificationsEnabled
+            }.getOrDefault(true)
+            if (!notificationsEnabled) {
+                walkingReminderScheduler.cancel()
+                return@launch
             }
-            ActivityState.STATIONARY -> {
-                if (stationaryReminderJob?.isActive == true) return
-                stationaryReminderJob = viewModelScope.launch {
-                    delay(STATIONARY_TRIGGER_DELAY_MS)
-                    tryFireReminder()
-                }
-            }
-            ActivityState.UNKNOWN -> Unit
+            walkingReminderScheduler.schedule(peakHour)
+            crashReporter.log("Peak-hour alarm scheduled: $peakHour:00")
         }
     }
 
-    private suspend fun tryFireReminder() {
-        val now = LocalDate.now()
-        val currentHour = LocalTime.now().hour
-
-        // 발송 가능 시간대 (오전 9시 ~ 오후 9시) 밖이면 스킵
-        if (currentHour !in REMINDER_HOUR_START until REMINDER_HOUR_END) return
-
-        // 날짜가 바뀌면 카운터 리셋
-        if (reminderSentDate != now) {
-            reminderSentDate = now
-            reminderCountToday = 0
-        }
-
-        // 하루 최대 3회 초과 시 스킵
-        if (reminderCountToday >= REMINDER_MAX_PER_DAY) return
-
-        // 직전 알림 후 2시간 cooldown
-        val elapsedSinceLast = System.currentTimeMillis() - lastReminderSentTimeMs
-        if (lastReminderSentTimeMs > 0L && elapsedSinceLast < REMINDER_COOLDOWN_MS) return
-
-        val notificationsEnabled = runCatching {
-            getUserSettings().first().notificationsEnabled
-        }.getOrDefault(true)
-        if (!notificationsEnabled) return
-
-        sendStationaryReminderNotification()
-        lastReminderSentTimeMs = System.currentTimeMillis()
-        reminderCountToday++
-    }
-
-    private fun sendStationaryReminderNotification() {
-        val manager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-        val notification = NotificationCompat.Builder(context, CHANNEL_ID)
-            .setSmallIcon(com.river.walklog.core.designsystem.R.drawable.ic_default)
-            .setContentTitle("지금 걸어볼까요?")
-            .setContentText("1시간째 움직임이 없어요. 잠깐 걷고 오세요!")
-            .setPriority(NotificationCompat.PRIORITY_DEFAULT)
-            .setAutoCancel(true)
-            .build()
-        manager.notify(NOTIFICATION_ID, notification)
-        crashReporter.log("Stationary reminder sent (today: $reminderCountToday)")
-    }
-
-    private fun ensureNotificationChannel() {
-        val manager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-        if (manager.getNotificationChannel(CHANNEL_ID) != null) return
-        val channel = NotificationChannel(
-            CHANNEL_ID,
-            "걷기 알림",
-            NotificationManager.IMPORTANCE_DEFAULT,
-        ).apply {
-            description = "장시간 정지 시 걷기를 권유하는 알림"
-        }
-        manager.createNotificationChannel(channel)
-    }
-
+    /** 최근 7일간의 시간대별 걸음 수 데이터를 불러와 걷기 예보를 갱신. */
     private fun loadWalkingInsights() {
         viewModelScope.launch {
             runCatching {
@@ -271,9 +203,6 @@ class HomeViewModel @Inject constructor(
                 val fromEpochDay = toEpochDay - 6
                 val hourlySteps = getHourlyStepsForRange(fromEpochDay, toEpochDay)
 
-                // Peak-hour detection requires at least 3 days of real data to be reliable.
-                // With sparse data the first recorded event of a day absorbs all accumulated
-                // steps from that hour, producing a spurious early-morning spike.
                 val daysWithData = (0..6).count { dayOffset ->
                     val start = dayOffset * 24
                     (start until start + 24).any { hourlySteps[it] > 0f }
@@ -287,7 +216,6 @@ class HomeViewModel @Inject constructor(
                     )
                     _state.update { state ->
                         state.copy(
-                            // Only trust peakHour if it falls in a waking window (6 am – 10 pm).
                             forecastDescription = if (result.peakHour in 6..22) {
                                 buildForecastDescription(result)
                             } else {
@@ -300,6 +228,9 @@ class HomeViewModel @Inject constructor(
                             forecastHourlyAverages = computeHourlyAverages(hourlySteps),
                             forecastPeakHour = result.peakHour,
                         )
+                    }
+                    if (result.peakHour in 6..22) {
+                        schedulePeakHourAlarm(result.peakHour)
                     }
                 }
             }.onFailure { e ->
@@ -384,6 +315,21 @@ class HomeViewModel @Inject constructor(
             .launchIn(viewModelScope)
     }
 
+    /** 자정마다 날짜 텍스트·걷기 예보 갱신. */
+    private fun scheduleMidnightRefresh() {
+        viewModelScope.launch {
+            while (isActive) {
+                val now = LocalTime.now()
+                val secondsUntilMidnight =
+                    (23 - now.hour) * 3600L + (59 - now.minute) * 60L + (60 - now.second)
+                delay(secondsUntilMidnight * 1000L)
+                initDateText()
+                collectWeeklySummary()
+                loadWalkingInsights()
+            }
+        }
+    }
+
     private fun refresh() {
         viewModelScope.launch {
             crashReporter.log("Manual refresh triggered")
@@ -461,14 +407,7 @@ class HomeViewModel @Inject constructor(
     ).joinToString(" · ")
 
     companion object {
-        private const val CHANNEL_ID = "walk_reminder"
-        private const val NOTIFICATION_ID = 1001
         private const val WEATHER_LOAD_MAX_ATTEMPTS = 3
         private const val WEATHER_RETRY_DELAY_MS = 1_500L
-        private const val STATIONARY_TRIGGER_DELAY_MS = 60 * 60 * 1000L // 정지 1시간 후 트리거
-        private const val REMINDER_COOLDOWN_MS = 2 * 60 * 60 * 1000L // 발송 후 2시간 재발송 금지
-        private const val REMINDER_MAX_PER_DAY = 3 // 하루 최대 3회
-        private const val REMINDER_HOUR_START = 9 // 오전 9시부터
-        private const val REMINDER_HOUR_END = 21 // 오후 9시까지 (21 exclusive)
     }
 }

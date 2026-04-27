@@ -39,6 +39,8 @@ class ActivityClassifier(
         Interpreter(model, Interpreter.Options().apply { numThreads = 2 })
     }.getOrNull()
 
+    val isModelAvailable: Boolean get() = interpreter != null
+
     private val _isStationary = MutableStateFlow(false)
     override val isStationary: StateFlow<Boolean> = _isStationary.asStateFlow()
 
