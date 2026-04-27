@@ -1,7 +1,8 @@
 package com.river.walklog.feature.report
 
 import android.widget.Toast
-import androidx.compose.animation.AnimatedVisibility
+import androidx.activity.compose.BackHandler
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -26,24 +27,22 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
-import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.layer.GraphicsLayer
 import androidx.compose.ui.graphics.rememberGraphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -51,22 +50,26 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.zIndex
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.river.walklog.core.designsystem.R
 import com.river.walklog.core.designsystem.component.WalkLogLinearProgressBar
 import com.river.walklog.core.designsystem.foundation.WalkLogTheme
 import com.river.walklog.core.model.DailyStepCount
 import com.river.walklog.feature.report.component.ShareableWeeklyReportCard
+import com.river.walklog.feature.report.component.WeeklyReportError
+import com.river.walklog.feature.report.component.WeeklyReportShareCard
+import com.river.walklog.feature.report.component.WeeklyReportTopBar
 import com.river.walklog.feature.report.extension.ReportShareManager
 import com.river.walklog.feature.report.extension.toAndroidBitmapSafely
 import com.river.walklog.feature.report.model.WeeklyReportShareCardUiModel
 import kotlinx.coroutines.launch
 
 @Composable
-fun WeeklyReportRoute(
+fun WeeklyReportDetailRoute(
+    weekStartEpochDay: Long,
     onBack: () -> Unit,
-    viewModel: WeeklyReportViewModel = hiltViewModel(),
+    viewModel: WeeklyReportDetailViewModel = hiltViewModel(),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val context = LocalContext.current
@@ -74,15 +77,25 @@ fun WeeklyReportRoute(
     val graphicsLayer = rememberGraphicsLayer()
     val scope = rememberCoroutineScope()
 
-    WeeklyReportScreen(
+    LaunchedEffect(weekStartEpochDay) {
+        viewModel.loadReport(weekStartEpochDay)
+    }
+
+    BackHandler {
+        viewModel.handleIntent(WeeklyReportDetailIntent.OnClickBack)
+        onBack()
+    }
+
+    WeeklyReportDetailScreen(
         state = state,
         graphicsLayer = graphicsLayer,
         onClickBack = {
-            viewModel.handleIntent(WeeklyReportIntent.OnClickBack)
+            viewModel.handleIntent(WeeklyReportDetailIntent.OnClickBack)
             onBack()
         },
         onClickShare = {
             scope.launch {
+                viewModel.handleIntent(WeeklyReportDetailIntent.OnClickShare)
                 viewModel.setSharing(true)
                 runCatching {
                     val bitmap = graphicsLayer.toAndroidBitmapSafely()
@@ -91,7 +104,6 @@ fun WeeklyReportRoute(
                         fileName = "weekly_report_${System.currentTimeMillis()}.png",
                     )
                     shareManager.shareImage(uri)
-                    viewModel.handleIntent(WeeklyReportIntent.OnClickShare)
                 }.onFailure {
                     Toast.makeText(context, "리포트 공유에 실패했어요.", Toast.LENGTH_SHORT).show()
                 }
@@ -102,23 +114,16 @@ fun WeeklyReportRoute(
 }
 
 @Composable
-internal fun WeeklyReportScreen(
-    state: WeeklyReportState,
+internal fun WeeklyReportDetailScreen(
+    state: WeeklyReportDetailState,
     graphicsLayer: GraphicsLayer,
     onClickBack: () -> Unit,
     onClickShare: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    var showSharePreview by rememberSaveable { mutableStateOf(false) }
-
-    androidx.compose.material3.Scaffold(
+    Scaffold(
         modifier = modifier,
         topBar = { WeeklyReportTopBar(onClickBack = onClickBack) },
-        bottomBar = {
-            if (!state.isEmpty && !state.isError && !state.isLoading) {
-                WeeklyReportBottomBar(isSharing = state.isSharing, onClickShare = onClickShare)
-            }
-        },
         containerColor = WalkLogTheme.colors.background,
     ) { padding ->
         Box(
@@ -126,6 +131,32 @@ internal fun WeeklyReportScreen(
                 .fillMaxSize()
                 .background(WalkLogTheme.colors.background),
         ) {
+            val shareCardModel = if (!state.isEmpty && !state.isError && !state.isLoading) {
+                WeeklyReportShareCardUiModel(
+                    weekRangeText = state.weekRangeText,
+                    headline = state.summaryMessage,
+                    totalStepsText = state.totalStepsText,
+                    achievementRateText = state.achievementRateText,
+                    bestDayText = state.bestDayText,
+                    bestTimeText = state.bestTimeText,
+                    streakText = state.bestStreakText,
+                )
+            } else {
+                null
+            }
+
+            shareCardModel?.let { model ->
+                ShareableWeeklyReportCard(
+                    model = model,
+                    graphicsLayer = graphicsLayer,
+                    modifier = Modifier
+                        .align(Alignment.TopCenter)
+                        .padding(horizontal = 20.dp)
+                        .graphicsLayer { alpha = 0f }
+                        .zIndex(-1f),
+                )
+            }
+
             when {
                 state.isLoading -> {
                     CircularProgressIndicator(
@@ -135,7 +166,7 @@ internal fun WeeklyReportScreen(
                 }
 
                 state.isError -> {
-                    WeeklyReportErrorState(
+                    WeeklyReportError(
                         modifier = Modifier
                             .align(Alignment.Center)
                             .padding(padding),
@@ -163,8 +194,6 @@ internal fun WeeklyReportScreen(
                             dateRangeSubtitle = state.dateRangeSubtitle,
                         )
 
-                        Spacer(modifier = Modifier.height(4.dp))
-
                         WeeklyBarChartCard(dailyCounts = state.dailyCounts)
 
                         WeeklyTotalStepsCard(totalStepsText = state.totalStepsText)
@@ -175,30 +204,27 @@ internal fun WeeklyReportScreen(
                             achievementRate = state.achievementRate,
                         )
 
-                        SharePreviewHeader(
-                            isExpanded = showSharePreview,
-                            onClickToggle = { showSharePreview = !showSharePreview },
+                        WeeklyInsightCard(
+                            bestDayText = state.bestDayText,
+                            bestTimeText = state.bestTimeText,
+                            bestStreakText = state.bestStreakText,
                         )
 
-                        AnimatedVisibility(visible = showSharePreview) {
-                            ShareableWeeklyReportCard(
-                                model = WeeklyReportShareCardUiModel(
-                                    weekRangeText = state.weekRangeText,
-                                    headline = state.summaryMessage,
-                                    totalStepsText = state.totalStepsText,
-                                    achievementRateText = state.achievementRateText,
-                                    bestDayText = state.bestDayText,
-                                    bestTimeText = state.bestTimeText,
-                                    streakText = state.bestStreakText,
-                                ),
-                                graphicsLayer = graphicsLayer,
-                                modifier = Modifier.fillMaxWidth(),
-                            )
+                        shareCardModel?.let { model ->
+                            WeeklyReportSharePreview(model = model)
                         }
 
-                        Spacer(modifier = Modifier.height(8.dp))
+                        Spacer(modifier = Modifier.height(96.dp))
                     }
                 }
+            }
+
+            if (!state.isEmpty && !state.isError && !state.isLoading) {
+                WeeklyReportBottomBar(
+                    isSharing = state.isSharing,
+                    onClickShare = onClickShare,
+                    modifier = Modifier.align(Alignment.BottomCenter),
+                )
             }
 
             if (state.isSharing) SharingOverlay()
@@ -207,93 +233,44 @@ internal fun WeeklyReportScreen(
 }
 
 @Composable
-private fun SharePreviewHeader(
-    isExpanded: Boolean,
-    onClickToggle: () -> Unit,
+private fun WeeklyReportBottomBar(
+    isSharing: Boolean,
+    onClickShare: () -> Unit,
+    modifier: Modifier = Modifier,
 ) {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically,
+    Box(
+        modifier = modifier
+            .fillMaxWidth()
+            .navigationBarsPadding()
+            .padding(horizontal = 16.dp, vertical = 14.dp),
     ) {
-        Text(
-            text = "공유 카드 미리보기",
-            style = WalkLogTheme.typography.typography7M,
-            color = WalkLogTheme.colors.onSurfaceVariant,
-        )
-        TextButton(
-            onClick = onClickToggle,
-            contentPadding = PaddingValues(horizontal = 8.dp),
+        Button(
+            onClick = onClickShare,
+            enabled = !isSharing,
+            modifier = Modifier.fillMaxWidth(),
+            colors = ButtonDefaults.buttonColors(
+                containerColor = WalkLogTheme.colors.primary,
+                contentColor = WalkLogTheme.colors.onPrimary,
+                disabledContainerColor = WalkLogTheme.colors.outlineVariant,
+                disabledContentColor = WalkLogTheme.colors.onSurfaceVariant,
+            ),
+            contentPadding = PaddingValues(vertical = 16.dp),
         ) {
+            if (isSharing) {
+                CircularProgressIndicator(
+                    Modifier.size(18.dp),
+                    WalkLogTheme.colors.onPrimary,
+                    strokeWidth = 2.dp,
+                )
+                Spacer(Modifier.size(8.dp))
+            }
             Text(
-                text = if (isExpanded) "접기" else "보기",
-                style = WalkLogTheme.typography.typography7SB,
-                color = WalkLogTheme.colors.primary,
+                text = if (isSharing) "공유 준비 중..." else "리포트 공유하기",
+                style = WalkLogTheme.typography.typography6SB,
             )
         }
     }
 }
-
-// ─── Top / Bottom bars ────────────────────────────────────────────────────────
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-private fun WeeklyReportTopBar(onClickBack: () -> Unit) {
-    TopAppBar(
-        title = {},
-        navigationIcon = {
-            IconButton(onClick = onClickBack) {
-                Icon(
-                    imageVector = ImageVector.vectorResource(R.drawable.ic_arrow_back),
-                    contentDescription = "뒤로가기",
-                    tint = WalkLogTheme.colors.onSurface,
-                )
-            }
-        },
-        colors = TopAppBarDefaults.topAppBarColors(containerColor = WalkLogTheme.colors.background),
-    )
-}
-
-@Composable
-private fun WeeklyReportBottomBar(isSharing: Boolean, onClickShare: () -> Unit) {
-    Surface(shadowElevation = 8.dp, color = WalkLogTheme.colors.background) {
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 14.dp),
-        ) {
-            Button(
-                onClick = onClickShare,
-                enabled = !isSharing,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .navigationBarsPadding(),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = WalkLogTheme.colors.primary,
-                    contentColor = WalkLogTheme.colors.onPrimary,
-                    disabledContainerColor = WalkLogTheme.colors.outlineVariant,
-                    disabledContentColor = WalkLogTheme.colors.onSurfaceVariant,
-                ),
-                contentPadding = PaddingValues(vertical = 16.dp),
-            ) {
-                if (isSharing) {
-                    CircularProgressIndicator(
-                        Modifier.size(18.dp),
-                        WalkLogTheme.colors.onPrimary,
-                        strokeWidth = 2.dp,
-                    )
-                    Spacer(Modifier.size(8.dp))
-                }
-                Text(
-                    text = if (isSharing) "공유 준비 중..." else "리포트 공유하기",
-                    style = WalkLogTheme.typography.typography6SB,
-                )
-            }
-        }
-    }
-}
-
-// ─── Content composables ──────────────────────────────────────────────────────
 
 @Composable
 private fun WeeklyReportHeader(dateRangeSubtitle: String) {
@@ -308,6 +285,106 @@ private fun WeeklyReportHeader(dateRangeSubtitle: String) {
             style = WalkLogTheme.typography.typography7M,
             color = WalkLogTheme.colors.onSurfaceVariant,
         )
+    }
+}
+
+@Composable
+private fun WeeklyReportSharePreview(
+    model: WeeklyReportShareCardUiModel,
+) {
+    var isExpanded by remember { mutableStateOf(false) }
+    val shape = RoundedCornerShape(24.dp)
+
+    Card(
+        onClick = { isExpanded = !isExpanded },
+        modifier = Modifier.fillMaxWidth(),
+        shape = shape,
+        colors = CardDefaults.cardColors(
+            containerColor = WalkLogTheme.colors.primaryContainer.copy(
+                alpha = 0.34f,
+            ),
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
+        border = BorderStroke(1.dp, WalkLogTheme.colors.primary.copy(alpha = 0.26f)),
+    ) {
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(
+                    Brush.horizontalGradient(
+                        listOf(
+                            WalkLogTheme.colors.primary.copy(alpha = 0.08f),
+                            WalkLogTheme.colors.surface,
+                        ),
+                    ),
+                ),
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(18.dp),
+                verticalArrangement = Arrangement.spacedBy(14.dp),
+            ) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Row(
+                        modifier = Modifier.weight(1f),
+                        horizontalArrangement = Arrangement.spacedBy(12.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .size(40.dp)
+                                .clip(CircleShape)
+                                .background(WalkLogTheme.colors.primary.copy(alpha = 0.14f)),
+                            contentAlignment = Alignment.Center,
+                        ) {
+                            Text(
+                                text = "↗",
+                                style = WalkLogTheme.typography.typography5SB,
+                                color = WalkLogTheme.colors.primary,
+                            )
+                        }
+
+                        Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                            Text(
+                                text = "공유 미리보기",
+                                style = WalkLogTheme.typography.typography6SB,
+                                color = WalkLogTheme.colors.onSurface,
+                            )
+                            Text(
+                                text = if (isExpanded) {
+                                    "공유될 카드가 아래에 표시돼요"
+                                } else {
+                                    "공유하기 전에 카드 형태를 확인해 보세요"
+                                },
+                                style = WalkLogTheme.typography.typography7M,
+                                color = WalkLogTheme.colors.onSurfaceVariant,
+                            )
+                        }
+                    }
+                    Text(
+                        text = if (isExpanded) "접기" else "열기",
+                        style = WalkLogTheme.typography.typography7M,
+                        color = WalkLogTheme.colors.onPrimary,
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(50))
+                            .background(WalkLogTheme.colors.primary)
+                            .padding(horizontal = 12.dp, vertical = 7.dp),
+                    )
+                }
+
+                if (isExpanded) {
+                    WeeklyReportShareCard(
+                        model = model,
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+                }
+            }
+        }
     }
 }
 
@@ -415,7 +492,7 @@ private fun WeeklyTotalStepsCard(totalStepsText: String) {
                 contentAlignment = Alignment.Center,
             ) {
                 Icon(
-                    imageVector = ImageVector.vectorResource(com.river.walklog.feature.report.R.drawable.ic_footprint),
+                    imageVector = ImageVector.vectorResource(R.drawable.ic_footprint),
                     contentDescription = null,
                     tint = WalkLogTheme.colors.primary,
                     modifier = Modifier.size(26.dp),
@@ -496,6 +573,56 @@ private fun WeeklyGoalCard(
     }
 }
 
+@Composable
+private fun WeeklyInsightCard(
+    bestDayText: String,
+    bestTimeText: String,
+    bestStreakText: String,
+) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(20.dp),
+        colors = CardDefaults.cardColors(containerColor = WalkLogTheme.colors.surface),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(20.dp),
+            verticalArrangement = Arrangement.spacedBy(14.dp),
+        ) {
+            Text(
+                text = "주간 하이라이트",
+                style = WalkLogTheme.typography.typography7M,
+                color = WalkLogTheme.colors.onSurfaceVariant,
+            )
+            InsightRow(label = "가장 많이 걸은 요일", value = bestDayText)
+            InsightRow(label = "가장 활발한 시간대", value = bestTimeText)
+            InsightRow(label = "최고 스트릭", value = bestStreakText)
+        }
+    }
+}
+
+@Composable
+private fun InsightRow(label: String, value: String) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Text(
+            text = label,
+            style = WalkLogTheme.typography.typography7M,
+            color = WalkLogTheme.colors.onSurfaceVariant,
+        )
+        Text(
+            text = value,
+            style = WalkLogTheme.typography.typography6SB,
+            color = WalkLogTheme.colors.onSurface,
+        )
+    }
+}
+
 // ─── Overlays / States ────────────────────────────────────────────────────────
 
 @Composable
@@ -552,27 +679,6 @@ private fun WeeklyReportEmptyState(modifier: Modifier = Modifier) {
     }
 }
 
-@Composable
-private fun WeeklyReportErrorState(modifier: Modifier = Modifier) {
-    Column(
-        modifier = modifier.padding(horizontal = 32.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(12.dp),
-    ) {
-        Text(text = "⚠️", style = WalkLogTheme.typography.typography1B)
-        Text(
-            text = "데이터를 불러오지 못했어요",
-            style = WalkLogTheme.typography.typography4SB,
-            color = WalkLogTheme.colors.onSurface,
-        )
-        Text(
-            text = "잠시 후 다시 시도해 주세요",
-            style = WalkLogTheme.typography.typography6M,
-            color = WalkLogTheme.colors.onSurfaceVariant,
-        )
-    }
-}
-
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 private fun formatStepsShort(steps: Int): String = when {
@@ -581,8 +687,6 @@ private fun formatStepsShort(steps: Int): String = when {
     else -> "$steps"
 }
 
-// ─── Preview ──────────────────────────────────────────────────────────────────
-
 @Preview(showBackground = true, widthDp = 390, heightDp = 844)
 @Composable
 private fun WeeklyReportScreenPreview() {
@@ -590,8 +694,8 @@ private fun WeeklyReportScreenPreview() {
         val fakeCounts = listOf(4200, 8100, 12300, 7400, 9000, 5100, 6200).mapIndexed { i, steps ->
             DailyStepCount(dateEpochDay = 19_823L + i, steps = steps)
         }
-        WeeklyReportScreen(
-            state = WeeklyReportState(
+        WeeklyReportDetailScreen(
+            state = WeeklyReportDetailState(
                 dateRangeSubtitle = "4월 14일 — 4월 20일",
                 weekRangeText = "4월 3주차 · 4/14~4/20",
                 totalStepsText = "52,300보",

@@ -11,6 +11,7 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.river.walklog.core.designsystem.foundation.WalkLogTheme
+import com.river.walklog.feature.report.model.WeeklyReportArchiveItemUiModel
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
@@ -26,7 +27,7 @@ class WeeklyReportScreenTest {
 
     @Test
     fun topBar_showsWeeklyReportTitle() {
-        setContent(state = WeeklyReportState())
+        setContent(state = archiveState())
 
         composeTestRule
             .onNodeWithText("주간 리포트")
@@ -36,7 +37,7 @@ class WeeklyReportScreenTest {
     @Test
     fun backButton_clicked_invokesOnClickBackCallback() {
         var backClicked = false
-        setContent(state = WeeklyReportState(), onClickBack = { backClicked = true })
+        setArchiveContent(state = WeeklyReportArchiveState(), onClickBack = { backClicked = true })
 
         composeTestRule.onNodeWithContentDescription("뒤로가기").performClick()
 
@@ -47,28 +48,34 @@ class WeeklyReportScreenTest {
 
     @Test
     fun weekRangeText_isDisplayed() {
-        setContent(state = WeeklyReportState(weekRangeText = "4월 2주차 · 4/7~4/13"))
+        setDetailContent(state = detailState(dateRangeSubtitle = "4월 7일 — 4월 13일"))
 
         composeTestRule
-            .onNodeWithText("4월 2주차 · 4/7~4/13")
+            .onNodeWithText("4월 7일 — 4월 13일")
             .assertIsDisplayed()
     }
 
     @Test
-    fun summaryMessage_isDisplayed() {
-        setContent(state = WeeklyReportState(summaryMessage = "지난주보다 12% 더 걸었어요"))
+    fun archiveSubtitle_isDisplayed() {
+        setContent(state = archiveState())
 
         composeTestRule
-            .onNodeWithText("지난주보다 12% 더 걸었어요")
+            .onNodeWithText("최근 12주 기록을 모아봤어요")
             .assertIsDisplayed()
     }
 
     @Test
-    fun detailDescription_isDisplayed() {
-        setContent(state = WeeklyReportState(detailDescription = "한 주 동안 꾸준히 걸으며 목표에 가까워졌어요."))
+    fun lockedReport_showsUnlockMessage() {
+        setContent(
+            state = archiveState(
+                items = listOf(
+                    archiveItem(isLocked = true, unlockMessage = "4월 20일 00:00부터 볼 수 있어요"),
+                ),
+            ),
+        )
 
         composeTestRule
-            .onNodeWithText("한 주 동안 꾸준히 걸으며 목표에 가까워졌어요.")
+            .onNodeWithText("4월 20일 00:00부터 볼 수 있어요")
             .assertIsDisplayed()
     }
 
@@ -76,7 +83,7 @@ class WeeklyReportScreenTest {
 
     @Test
     fun shareButton_showsShareLabel_whenNotSharing() {
-        setContent(state = WeeklyReportState(isSharing = false))
+        setDetailContent(state = detailState(isSharing = false))
 
         composeTestRule
             .onNodeWithText("리포트 공유하기")
@@ -85,7 +92,7 @@ class WeeklyReportScreenTest {
 
     @Test
     fun shareButton_isEnabled_whenNotSharing() {
-        setContent(state = WeeklyReportState(isSharing = false))
+        setDetailContent(state = detailState(isSharing = false))
 
         composeTestRule
             .onNodeWithText("리포트 공유하기")
@@ -94,7 +101,7 @@ class WeeklyReportScreenTest {
 
     @Test
     fun shareButton_showsLoadingLabel_whenSharing() {
-        setContent(state = WeeklyReportState(isSharing = true))
+        setDetailContent(state = detailState(isSharing = true))
 
         composeTestRule
             .onNodeWithText("공유 준비 중...")
@@ -103,7 +110,7 @@ class WeeklyReportScreenTest {
 
     @Test
     fun shareButton_isDisabled_whenSharing() {
-        setContent(state = WeeklyReportState(isSharing = true))
+        setDetailContent(state = detailState(isSharing = true))
 
         composeTestRule
             .onNodeWithText("공유 준비 중...")
@@ -113,8 +120,8 @@ class WeeklyReportScreenTest {
     @Test
     fun shareButton_clicked_invokesOnClickShareCallback() {
         var shareClicked = false
-        setContent(
-            state = WeeklyReportState(isSharing = false),
+        setDetailContent(
+            state = detailState(isSharing = false),
             onClickShare = { shareClicked = true },
         )
 
@@ -127,7 +134,7 @@ class WeeklyReportScreenTest {
 
     @Test
     fun sharingOverlay_isShown_whenIsSharing() {
-        setContent(state = WeeklyReportState(isSharing = true))
+        setDetailContent(state = detailState(isSharing = true))
 
         composeTestRule
             .onNodeWithText("공유 이미지를 만드는 중이에요")
@@ -136,7 +143,7 @@ class WeeklyReportScreenTest {
 
     @Test
     fun sharingOverlay_isHidden_whenNotSharing() {
-        setContent(state = WeeklyReportState(isSharing = false))
+        setDetailContent(state = detailState(isSharing = false))
 
         composeTestRule
             .onNodeWithText("공유 이미지를 만드는 중이에요")
@@ -146,13 +153,35 @@ class WeeklyReportScreenTest {
     // ─── Helper ────────────────────────────────────────────────────────────
 
     private fun setContent(
-        state: WeeklyReportState,
+        state: WeeklyReportArchiveState,
+        onClickBack: () -> Unit = {},
+        onClickReport: (Long) -> Unit = {},
+    ) = setArchiveContent(state, onClickBack, onClickReport)
+
+    private fun setArchiveContent(
+        state: WeeklyReportArchiveState,
+        onClickBack: () -> Unit = {},
+        onClickReport: (Long) -> Unit = {},
+    ) {
+        composeTestRule.setContent {
+            WalkLogTheme {
+                WeeklyReportArchiveScreen(
+                    state = state,
+                    onClickBack = onClickBack,
+                    onClickReport = onClickReport,
+                )
+            }
+        }
+    }
+
+    private fun setDetailContent(
+        state: WeeklyReportDetailState,
         onClickBack: () -> Unit = {},
         onClickShare: () -> Unit = {},
     ) {
         composeTestRule.setContent {
             WalkLogTheme {
-                WeeklyReportScreen(
+                WeeklyReportDetailScreen(
                     state = state,
                     graphicsLayer = rememberGraphicsLayer(),
                     onClickBack = onClickBack,
@@ -161,4 +190,47 @@ class WeeklyReportScreenTest {
             }
         }
     }
+
+    private fun archiveState(
+        items: List<WeeklyReportArchiveItemUiModel> = listOf(archiveItem()),
+    ) = WeeklyReportArchiveState(
+        archiveItems = items,
+        isLoading = false,
+    )
+
+    private fun detailState(
+        dateRangeSubtitle: String = "4월 7일 — 4월 13일",
+        isSharing: Boolean = false,
+    ) = WeeklyReportDetailState(
+        dateRangeSubtitle = dateRangeSubtitle,
+        weekRangeText = "4월 2주차 · 4/7~4/13",
+        totalStepsText = "42,000보",
+        achievementRateText = "71%",
+        achievedDays = 5,
+        totalDays = 7,
+        achievementRate = 5f / 7f,
+        bestDayText = "수요일",
+        bestTimeText = "오후 3시",
+        bestStreakText = "3일",
+        summaryMessage = "훌륭해요! 목표에 가까워지고 있어요",
+        dailyCounts = List(7) { index ->
+            com.river.walklog.core.model.DailyStepCount(19_000L + index, 6_000)
+        },
+        isLoading = false,
+        isSharing = isSharing,
+    )
+
+    private fun archiveItem(
+        isLocked: Boolean = false,
+        unlockMessage: String = "",
+    ) = WeeklyReportArchiveItemUiModel(
+        weekStartEpochDay = 19_000L,
+        weekRangeText = "4월 2주차",
+        dateRangeText = "4/7~4/13",
+        totalStepsText = "42,000보",
+        achievementRateText = "71%",
+        achievementRate = 0.71f,
+        isLocked = isLocked,
+        unlockMessage = unlockMessage,
+    )
 }

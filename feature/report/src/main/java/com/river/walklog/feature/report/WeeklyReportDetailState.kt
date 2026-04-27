@@ -4,7 +4,7 @@ import androidx.compose.runtime.Immutable
 import com.river.walklog.core.model.DailyStepCount
 
 @Immutable
-data class WeeklyReportState(
+data class WeeklyReportDetailState(
     val weekRangeText: String = "",
     val dateRangeSubtitle: String = "",
     val totalStepsText: String = "-",
@@ -16,7 +16,6 @@ data class WeeklyReportState(
     val bestTimeText: String = "-",
     val bestStreakText: String = "-",
     val summaryMessage: String = "",
-    val detailDescription: String = "한 주 동안 꾸준히 걸으며 목표에 가까워졌어요.",
     val dailyCounts: List<DailyStepCount> = emptyList(),
     val isLoading: Boolean = true,
     val isSharing: Boolean = false,
@@ -24,7 +23,7 @@ data class WeeklyReportState(
     val isError: Boolean = false,
 )
 
-sealed interface WeeklyReportIntent {
-    data object OnClickBack : WeeklyReportIntent
-    data object OnClickShare : WeeklyReportIntent
+sealed interface WeeklyReportDetailIntent {
+    data object OnClickBack : WeeklyReportDetailIntent
+    data object OnClickShare : WeeklyReportDetailIntent
 }
