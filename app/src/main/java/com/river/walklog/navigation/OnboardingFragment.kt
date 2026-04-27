@@ -28,6 +28,9 @@ class OnboardingFragment : Fragment() {
                     onNavigateToHome = {
                         findNavController().navigate(R.id.action_onboarding_to_home)
                     },
+                    onExitApp = {
+                        requireActivity().finish()
+                    },
                 )
             }
         }
