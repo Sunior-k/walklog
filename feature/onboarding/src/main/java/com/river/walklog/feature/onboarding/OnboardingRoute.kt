@@ -126,7 +126,7 @@ fun OnboardingRoute(
         }
     }
 
-    // Health Connect READ_STEPS 권한 요청
+    // Health Connect 권한 요청 (READ_STEPS + 백그라운드 읽기)
     val healthPermissionsLauncher = rememberLauncherForActivityResult(
         PermissionController.createRequestPermissionResultContract(),
     ) { grantedPermissions: Set<String> ->
@@ -153,7 +153,10 @@ fun OnboardingRoute(
                 0 -> {
                     if (HealthConnectClient.getSdkStatus(context) == HealthConnectClient.SDK_AVAILABLE) {
                         healthPermissionsLauncher.launch(
-                            setOf(HealthPermission.getReadPermission(StepsRecord::class)),
+                            setOf(
+                                HealthPermission.getReadPermission(StepsRecord::class),
+                                HealthPermission.PERMISSION_READ_HEALTH_DATA_IN_BACKGROUND,
+                            ),
                         )
                     } else {
                         viewModel.handleIntent(OnboardingIntent.OnPermissionResult(false))

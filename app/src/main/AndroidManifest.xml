@@ -4,6 +4,8 @@
 
     <!-- Health Connect: 걸음 수 읽기 권한 -->
     <uses-permission android:name="android.permission.health.READ_STEPS" />
+    <!-- WorkManager 등 백그라운드에서 HC 데이터를 읽기 위한 권한 (Android 14+ 필수) -->
+    <uses-permission android:name="android.permission.health.READ_HEALTH_DATA_IN_BACKGROUND" />
 
     <!-- 기상청 날씨 API 호출 -->
     <uses-permission android:name="android.permission.INTERNET" />
