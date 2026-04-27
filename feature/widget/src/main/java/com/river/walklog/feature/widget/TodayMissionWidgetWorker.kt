@@ -16,6 +16,7 @@ import androidx.work.WorkerParameters
 import com.river.walklog.core.analytics.CrashKeys
 import com.river.walklog.core.analytics.CrashReporter
 import com.river.walklog.core.data.repository.StepRepository
+import com.river.walklog.core.data.repository.UserSettingsRepository
 import com.river.walklog.core.model.DailyStepCount
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
@@ -37,6 +38,7 @@ class TodayMissionWidgetWorker @AssistedInject constructor(
     @Assisted private val context: Context,
     @Assisted params: WorkerParameters,
     private val stepRepository: StepRepository,
+    private val userSettingsRepository: UserSettingsRepository,
     private val crashReporter: CrashReporter,
 ) : CoroutineWorker(context, params) {
 
@@ -45,9 +47,10 @@ class TodayMissionWidgetWorker @AssistedInject constructor(
         crashReporter.setKey(CrashKeys.WORKER_RUN_ATTEMPT, runAttemptCount)
 
         return runCatching {
+            val targetSteps = userSettingsRepository.settings.first().dailyStepGoal
             val stepCount = stepRepository.getStepsForDay(
                 LocalDate.now().toEpochDay(),
-            ).first()
+            ).first().copy(targetSteps = targetSteps)
             updateGlanceWidget(stepCount)
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.VANILLA_ICE_CREAM) {
                 updatePickerPreview(stepCount)
