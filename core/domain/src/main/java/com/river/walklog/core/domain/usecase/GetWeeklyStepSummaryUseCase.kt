@@ -10,7 +10,7 @@ import javax.inject.Inject
 
 /**
  * 주간 걸음 수 집계 (Flow를 반환)
- * weekStartEpochDay가 null이면 이번 주 월요일 기준으로 조회.
+ * weekStartEpochDay가 null이면 마지막으로 완료된 주의 월요일 기준으로 조회.
  */
 class GetWeeklyStepSummaryUseCase @Inject constructor(
     private val stepRepository: StepRepository,
@@ -19,6 +19,7 @@ class GetWeeklyStepSummaryUseCase @Inject constructor(
         val startDay = weekStartEpochDay
             ?: LocalDate.now()
                 .with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY))
+                .minusWeeks(1)
                 .toEpochDay()
         return stepRepository.getWeeklyStepSummary(startDay)
     }

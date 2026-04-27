@@ -139,4 +139,30 @@ class WeeklyStepSummaryTest {
         val summary = WeeklyStepSummary.empty(weekStartEpochDay = 19_000L)
         assertNull(summary.bestDay)
     }
+
+    // ─── longestAchievedStreak ─────────────────────────────────────────────
+
+    @Test
+    fun `longestAchievedStreak is max consecutive achieved days`() {
+        val summary = WeeklyStepSummary(
+            weekStartEpochDay = 19_000L,
+            dailyCounts = listOf(
+                stepCount(0, steps = 6_000),
+                stepCount(1, steps = 7_000),
+                stepCount(2, steps = 0),
+                stepCount(3, steps = 6_000),
+                stepCount(4, steps = 6_000),
+                stepCount(5, steps = 6_000),
+                stepCount(6, steps = 3_000),
+            ),
+        )
+
+        assertEquals(3, summary.longestAchievedStreak)
+    }
+
+    @Test
+    fun `longestAchievedStreak is zero for empty week`() {
+        val summary = WeeklyStepSummary.empty(weekStartEpochDay = 19_000L)
+        assertEquals(0, summary.longestAchievedStreak)
+    }
 }

@@ -6,7 +6,6 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -19,10 +18,8 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -205,14 +202,7 @@ internal fun HomeScreen(
             }
 
             if (state.sensorStatus != SensorStatus.Unavailable) {
-                WeeklyReportSummaryCard(
-                    totalStepsText = state.weeklyTotalStepsText,
-                    achievementRateText = state.weeklyAchievementRateText,
-                    bestDayText = state.bestDayText,
-                    bestTimeText = state.bestTimeText,
-                    bestStreakText = state.bestStreakText,
-                    onClick = onClickWeeklyReport,
-                )
+                WeeklyReportSummaryCard(onClick = onClickWeeklyReport)
             }
 
             WeatherSummaryCard(
@@ -302,74 +292,34 @@ private fun ProgressSection(currentSteps: Int, targetSteps: Int, isWalking: Bool
 
 @Composable
 private fun WeeklyReportSummaryCard(
-    totalStepsText: String,
-    achievementRateText: String,
-    bestDayText: String,
-    bestTimeText: String,
-    bestStreakText: String,
     onClick: () -> Unit,
 ) {
-    Column(
+    Row(
         modifier = Modifier
             .fillMaxWidth()
-            .background(WalkLogTheme.colors.surface, RoundedCornerShape(24.dp))
-            .padding(20.dp),
-        verticalArrangement = Arrangement.spacedBy(14.dp),
+            .clip(RoundedCornerShape(24.dp))
+            .background(WalkLogTheme.colors.surface)
+            .clickable(onClick = onClick)
+            .padding(horizontal = 20.dp, vertical = 18.dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically,
     ) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
+        Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
             Text(
-                text = "지난주 리포트",
+                text = "주간 리포트 모아보기",
                 style = WalkLogTheme.typography.typography5SB,
                 color = WalkLogTheme.colors.onSurface,
             )
-            TextButton(
-                onClick = onClick,
-                contentPadding = PaddingValues(horizontal = 8.dp),
-            ) {
-                Text(
-                    text = "전체보기",
-                    style = WalkLogTheme.typography.typography7SB,
-                    color = WalkLogTheme.colors.primary,
-                )
-            }
-        }
-        ReportRow("총 걸음 수", totalStepsText)
-        ReportRow("달성률", achievementRateText)
-        ReportRow("가장 많이 걸은 요일", bestDayText)
-        ReportRow("가장 활발한 시간대", bestTimeText)
-        ReportRow("최고 스트릭", bestStreakText)
-    }
-}
-
-@Composable
-private fun ReportRow(label: String, value: String) {
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(top = 4.dp),
-    ) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-        ) {
             Text(
-                text = label,
+                text = "완료된 주간 기록을 보고 공유해요",
                 style = WalkLogTheme.typography.typography7M,
                 color = WalkLogTheme.colors.onSurfaceVariant,
             )
-            Text(
-                text = value,
-                style = WalkLogTheme.typography.typography6SB,
-                color = WalkLogTheme.colors.onSurface,
-            )
         }
-        HorizontalDivider(
-            modifier = Modifier.padding(vertical = 12.dp),
-            color = WalkLogTheme.colors.outlineVariant,
+        Icon(
+            imageVector = ImageVector.vectorResource(R.drawable.ic_arrow_forward),
+            contentDescription = null,
+            tint = WalkLogTheme.colors.primary,
         )
     }
 }

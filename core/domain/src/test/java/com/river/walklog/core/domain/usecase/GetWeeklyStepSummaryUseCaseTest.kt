@@ -12,6 +12,7 @@ import org.junit.Before
 import org.junit.Test
 import java.time.DayOfWeek
 import java.time.LocalDate
+import java.time.temporal.TemporalAdjusters
 import kotlin.test.assertEquals
 
 class GetWeeklyStepSummaryUseCaseTest {
@@ -39,7 +40,7 @@ class GetWeeklyStepSummaryUseCaseTest {
     }
 
     @Test
-    fun `invoke without param uses Monday of current week`() = runTest {
+    fun `invoke without param uses Monday of last completed week`() = runTest {
         val capturedEpochDay = slot<Long>()
         every {
             repository.getWeeklyStepSummary(capture(capturedEpochDay))
@@ -52,10 +53,16 @@ class GetWeeklyStepSummaryUseCaseTest {
 
         val resolvedDate = LocalDate.ofEpochDay(capturedEpochDay.captured)
         assertEquals(DayOfWeek.MONDAY, resolvedDate.dayOfWeek)
+        assertEquals(
+            LocalDate.now()
+                .with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY))
+                .minusWeeks(1),
+            resolvedDate,
+        )
     }
 
     @Test
-    fun `invoke without param resolves to Monday on or before today`() = runTest {
+    fun `invoke without param resolves before current week`() = runTest {
         val capturedEpochDay = slot<Long>()
         every {
             repository.getWeeklyStepSummary(capture(capturedEpochDay))
@@ -67,13 +74,9 @@ class GetWeeklyStepSummaryUseCaseTest {
         }
 
         val resolvedDate = LocalDate.ofEpochDay(capturedEpochDay.captured)
-        val today = LocalDate.now()
-        // The resolved Monday must be on or before today and at most 6 days in the past
-        assert(!resolvedDate.isAfter(today)) {
-            "Expected resolved Monday ($resolvedDate) to be on or before today ($today)"
-        }
-        assert(!resolvedDate.isBefore(today.minusDays(6))) {
-            "Expected resolved Monday ($resolvedDate) within 6 days before today ($today)"
+        val currentWeekStart = LocalDate.now().with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY))
+        assert(resolvedDate.isBefore(currentWeekStart)) {
+            "Expected resolved Monday ($resolvedDate) before current week start ($currentWeekStart)"
         }
     }
 }

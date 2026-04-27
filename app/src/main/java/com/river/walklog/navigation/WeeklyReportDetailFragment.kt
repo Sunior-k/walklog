@@ -8,13 +8,12 @@ import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.platform.ViewCompositionStrategy
 import androidx.fragment.app.Fragment
 import androidx.navigation.fragment.findNavController
-import com.river.walklog.R
 import com.river.walklog.core.designsystem.foundation.WalkLogTheme
-import com.river.walklog.feature.report.WeeklyReportArchiveRoute
+import com.river.walklog.feature.report.WeeklyReportDetailRoute
 import dagger.hilt.android.AndroidEntryPoint
 
 @AndroidEntryPoint
-class WeeklyReportFragment : Fragment() {
+class WeeklyReportDetailFragment : Fragment() {
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -24,16 +23,19 @@ class WeeklyReportFragment : Fragment() {
         setViewCompositionStrategy(ViewCompositionStrategy.DisposeOnViewTreeLifecycleDestroyed)
         setContent {
             WalkLogTheme {
-                WeeklyReportArchiveRoute(
+                WeeklyReportDetailRoute(
+                    weekStartEpochDay = requireArguments().getLong(ARG_WEEK_START_EPOCH_DAY),
                     onBack = { findNavController().popBackStack() },
-                    onClickReport = { weekStartEpochDay ->
-                        findNavController().navigate(
-                            R.id.action_weeklyReport_to_weeklyReportDetail,
-                            WeeklyReportDetailFragment.createArgs(weekStartEpochDay),
-                        )
-                    },
                 )
             }
+        }
+    }
+
+    companion object {
+        private const val ARG_WEEK_START_EPOCH_DAY = "weekStartEpochDay"
+
+        fun createArgs(weekStartEpochDay: Long): Bundle = Bundle().apply {
+            putLong(ARG_WEEK_START_EPOCH_DAY, weekStartEpochDay)
         }
     }
 }

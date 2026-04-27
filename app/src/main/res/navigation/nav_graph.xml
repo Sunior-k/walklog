@@ -44,9 +44,21 @@
         android:name="com.river.walklog.navigation.WeeklyReportFragment"
         android:label="WeeklyReport">
         <action
+            android:id="@+id/action_weeklyReport_to_weeklyReportDetail"
+            app:destination="@id/weeklyReportDetailFragment" />
+        <action
             android:id="@+id/action_weeklyReport_pop"
             app:popUpTo="@id/homeFragment"
             app:popUpToInclusive="false" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/weeklyReportDetailFragment"
+        android:name="com.river.walklog.navigation.WeeklyReportDetailFragment"
+        android:label="WeeklyReportDetail">
+        <argument
+            android:name="weekStartEpochDay"
+            app:argType="long" />
     </fragment>
 
     <fragment
