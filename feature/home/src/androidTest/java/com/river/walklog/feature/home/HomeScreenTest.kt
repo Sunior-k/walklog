@@ -56,7 +56,7 @@ class HomeScreenTest {
         setContent(state = HomeState(sensorStatus = SensorStatus.Unavailable))
 
         composeTestRule
-            .onNodeWithText("지난주 리포트")
+            .onNodeWithText("주간 리포트 모아보기")
             .assertDoesNotExist()
     }
 
