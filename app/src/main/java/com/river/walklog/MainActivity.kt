@@ -18,11 +18,15 @@ import androidx.navigation.NavController
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.fragment.NavHostFragment
 import androidx.navigation.navOptions
+import androidx.work.ExistingWorkPolicy
+import androidx.work.OneTimeWorkRequestBuilder
+import androidx.work.WorkManager
 import com.google.android.material.bottomnavigation.BottomNavigationView
 import com.river.walklog.core.analytics.CrashReporter
 import com.river.walklog.core.data.repository.UserSettingsRepository
 import com.river.walklog.core.model.ThemeMode
 import com.river.walklog.core.model.UserSettings
+import com.river.walklog.feature.widget.TodayMissionWidgetWorker
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.first
@@ -68,6 +72,16 @@ class MainActivity : AppCompatActivity() {
             observeThemeMode()
             isStartupReady = true
         }
+    }
+
+    override fun onStart() {
+        super.onStart()
+        // 앱이 포그라운드로 올 때마다 위젯 갱신
+        WorkManager.getInstance(this).enqueueUniqueWork(
+            TodayMissionWidgetWorker.FOREGROUND_SYNC_WORK_NAME,
+            ExistingWorkPolicy.REPLACE,
+            OneTimeWorkRequestBuilder<TodayMissionWidgetWorker>().build(),
+        )
     }
 
     override fun onSaveInstanceState(outState: Bundle) {

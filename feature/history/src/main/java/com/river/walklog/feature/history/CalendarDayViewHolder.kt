@@ -6,9 +6,9 @@ import android.graphics.drawable.GradientDrawable
 import android.graphics.drawable.RippleDrawable
 import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.RecyclerView
-import com.river.walklog.core.designsystem.R as DesignR
 import com.river.walklog.feature.history.databinding.ItemCalendarDayBinding
 import java.time.LocalDate
+import com.river.walklog.core.designsystem.R as DesignR
 
 class CalendarDayViewHolder(
     private val binding: ItemCalendarDayBinding,

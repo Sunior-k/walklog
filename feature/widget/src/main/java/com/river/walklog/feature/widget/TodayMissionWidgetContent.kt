@@ -3,11 +3,15 @@ package com.river.walklog.feature.widget
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.glance.ColorFilter
 import androidx.glance.GlanceModifier
 import androidx.glance.GlanceTheme
+import androidx.glance.Image
+import androidx.glance.ImageProvider
 import androidx.glance.LocalContext
 import androidx.glance.LocalSize
 import androidx.glance.action.clickable
+import androidx.glance.appwidget.action.actionRunCallback
 import androidx.glance.appwidget.action.actionStartActivity
 import androidx.glance.appwidget.cornerRadius
 import androidx.glance.background
@@ -22,11 +26,11 @@ import androidx.glance.layout.fillMaxSize
 import androidx.glance.layout.fillMaxWidth
 import androidx.glance.layout.height
 import androidx.glance.layout.padding
+import androidx.glance.layout.size
 import androidx.glance.layout.width
 import androidx.glance.text.FontWeight
 import androidx.glance.text.Text
 import androidx.glance.text.TextStyle
-import androidx.glance.unit.ColorProvider
 import com.river.walklog.core.designsystem.foundation.WalkLogColor
 
 private val WidgetPrimary = ColorProvider(
@@ -83,13 +87,20 @@ internal fun TodayMissionWidgetContent(
                 ),
             )
             Spacer(modifier = GlanceModifier.defaultWeight())
-            Text(
-                text = "오늘 미션",
-                style = TextStyle(
-                    color = GlanceTheme.colors.onSurfaceVariant,
-                    fontSize = 11.sp,
-                ),
-            )
+            Box(
+                contentAlignment = Alignment.Center,
+                modifier = GlanceModifier
+                    .size(32.dp)
+                    .cornerRadius(16.dp)
+                    .clickable(actionRunCallback<RefreshWidgetAction>()),
+            ) {
+                Image(
+                    provider = ImageProvider(R.drawable.ic_widget_refresh),
+                    contentDescription = "새로고침",
+                    colorFilter = ColorFilter.tint(GlanceTheme.colors.onSurfaceVariant),
+                    modifier = GlanceModifier.size(20.dp),
+                )
+            }
         }
 
         Spacer(modifier = GlanceModifier.height(10.dp))
@@ -127,8 +138,6 @@ internal fun TodayMissionWidgetContent(
             Spacer(modifier = GlanceModifier.height(10.dp))
 
             // ── 프로그레스 바 ─────────────────────────────────────────────────
-            // SizeMode.Exact 이므로 LocalSize.current 로 정확한 위젯 너비를 얻을 수 있다.
-            // 양쪽 패딩(16.dp × 2)을 빼서 실제 콘텐츠 너비를 계산한다.
             val barWidth = LocalSize.current.width - 32.dp
 
             Box(

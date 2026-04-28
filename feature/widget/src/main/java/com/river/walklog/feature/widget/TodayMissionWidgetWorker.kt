@@ -27,11 +27,16 @@ import java.time.LocalDate
  * WorkManager 기반 위젯 데이터 갱신 Worker
  *
  * 실행 흐름:
- * 1. [StepRepository] 로 오늘의 걸음 수 조회.
- * 2. [PreferencesGlanceStateDefinition] 상태(DataStore) 갱신.
- * 3. [TodayMissionWidget.update] 로 Glance UI 재구성 트리거.
- * 4. Android 15+: [AppWidgetManager.setWidgetPreview] 로 picker 미리보기 동적 갱신.
- * 5. 실패 시 Crashlytics non-fatal 로깅 후 [Result.retry].
+ * 1. Health Connect 사용 불가 시 즉시 종료 (불필요한 재시도 방지).
+ * 2. [StepRepository.syncTodaySteps] 로 HC에서 직접 걸음 수 조회 + Room 캐시 갱신.
+ * 3. HC 접근 실패 시:
+ *    - [SecurityException] (권한 거부): DataStore를 건드리지 않고 [Result.success] 반환.
+ *      → 권한이 생기기 전까지 재시도해봐야 의미 없음.
+ *    - 그 외 일시적 오류: [Result.retry] 반환.
+ *    - 어느 경우든 로딩 상태는 해제해 위젯이 stuck 되지 않도록 함.
+ * 4. 성공 시 [PreferencesGlanceStateDefinition] 상태(DataStore) 갱신.
+ * 5. [TodayMissionWidget.update] 로 Glance UI 재구성 트리거.
+ * 6. Android 15+: [AppWidgetManager.setWidgetPreview] 로 picker 미리보기 동적 갱신.
  */
 @HiltWorker
 class TodayMissionWidgetWorker @AssistedInject constructor(
@@ -43,14 +48,23 @@ class TodayMissionWidgetWorker @AssistedInject constructor(
 ) : CoroutineWorker(context, params) {
 
     override suspend fun doWork(): Result {
+        // Health Connect 자체가 사용 불가능하면 재시도해도 의미 x
+        if (!stepRepository.isHealthConnectAvailable) {
+            resetLoadingState()
+            return Result.success()
+        }
+
         crashReporter.log("WidgetWorker started: attempt=$runAttemptCount")
         crashReporter.setKey(CrashKeys.WORKER_RUN_ATTEMPT, runAttemptCount)
 
         return runCatching {
             val targetSteps = userSettingsRepository.settings.first().dailyStepGoal
-            val stepCount = stepRepository.getStepsForDay(
-                LocalDate.now().toEpochDay(),
-            ).first().copy(targetSteps = targetSteps)
+            val steps = stepRepository.syncTodaySteps()
+            val stepCount = DailyStepCount(
+                dateEpochDay = LocalDate.now().toEpochDay(),
+                steps = steps,
+                targetSteps = targetSteps,
+            )
             updateGlanceWidget(stepCount)
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.VANILLA_ICE_CREAM) {
                 updatePickerPreview(stepCount)
@@ -61,10 +75,11 @@ class TodayMissionWidgetWorker @AssistedInject constructor(
                 Result.success()
             },
             onFailure = { throwable ->
-                // 위젯 갱신 실패는 앱 크래시가 아니므로 non-fatal 로 기록한다.
                 crashReporter.log("WidgetWorker failed: ${throwable.message}")
                 crashReporter.recordException(throwable)
-                Result.retry()
+                resetLoadingState()
+                // 권한 거부는 재시도해도 소용없으므로 success 처리
+                if (throwable is SecurityException) Result.success() else Result.retry()
             },
         )
     }
@@ -87,6 +102,26 @@ class TodayMissionWidgetWorker @AssistedInject constructor(
                 }
             }
             TodayMissionWidget().update(context, id)
+        }
+    }
+
+    /** 실패 시 로딩 상태를 해제해 위젯이 무한 로딩에 stuck 되지 않도록 함 */
+    private suspend fun resetLoadingState() {
+        runCatching {
+            val glanceIds = GlanceAppWidgetManager(context)
+                .getGlanceIds(TodayMissionWidget::class.java)
+            glanceIds.forEach { id ->
+                updateAppWidgetState(
+                    context = context,
+                    definition = PreferencesGlanceStateDefinition,
+                    glanceId = id,
+                ) { prefs ->
+                    prefs.toMutablePreferences().apply {
+                        this[TodayMissionWidget.IS_LOADING_KEY] = false
+                    }
+                }
+                TodayMissionWidget().update(context, id)
+            }
         }
     }
 
@@ -117,5 +152,6 @@ class TodayMissionWidgetWorker @AssistedInject constructor(
 
     companion object {
         const val WORK_NAME = "today_mission_widget_periodic_update"
+        const val FOREGROUND_SYNC_WORK_NAME = "today_mission_widget_foreground_sync"
     }
 }
