@@ -1,36 +1,24 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
-    android:layout_height="56dp"
-    android:gravity="center"
-    android:orientation="vertical"
-    android:padding="2dp">
+    android:layout_height="50dp">
+
+    <View
+        android:id="@+id/view_circle_bg"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:layout_gravity="center"
+        android:duplicateParentState="true" />
 
     <TextView
         android:id="@+id/tv_day_number"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:textColor="@color/walklog_text_primary"
-        android:textSize="13sp"
-        android:textStyle="bold"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:layout_gravity="center"
+        android:duplicateParentState="true"
+        android:gravity="center"
+        android:textAppearance="@style/WalkLog.TextAppearance.Typography7B"
         tools:text="15" />
 
-    <View
-        android:id="@+id/view_indicator"
-        android:layout_width="6dp"
-        android:layout_height="6dp"
-        android:layout_marginTop="3dp"
-        android:background="@android:color/transparent" />
-
-    <TextView
-        android:id="@+id/tv_steps"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="1dp"
-        android:maxLines="1"
-        android:textColor="@color/walklog_gray_400"
-        android:textSize="9sp"
-        tools:text="8,420" />
-
-</LinearLayout>
+</FrameLayout>

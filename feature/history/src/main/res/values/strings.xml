@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="no_data_past_message">이날은 기록이 없었어요</string>
+    <string name="no_data_past_sub_message">다음엔 더 많이 걸어봐요</string>
+    <string name="no_data_today_message">아직 오늘의 기록이 없어요</string>
+    <string name="no_data_today_sub_message">걷기 시작하면 여기에 표시돼요</string>
+</resources>
