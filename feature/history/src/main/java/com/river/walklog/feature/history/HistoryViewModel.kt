@@ -22,6 +22,7 @@ import java.time.YearMonth
 import java.time.format.DateTimeFormatter
 import java.util.Locale
 import javax.inject.Inject
+import kotlin.math.sign
 
 private val DAY_LABELS = listOf("월", "화", "수", "목", "금", "토", "일")
 private val MONTH_FORMATTER = DateTimeFormatter.ofPattern("yyyy년 M월", Locale.KOREAN)
@@ -178,12 +179,16 @@ class HistoryViewModel @Inject constructor(
         val distance = steps * KILOMETERS_PER_STEP
         return SelectedDaySummary(
             dateText = LocalDate.ofEpochDay(dateEpochDay).format(SELECTED_DATE_FORMATTER),
-            stepsText = "%,d 보".format(steps),
+            stepsText = "%,d".format(steps),
             caloriesText = "%,d kcal".format(calories),
             distanceText = String.format(Locale.KOREAN, "%.1f km", distance),
             targetStatusText = buildTargetStatusText(),
             comparisonText = buildComparisonText(previousDay),
             hasData = hasData,
+            isAchieved = isAchieved,
+            achievementFraction = if (hasData) (steps.toFloat() / targetSteps).coerceIn(0f, 1f) else 0f,
+            comparisonSign = buildComparisonSign(previousDay),
+            isPastDay = LocalDate.ofEpochDay(dateEpochDay).isBefore(LocalDate.now()),
         )
     }
 
@@ -191,6 +196,12 @@ class HistoryViewModel @Inject constructor(
         !hasData -> "이날은 걸음 기록이 없어요"
         isAchieved -> "목표 달성"
         else -> "목표까지 %,d보".format(targetSteps - steps)
+    }
+
+    private fun CalendarItem.Day.buildComparisonSign(previousDay: CalendarItem.Day?): Int? {
+        if (!hasData || previousDay == null || !previousDay.hasData) return null
+        val diff = steps - previousDay.steps
+        return diff.sign
     }
 
     private fun CalendarItem.Day.buildComparisonText(previousDay: CalendarItem.Day?): String {
