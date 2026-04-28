@@ -1,0 +1,177 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <style name="WalkLog.TextAppearance" parent="android:style/TextAppearance">
+        <item name="android:letterSpacing">0</item>
+    </style>
+
+    <!-- 히어로 숫자 -->
+
+    <style name="WalkLog.TextAppearance.Display1B" parent="WalkLog.TextAppearance">
+        <item name="android:textSize">40sp</item>
+        <item name="android:fontFamily">@font/pretendard_bold</item>
+        <item name="android:lineSpacingMultiplier">1.3</item>
+    </style>
+
+    <!-- 작은 제목 -->
+
+    <style name="WalkLog.TextAppearance.Typography4R" parent="WalkLog.TextAppearance">
+        <item name="android:textSize">20sp</item>
+        <item name="android:fontFamily">@font/pretendard_regular</item>
+        <item name="android:lineSpacingMultiplier">1.45</item>
+    </style>
+    <style name="WalkLog.TextAppearance.Typography4M" parent="WalkLog.TextAppearance">
+        <item name="android:textSize">20sp</item>
+        <item name="android:fontFamily">@font/pretendard_medium</item>
+        <item name="android:lineSpacingMultiplier">1.45</item>
+    </style>
+    <style name="WalkLog.TextAppearance.Typography4SB" parent="WalkLog.TextAppearance">
+        <item name="android:textSize">20sp</item>
+        <item name="android:fontFamily">@font/pretendard_semibold</item>
+        <item name="android:lineSpacingMultiplier">1.45</item>
+    </style>
+    <style name="WalkLog.TextAppearance.Typography4B" parent="WalkLog.TextAppearance">
+        <item name="android:textSize">20sp</item>
+        <item name="android:fontFamily">@font/pretendard_bold</item>
+        <item name="android:lineSpacingMultiplier">1.45</item>
+    </style>
+
+    <!-- 본문 강조 -->
+
+    <style name="WalkLog.TextAppearance.SubTypography9R" parent="WalkLog.TextAppearance">
+        <item name="android:textSize">18sp</item>
+        <item name="android:fontFamily">@font/pretendard_regular</item>
+        <item name="android:lineSpacingMultiplier">1.5</item>
+    </style>
+    <style name="WalkLog.TextAppearance.SubTypography9M" parent="WalkLog.TextAppearance">
+        <item name="android:textSize">18sp</item>
+        <item name="android:fontFamily">@font/pretendard_medium</item>
+        <item name="android:lineSpacingMultiplier">1.5</item>
+    </style>
+    <style name="WalkLog.TextAppearance.SubTypography9SB" parent="WalkLog.TextAppearance">
+        <item name="android:textSize">18sp</item>
+        <item name="android:fontFamily">@font/pretendard_semibold</item>
+        <item name="android:lineSpacingMultiplier">1.5</item>
+    </style>
+    <style name="WalkLog.TextAppearance.SubTypography9B" parent="WalkLog.TextAppearance">
+        <item name="android:textSize">18sp</item>
+        <item name="android:fontFamily">@font/pretendard_bold</item>
+        <item name="android:lineSpacingMultiplier">1.5</item>
+    </style>
+
+    <!-- 본문 -->
+
+    <style name="WalkLog.TextAppearance.SubTypography10R" parent="WalkLog.TextAppearance">
+        <item name="android:textSize">16sp</item>
+        <item name="android:fontFamily">@font/pretendard_regular</item>
+        <item name="android:lineSpacingMultiplier">1.5</item>
+    </style>
+    <style name="WalkLog.TextAppearance.SubTypography10M" parent="WalkLog.TextAppearance">
+        <item name="android:textSize">16sp</item>
+        <item name="android:fontFamily">@font/pretendard_medium</item>
+        <item name="android:lineSpacingMultiplier">1.5</item>
+    </style>
+    <style name="WalkLog.TextAppearance.SubTypography10SB" parent="WalkLog.TextAppearance">
+        <item name="android:textSize">16sp</item>
+        <item name="android:fontFamily">@font/pretendard_semibold</item>
+        <item name="android:lineSpacingMultiplier">1.5</item>
+    </style>
+    <style name="WalkLog.TextAppearance.SubTypography10B" parent="WalkLog.TextAppearance">
+        <item name="android:textSize">16sp</item>
+        <item name="android:fontFamily">@font/pretendard_bold</item>
+        <item name="android:lineSpacingMultiplier">1.5</item>
+    </style>
+
+    <!-- 작은 본문 -->
+
+    <style name="WalkLog.TextAppearance.Typography6R" parent="WalkLog.TextAppearance">
+        <item name="android:textSize">15sp</item>
+        <item name="android:fontFamily">@font/pretendard_regular</item>
+        <item name="android:lineSpacingMultiplier">1.5</item>
+    </style>
+    <style name="WalkLog.TextAppearance.Typography6M" parent="WalkLog.TextAppearance">
+        <item name="android:textSize">15sp</item>
+        <item name="android:fontFamily">@font/pretendard_medium</item>
+        <item name="android:lineSpacingMultiplier">1.5</item>
+    </style>
+    <style name="WalkLog.TextAppearance.Typography6SB" parent="WalkLog.TextAppearance">
+        <item name="android:textSize">15sp</item>
+        <item name="android:fontFamily">@font/pretendard_semibold</item>
+        <item name="android:lineSpacingMultiplier">1.5</item>
+    </style>
+    <style name="WalkLog.TextAppearance.Typography6B" parent="WalkLog.TextAppearance">
+        <item name="android:textSize">15sp</item>
+        <item name="android:fontFamily">@font/pretendard_bold</item>
+        <item name="android:lineSpacingMultiplier">1.5</item>
+    </style>
+
+    <!-- 보조 텍스트 -->
+
+    <style name="WalkLog.TextAppearance.Typography7R" parent="WalkLog.TextAppearance">
+        <item name="android:textSize">13sp</item>
+        <item name="android:fontFamily">@font/pretendard_regular</item>
+        <item name="android:lineSpacingMultiplier">1.5</item>
+    </style>
+    <style name="WalkLog.TextAppearance.Typography7M" parent="WalkLog.TextAppearance">
+        <item name="android:textSize">13sp</item>
+        <item name="android:fontFamily">@font/pretendard_medium</item>
+        <item name="android:lineSpacingMultiplier">1.5</item>
+    </style>
+    <style name="WalkLog.TextAppearance.Typography7SB" parent="WalkLog.TextAppearance">
+        <item name="android:textSize">13sp</item>
+        <item name="android:fontFamily">@font/pretendard_semibold</item>
+        <item name="android:lineSpacingMultiplier">1.5</item>
+    </style>
+    <style name="WalkLog.TextAppearance.Typography7B" parent="WalkLog.TextAppearance">
+        <item name="android:textSize">13sp</item>
+        <item name="android:fontFamily">@font/pretendard_bold</item>
+        <item name="android:lineSpacingMultiplier">1.5</item>
+    </style>
+
+    <!-- 레이블 -->
+
+    <style name="WalkLog.TextAppearance.SubTypography12R" parent="WalkLog.TextAppearance">
+        <item name="android:textSize">12sp</item>
+        <item name="android:fontFamily">@font/pretendard_regular</item>
+        <item name="android:lineSpacingMultiplier">1.5</item>
+    </style>
+    <style name="WalkLog.TextAppearance.SubTypography12M" parent="WalkLog.TextAppearance">
+        <item name="android:textSize">12sp</item>
+        <item name="android:fontFamily">@font/pretendard_medium</item>
+        <item name="android:lineSpacingMultiplier">1.5</item>
+    </style>
+    <style name="WalkLog.TextAppearance.SubTypography12SB" parent="WalkLog.TextAppearance">
+        <item name="android:textSize">12sp</item>
+        <item name="android:fontFamily">@font/pretendard_semibold</item>
+        <item name="android:lineSpacingMultiplier">1.5</item>
+    </style>
+    <style name="WalkLog.TextAppearance.SubTypography12B" parent="WalkLog.TextAppearance">
+        <item name="android:textSize">12sp</item>
+        <item name="android:fontFamily">@font/pretendard_bold</item>
+        <item name="android:lineSpacingMultiplier">1.5</item>
+    </style>
+
+    <!-- 마이크로 -->
+
+    <style name="WalkLog.TextAppearance.SubTypography13R" parent="WalkLog.TextAppearance">
+        <item name="android:textSize">11sp</item>
+        <item name="android:fontFamily">@font/pretendard_regular</item>
+        <item name="android:lineSpacingMultiplier">1.5</item>
+    </style>
+    <style name="WalkLog.TextAppearance.SubTypography13M" parent="WalkLog.TextAppearance">
+        <item name="android:textSize">11sp</item>
+        <item name="android:fontFamily">@font/pretendard_medium</item>
+        <item name="android:lineSpacingMultiplier">1.5</item>
+    </style>
+    <style name="WalkLog.TextAppearance.SubTypography13SB" parent="WalkLog.TextAppearance">
+        <item name="android:textSize">11sp</item>
+        <item name="android:fontFamily">@font/pretendard_semibold</item>
+        <item name="android:lineSpacingMultiplier">1.5</item>
+    </style>
+    <style name="WalkLog.TextAppearance.SubTypography13B" parent="WalkLog.TextAppearance">
+        <item name="android:textSize">11sp</item>
+        <item name="android:fontFamily">@font/pretendard_bold</item>
+        <item name="android:lineSpacingMultiplier">1.5</item>
+    </style>
+
+</resources>
