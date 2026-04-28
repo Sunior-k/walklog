@@ -24,7 +24,10 @@ class CalendarAdapter(
         return when (viewType) {
             TYPE_LABEL -> LabelViewHolder(ItemCalendarHeaderBinding.inflate(inflater, parent, false))
             TYPE_EMPTY -> EmptyViewHolder(ItemCalendarEmptyBinding.inflate(inflater, parent, false))
-            TYPE_DAY -> DayViewHolder(ItemCalendarDayBinding.inflate(inflater, parent, false))
+            TYPE_DAY -> CalendarDayViewHolder(
+                ItemCalendarDayBinding.inflate(inflater, parent, false),
+                onDayClick,
+            )
             else -> error("Unknown viewType: $viewType")
         }
     }
@@ -33,7 +36,7 @@ class CalendarAdapter(
         when (val item = getItem(position)) {
             is CalendarItem.DayLabel -> (holder as LabelViewHolder).bind(item)
             is CalendarItem.Empty -> Unit
-            is CalendarItem.Day -> (holder as DayViewHolder).bind(item)
+            is CalendarItem.Day -> (holder as CalendarDayViewHolder).bind(item)
         }
     }
 
@@ -48,36 +51,6 @@ class CalendarAdapter(
     inner class EmptyViewHolder(
         binding: ItemCalendarEmptyBinding,
     ) : RecyclerView.ViewHolder(binding.root)
-
-    inner class DayViewHolder(
-        private val binding: ItemCalendarDayBinding,
-    ) : RecyclerView.ViewHolder(binding.root) {
-        fun bind(item: CalendarItem.Day) {
-            binding.tvDayNumber.text = item.dayNumber.toString()
-            binding.tvSteps.text = if (item.hasData) {
-                "%,d".format(item.steps)
-            } else {
-                ""
-            }
-
-            val indicatorRes = when {
-                item.isAchieved -> R.drawable.bg_day_achieved
-                item.isToday -> R.drawable.bg_day_today
-                item.hasData -> R.drawable.bg_day_partial
-                else -> android.R.color.transparent
-            }
-            binding.viewIndicator.setBackgroundResource(indicatorRes)
-            binding.root.setBackgroundResource(
-                if (item.isSelected) {
-                    R.drawable.bg_calendar_day_selected
-                } else {
-                    android.R.color.transparent
-                },
-            )
-            binding.root.setOnClickListener { onDayClick(item) }
-            binding.root.contentDescription = "${item.dayNumber}일, ${item.steps}보"
-        }
-    }
 
     companion object {
         private const val TYPE_LABEL = 0
