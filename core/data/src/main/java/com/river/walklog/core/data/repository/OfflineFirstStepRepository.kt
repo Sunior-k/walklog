@@ -118,6 +118,23 @@ class OfflineFirstStepRepository @Inject constructor(
         }
     }
 
+    /**
+     * Health Connect에서 오늘 걸음 수를 직접 읽어 Room에 저장하고 반환.
+     * HC 접근 실패 시 예외를 그대로 전파한다.
+     */
+    override suspend fun syncTodaySteps(): Int = withContext(dispatchers.io) {
+        val today = LocalDate.now()
+        val steps = healthConnectDataSource.readDailySteps(today)
+        dailyStepDao.upsert(
+            DailyStepEntity(
+                dateEpochDay = today.toEpochDay(),
+                totalSteps = steps,
+                lastUpdatedAt = System.currentTimeMillis(),
+            ),
+        )
+        steps
+    }
+
     // ─── Private ──────────────────────────────────────────────────────────────
 
     private suspend fun seedFromHealthConnect(dateEpochDay: Long) {

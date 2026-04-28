@@ -21,4 +21,10 @@ interface StepRepository {
     fun getWeeklyStepSummary(weekStartEpochDay: Long): Flow<WeeklyStepSummary>
 
     suspend fun getHourlyStepsForRange(fromEpochDay: Long, toEpochDay: Long): FloatArray
+
+    /**
+     * Health Connect에서 오늘 걸음 수를 직접 읽어 Room 캐시에 저장하고 반환한다.
+     * HC 접근 실패 시 예외를 그대로 던짐.
+     */
+    suspend fun syncTodaySteps(): Int
 }
