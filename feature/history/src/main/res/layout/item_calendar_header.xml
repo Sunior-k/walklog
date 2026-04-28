@@ -5,7 +5,6 @@
     android:layout_width="match_parent"
     android:layout_height="36dp"
     android:gravity="center"
+    android:textAppearance="@style/WalkLog.TextAppearance.SubTypography12B"
     android:textColor="@color/walklog_gray_400"
-    android:textSize="12sp"
-    android:textStyle="bold"
     tools:text="월" />

@@ -21,4 +21,8 @@ data class SelectedDaySummary(
     val targetStatusText: String,
     val comparisonText: String,
     val hasData: Boolean,
+    val isAchieved: Boolean,
+    val achievementFraction: Float,
+    val comparisonSign: Int?, // 1=증가, 0=동일, -1=감소, null=비교불가
+    val isPastDay: Boolean,
 )

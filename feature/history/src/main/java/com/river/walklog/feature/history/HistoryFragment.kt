@@ -1,9 +1,12 @@
 package com.river.walklog.feature.history
 
+import android.content.res.ColorStateList
+import android.graphics.drawable.GradientDrawable
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.core.content.ContextCompat
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.isVisible
@@ -17,11 +20,8 @@ import com.river.walklog.feature.history.databinding.FragmentHistoryBinding
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
+import com.river.walklog.core.designsystem.R as DesignR
 
-/**
- * 월간 걸음 캘린더 화면
- *
- */
 @AndroidEntryPoint
 class HistoryFragment : Fragment() {
 
@@ -52,11 +52,9 @@ class HistoryFragment : Fragment() {
 
     private fun applyStatusBarInsets() {
         val initialTopPadding = binding.root.paddingTop
-        ViewCompat.setOnApplyWindowInsetsListener(binding.root) { view, insets ->
-            val statusBarTop = insets
-                .getInsets(WindowInsetsCompat.Type.statusBars())
-                .top
-            view.updatePadding(top = initialTopPadding + statusBarTop)
+        ViewCompat.setOnApplyWindowInsetsListener(binding.root) { v, insets ->
+            val statusBarTop = insets.getInsets(WindowInsetsCompat.Type.statusBars()).top
+            v.updatePadding(top = initialTopPadding + statusBarTop)
             insets
         }
     }
@@ -77,9 +75,7 @@ class HistoryFragment : Fragment() {
     private fun observeState() {
         viewLifecycleOwner.lifecycleScope.launch {
             viewLifecycleOwner.repeatOnLifecycle(androidx.lifecycle.Lifecycle.State.STARTED) {
-                viewModel.state.collectLatest { state ->
-                    renderState(state)
-                }
+                viewModel.state.collectLatest { state -> renderState(state) }
             }
         }
     }
@@ -94,27 +90,97 @@ class HistoryFragment : Fragment() {
         val isLoading = state.isLoading
         val isEmpty = state.isEmpty
         val showContent = !isLoading && !isEmpty
-        selectedDayContainer.isVisible = showContent && state.selectedDaySummary != null
+
         state.selectedDaySummary?.let { summary ->
             tvSelectedDate.text = summary.dateText
-            tvSelectedSteps.text = summary.stepsText
-            tvSelectedCalories.text = summary.caloriesText
-            tvSelectedDistance.text = summary.distanceText
-            tvSelectedTargetStatus.text = summary.targetStatusText
-            tvSelectedComparison.text = summary.comparisonText
-            selectedMetricsDivider.isVisible = summary.hasData
-            selectedMetricsRow.isVisible = summary.hasData
-            tvSelectedComparison.isVisible = summary.hasData
+            applyChipStyle(summary)
+
+            groupHasData.isVisible = summary.hasData
+            groupNoData.isVisible = !summary.hasData
+
+            if (!summary.hasData) {
+                if (summary.isPastDay) {
+                    tvNoDataMessage.setText(R.string.no_data_past_message)
+                    tvNoDataSubMessage.setText(R.string.no_data_past_sub_message)
+                } else {
+                    tvNoDataMessage.setText(R.string.no_data_today_message)
+                    tvNoDataSubMessage.setText(R.string.no_data_today_sub_message)
+                }
+            }
+
+            if (summary.hasData) {
+                tvSelectedSteps.text = summary.stepsText
+                tvSelectedCalories.text = summary.caloriesText
+                tvSelectedDistance.text = summary.distanceText
+                pbGoalProgress.progress = (summary.achievementFraction * 100).toInt()
+                applyProgressBarStyle(summary.isAchieved)
+                applyComparisonStyle(summary)
+            }
         }
 
+        selectedDayContainer.isVisible = showContent && state.selectedDaySummary != null
         progressBar.isVisible = isLoading
         rvCalendar.isVisible = showContent
         emptyState.isVisible = !isLoading && isEmpty
         statsContainer.isVisible = showContent
 
-        if (!isLoading) {
-            calendarAdapter.submitList(state.items)
+        if (!isLoading) calendarAdapter.submitList(state.items)
+    }
+
+    private fun applyChipStyle(summary: SelectedDaySummary) = with(binding) {
+        val ctx = requireContext()
+        val (bgColor, textColor, text) = when {
+            summary.isAchieved -> Triple(
+                ContextCompat.getColor(ctx, DesignR.color.walklog_success_container),
+                ContextCompat.getColor(ctx, DesignR.color.walklog_success_dark),
+                "목표 달성 ✓",
+            )
+            summary.hasData -> Triple(
+                ContextCompat.getColor(ctx, DesignR.color.walklog_primary_container),
+                ContextCompat.getColor(ctx, DesignR.color.walklog_primary_dark),
+                summary.targetStatusText,
+            )
+            else -> Triple(
+                ContextCompat.getColor(ctx, DesignR.color.walklog_gray_100),
+                ContextCompat.getColor(ctx, DesignR.color.walklog_gray_400),
+                "기록 없음",
+            )
         }
+        tvSelectedTargetStatus.text = text
+        tvSelectedTargetStatus.setTextColor(textColor)
+        tvSelectedTargetStatus.background = GradientDrawable().apply {
+            shape = GradientDrawable.RECTANGLE
+            cornerRadius = resources.displayMetrics.density * 12
+            setColor(bgColor)
+        }
+    }
+
+    private fun applyComparisonStyle(summary: SelectedDaySummary) = with(binding) {
+        val ctx = requireContext()
+        val show = summary.hasData && summary.comparisonSign != null
+        tvSelectedComparison.isVisible = show
+        if (!show) return
+
+        val (color, prefix) = when (summary.comparisonSign) {
+            1 -> ContextCompat.getColor(ctx, DesignR.color.walklog_success) to "↑ "
+            -1 -> ContextCompat.getColor(ctx, DesignR.color.walklog_error) to "↓ "
+            else -> ContextCompat.getColor(ctx, DesignR.color.walklog_gray_400) to ""
+        }
+        tvSelectedComparison.setTextColor(color)
+        tvSelectedComparison.text = "$prefix${summary.comparisonText}"
+    }
+
+    private fun applyProgressBarStyle(isAchieved: Boolean) = with(binding) {
+        val ctx = requireContext()
+        val fillColor = if (isAchieved) {
+            ContextCompat.getColor(ctx, DesignR.color.walklog_success)
+        } else {
+            ContextCompat.getColor(ctx, DesignR.color.walklog_primary)
+        }
+        pbGoalProgress.progressTintList = ColorStateList.valueOf(fillColor)
+        pbGoalProgress.progressBackgroundTintList = ColorStateList.valueOf(
+            ContextCompat.getColor(ctx, DesignR.color.walklog_gray_100),
+        )
     }
 
     override fun onDestroyView() {
