@@ -15,6 +15,7 @@ import com.river.walklog.core.domain.usecase.ObserveCurrentStepsUseCase
 import com.river.walklog.core.engine.ActivityClassifier
 import com.river.walklog.core.engine.WalkingInsightsEngine
 import com.river.walklog.core.engine.WalkingInsightsResult
+import com.river.walklog.core.model.DailyStepCount
 import com.river.walklog.core.model.MissionType
 import com.river.walklog.core.model.WeatherSummary
 import com.river.walklog.core.model.WeeklyStepSummary
@@ -60,6 +61,7 @@ class HomeViewModel @Inject constructor(
     private var liveStepsJob: Job? = null
     private var activityJob: Job? = null
     private var weatherJob: Job? = null
+    private var recapPreviewJob: Job? = null
     private var latestWeeklySummary: WeeklyStepSummary? = null
 
     init {
@@ -315,7 +317,8 @@ class HomeViewModel @Inject constructor(
 
     private fun loadRecapPreview() {
         val today = LocalDate.now()
-        getMonthlyRecap(today.year, today.monthValue)
+        recapPreviewJob?.cancel()
+        recapPreviewJob = getMonthlyRecap(today.year, today.monthValue)
             .catch { throwable ->
                 crashReporter.log("Monthly recap query failed: ${throwable.message}")
                 crashReporter.recordException(throwable)
@@ -325,6 +328,10 @@ class HomeViewModel @Inject constructor(
                     state.copy(
                         recapMonthLabel = recap.monthLabel,
                         recapTotalStepsText = "%,d보".format(recap.totalSteps),
+                        streakDays = computeCurrentStreak(
+                            dailyCounts = recap.dailyCounts,
+                            today = today,
+                        ),
                     )
                 }
             }
@@ -341,6 +348,7 @@ class HomeViewModel @Inject constructor(
                 delay(secondsUntilMidnight * 1000L)
                 initDateText()
                 collectWeeklySummary()
+                loadRecapPreview()
                 loadWalkingInsights()
             }
         }
@@ -351,6 +359,7 @@ class HomeViewModel @Inject constructor(
             crashReporter.log("Manual refresh triggered")
             _state.update { it.copy(isLoading = true) }
             collectWeeklySummary()
+            loadRecapPreview()
             loadWalkingInsights()
             loadWeather(forceRefresh = true)
             _state.update { it.copy(isLoading = false) }
@@ -421,6 +430,25 @@ class HomeViewModel @Inject constructor(
         weather.humidity?.let { "습도 $it%" },
         weather.windSpeedMetersPerSecond?.let { "풍속 ${String.format(Locale.KOREAN, "%.1f", it)}m/s" },
     ).joinToString(" · ")
+
+    private fun computeCurrentStreak(
+        dailyCounts: List<DailyStepCount>,
+        today: LocalDate,
+    ): Int {
+        val todayEpochDay = today.toEpochDay()
+        val countsByDay = dailyCounts.associateBy { it.dateEpochDay }
+        var day = todayEpochDay
+        if (countsByDay[day]?.isAchieved != true) {
+            day--
+        }
+
+        var streak = 0
+        while (countsByDay[day]?.isAchieved == true) {
+            streak++
+            day--
+        }
+        return streak
+    }
 
     private fun awardDailyMission() {
         viewModelScope.launch {

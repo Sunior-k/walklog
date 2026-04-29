@@ -56,6 +56,8 @@ import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -204,8 +206,12 @@ private fun OnboardingScreen(
     modifier: Modifier = Modifier,
 ) {
     val pagerState = rememberPagerState(pageCount = { TOTAL_PAGES })
+    val keyboardController = LocalSoftwareKeyboardController.current
+    val focusManager = LocalFocusManager.current
 
     LaunchedEffect(state.currentPage) {
+        keyboardController?.hide()
+        focusManager.clearFocus()
         pagerState.animateScrollToPage(state.currentPage)
     }
 
