@@ -13,7 +13,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
-private const val TOTAL_PAGES = 3
+private const val TOTAL_PAGES = 4
 
 @HiltViewModel
 class OnboardingViewModel @Inject constructor(
@@ -35,8 +35,12 @@ class OnboardingViewModel @Inject constructor(
         when (intent) {
             OnboardingIntent.OnClickNext -> advancePage()
             OnboardingIntent.OnClickBack -> retreatPage()
-            is OnboardingIntent.OnStepGoalChanged -> _state.update { it.copy(dailyStepGoal = intent.steps) }
-            is OnboardingIntent.OnNotificationsToggled -> _state.update { it.copy(notificationsEnabled = intent.enabled) }
+            is OnboardingIntent.OnNicknameChanged ->
+                _state.update { it.copy(nickname = intent.nickname) }
+            is OnboardingIntent.OnStepGoalChanged ->
+                _state.update { it.copy(dailyStepGoal = intent.steps) }
+            is OnboardingIntent.OnNotificationsToggled ->
+                _state.update { it.copy(notificationsEnabled = intent.enabled) }
             is OnboardingIntent.OnPermissionResult -> advancePage()
             OnboardingIntent.OnClickComplete -> complete()
         }
@@ -44,11 +48,7 @@ class OnboardingViewModel @Inject constructor(
 
     private fun advancePage() {
         val next = _state.value.currentPage + 1
-        if (next >= TOTAL_PAGES) {
-            complete()
-        } else {
-            _state.update { it.copy(currentPage = next) }
-        }
+        if (next >= TOTAL_PAGES) complete() else _state.update { it.copy(currentPage = next) }
     }
 
     private fun retreatPage() {
@@ -61,6 +61,7 @@ class OnboardingViewModel @Inject constructor(
         _state.update { it.copy(isCompleting = true) }
         viewModelScope.launch {
             runCatching {
+                userSettingsRepository.setNickname(current.nickname.trim())
                 userSettingsRepository.setDailyStepGoal(current.dailyStepGoal)
                 userSettingsRepository.setNotificationsEnabled(current.notificationsEnabled)
                 userSettingsRepository.setOnboardingCompleted()
