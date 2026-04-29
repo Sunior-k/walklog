@@ -29,13 +29,87 @@
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
 
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:id="@+id/profile_card"
+            style="@style/WalkLogSettingsCard"
+            android:clickable="true"
+            android:focusable="true"
+            android:foreground="?attr/selectableItemBackground"
+            android:paddingVertical="16dp"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/tv_title">
+
+            <TextView
+                android:id="@+id/tv_avatar"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:background="@drawable/bg_avatar_circle"
+                android:gravity="center"
+                android:textColor="@color/walklog_primary"
+                android:textSize="20sp"
+                android:textStyle="bold"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent"
+                tools:text="K" />
+
+            <TextView
+                android:id="@+id/tv_nickname"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="14dp"
+                android:textColor="@color/walklog_text_primary"
+                android:textSize="16sp"
+                android:textStyle="bold"
+                app:layout_constraintBottom_toTopOf="@id/tv_edit_hint"
+                app:layout_constraintEnd_toStartOf="@id/tv_points_badge"
+                app:layout_constraintStart_toEndOf="@id/tv_avatar"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintVertical_chainStyle="packed"
+                tools:text="닉네임" />
+
+            <TextView
+                android:id="@+id/tv_edit_hint"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="3dp"
+                android:drawablePadding="4dp"
+                android:drawableStart="@drawable/ic_edit"
+                android:gravity="center_vertical"
+                android:text="닉네임 수정"
+                android:textColor="@color/walklog_text_secondary"
+                android:textSize="12sp"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toStartOf="@id/tv_points_badge"
+                app:layout_constraintStart_toEndOf="@id/tv_avatar"
+                app:layout_constraintTop_toBottomOf="@id/tv_nickname" />
+
+            <TextView
+                android:id="@+id/tv_points_badge"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:background="@drawable/bg_points_badge"
+                android:paddingHorizontal="12dp"
+                android:paddingVertical="6dp"
+                android:textColor="@color/walklog_primary_dark"
+                android:textSize="13sp"
+                android:textStyle="bold"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintTop_toTopOf="parent"
+                tools:text="1,234 P" />
+
+        </androidx.constraintlayout.widget.ConstraintLayout>
+
         <TextView
             android:id="@+id/tv_daily_step_goal_section"
             style="@style/WalkLogSettingsSectionLabel"
+            android:layout_marginTop="20dp"
             android:text="걸음 목표"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/tv_title" />
+            app:layout_constraintTop_toBottomOf="@id/profile_card" />
 
         <androidx.constraintlayout.widget.ConstraintLayout
             android:id="@+id/daily_step_goal_card"

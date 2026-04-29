@@ -33,6 +33,7 @@ class SettingsViewModel @Inject constructor(
 
     fun handleIntent(intent: SettingsIntent) {
         when (intent) {
+            is SettingsIntent.OnNicknameChanged -> updateNickname(intent.nickname)
             is SettingsIntent.OnStepGoalChanged -> updateStepGoal(intent.steps)
             is SettingsIntent.OnNotificationsToggled -> updateNotifications(intent.enabled)
             is SettingsIntent.OnRecoveryStepsChanged -> updateRecoverySteps(intent.steps)
@@ -45,6 +46,8 @@ class SettingsViewModel @Inject constructor(
             .onEach { settings ->
                 _state.update {
                     it.copy(
+                        nickname = settings.nickname,
+                        totalPoints = settings.totalPoints,
                         dailyStepGoal = settings.dailyStepGoal,
                         notificationsEnabled = settings.notificationsEnabled,
                         recoveryMissionSteps = settings.recoveryMissionSteps,
@@ -55,6 +58,13 @@ class SettingsViewModel @Inject constructor(
             }
             .catch { e -> crashReporter.recordException(e) }
             .launchIn(viewModelScope)
+    }
+
+    private fun updateNickname(nickname: String) {
+        viewModelScope.launch {
+            runCatching { userSettingsRepository.setNickname(nickname.trim()) }
+                .onFailure { e -> crashReporter.recordException(e) }
+        }
     }
 
     private fun updateStepGoal(steps: Int) {

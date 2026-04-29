@@ -60,6 +60,7 @@ class SettingsFragment : Fragment() {
     }
 
     private fun setupListeners() = with(binding) {
+        profileCard.setOnClickListener { showNicknameEditDialog() }
         seekDailyStepGoal.setOnSeekBarChangeListener(
             onProgressChanged = { progress, fromUser ->
                 if (fromUser) {
@@ -104,6 +105,11 @@ class SettingsFragment : Fragment() {
     }
 
     private fun renderState(state: SettingsState) = with(binding) {
+        val displayName = state.nickname.ifBlank { "익명" }
+        tvNickname.text = "${displayName}님"
+        tvAvatar.text = displayName.take(1).uppercase()
+        tvPointsBadge.text = numberFormat.format(state.totalPoints) + " P"
+
         tvDailyStepGoal.text = state.dailyStepGoal.toStepText()
         tvRecoveryMissionSteps.text = state.recoveryMissionSteps.toStepText()
 
@@ -128,6 +134,14 @@ class SettingsFragment : Fragment() {
 
     private fun updateThemeMode(themeMode: ThemeMode) {
         viewModel.handleIntent(SettingsIntent.OnThemeModeChanged(themeMode))
+    }
+
+    private fun showNicknameEditDialog() {
+        val sheet = NicknameEditBottomSheet.newInstance(viewModel.state.value.nickname)
+        sheet.onSave = { newNickname ->
+            viewModel.handleIntent(SettingsIntent.OnNicknameChanged(newNickname))
+        }
+        sheet.show(childFragmentManager, NicknameEditBottomSheet.TAG)
     }
 
     private fun Int.toStepText(): String = "${numberFormat.format(this)} 보"

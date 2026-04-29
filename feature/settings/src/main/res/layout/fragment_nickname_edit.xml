@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="@drawable/bg_nickname_sheet"
+    android:orientation="vertical">
+
+    <View
+        android:layout_width="40dp"
+        android:layout_height="4dp"
+        android:layout_gravity="center_horizontal"
+        android:layout_marginTop="12dp"
+        android:background="@drawable/bg_drag_handle" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:paddingHorizontal="24dp"
+        android:paddingTop="24dp"
+        android:paddingBottom="12dp">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="닉네임 수정"
+            android:textColor="@color/walklog_text_primary"
+            android:textSize="20sp"
+            android:textStyle="bold"
+            android:letterSpacing="-0.02" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="6dp"
+            android:text="영어, 한국어만 입력할 수 있어요"
+            android:textColor="@color/walklog_gray_400"
+            android:textSize="13sp" />
+
+        <FrameLayout
+            android:id="@+id/fl_nickname_container"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="24dp"
+            android:background="@drawable/bg_nickname_field"
+            android:paddingHorizontal="16dp"
+            android:paddingVertical="14dp">
+
+            <EditText
+                android:id="@+id/et_nickname"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginEnd="48dp"
+                android:background="@null"
+                android:hint="닉네임을 입력해주세요"
+                android:maxLines="1"
+                android:textColor="@color/walklog_text_primary"
+                android:textColorHint="@color/walklog_gray_300"
+                android:textSize="16sp"
+                android:textStyle="bold"
+                android:inputType="text"
+                tools:text="홍길동" />
+
+            <TextView
+                android:id="@+id/tv_counter"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_vertical|end"
+                android:textColor="@color/walklog_gray_300"
+                android:textSize="13sp"
+                tools:text="0/10" />
+
+        </FrameLayout>
+
+        <Button
+            android:id="@+id/btn_save"
+            android:layout_width="match_parent"
+            android:layout_height="56dp"
+            android:layout_marginTop="20dp"
+            android:background="@drawable/bg_save_button"
+            android:enabled="false"
+            android:stateListAnimator="@null"
+            android:text="저장하기"
+            android:textColor="@color/walklog_gray_900"
+            android:textSize="16sp"
+            android:textStyle="bold" />
+
+        <View
+            android:id="@+id/nav_bar_spacer"
+            android:layout_width="match_parent"
+            android:layout_height="16dp" />
+
+    </LinearLayout>
+
+</LinearLayout>
