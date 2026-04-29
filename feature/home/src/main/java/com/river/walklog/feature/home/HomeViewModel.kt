@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.river.walklog.core.analytics.CrashKeys
 import com.river.walklog.core.analytics.CrashReporter
+import com.river.walklog.core.domain.usecase.AwardMissionPointsUseCase
 import com.river.walklog.core.domain.usecase.GetCurrentWeatherUseCase
 import com.river.walklog.core.domain.usecase.GetHourlyStepsForRangeUseCase
 import com.river.walklog.core.domain.usecase.GetMonthlyRecapUseCase
@@ -14,6 +15,7 @@ import com.river.walklog.core.domain.usecase.ObserveCurrentStepsUseCase
 import com.river.walklog.core.engine.ActivityClassifier
 import com.river.walklog.core.engine.WalkingInsightsEngine
 import com.river.walklog.core.engine.WalkingInsightsResult
+import com.river.walklog.core.model.MissionType
 import com.river.walklog.core.model.WeatherSummary
 import com.river.walklog.core.model.WeeklyStepSummary
 import com.river.walklog.feature.home.notification.WalkingReminderScheduler
@@ -47,6 +49,7 @@ class HomeViewModel @Inject constructor(
     private val walkingInsightsEngine: WalkingInsightsEngine,
     private val activityClassifier: ActivityClassifier,
     private val getUserSettings: GetUserSettingsUseCase,
+    private val awardMissionPoints: AwardMissionPointsUseCase,
     private val crashReporter: CrashReporter,
     private val walkingReminderScheduler: WalkingReminderScheduler,
 ) : ViewModel() {
@@ -113,10 +116,17 @@ class HomeViewModel @Inject constructor(
                 crashReporter.recordException(throwable)
             }
             .onEach { settings ->
+                val today = LocalDate.now().toString()
+                val alreadyCompletedToday = settings.lastDailyMissionAwardedDate == today
                 _state.update { state ->
                     val updatedState = state.copy(
+                        userName = settings.nickname.ifBlank { "익명" },
                         targetSteps = settings.dailyStepGoal,
-                        mission = state.mission.copy(targetSteps = settings.dailyStepGoal),
+                        mission = state.mission.copy(
+                            targetSteps = settings.dailyStepGoal,
+                            // 앱 재시작 후에도 당일 달성 상태 유지
+                            isCompleted = alreadyCompletedToday || state.mission.isCompleted,
+                        ),
                     )
                     latestWeeklySummary?.let { summary ->
                         updatedState.applyWeeklySummary(summary, settings.dailyStepGoal)
@@ -156,12 +166,18 @@ class HomeViewModel @Inject constructor(
             }
             .onEach { steps ->
                 crashReporter.setKey(CrashKeys.CURRENT_STEPS, steps)
+                val prev = _state.value
+                val justAchieved = steps >= prev.targetSteps && !prev.mission.isCompleted
                 _state.update { state ->
                     state.copy(
                         currentSteps = steps,
-                        mission = state.mission.copy(currentSteps = steps),
+                        mission = state.mission.copy(
+                            currentSteps = steps,
+                            isCompleted = steps >= state.targetSteps || state.mission.isCompleted,
+                        ),
                     )
                 }
+                if (justAchieved) awardDailyMission()
             }
             .launchIn(viewModelScope)
     }
@@ -406,8 +422,22 @@ class HomeViewModel @Inject constructor(
         weather.windSpeedMetersPerSecond?.let { "풍속 ${String.format(Locale.KOREAN, "%.1f", it)}m/s" },
     ).joinToString(" · ")
 
+    private fun awardDailyMission() {
+        viewModelScope.launch {
+            runCatching {
+                val awarded = awardMissionPoints(MissionType.DAILY, DAILY_MISSION_POINTS)
+                if (awarded) {
+                    crashReporter.log("Daily mission points awarded: +$DAILY_MISSION_POINTS")
+                }
+            }.onFailure { e ->
+                crashReporter.recordException(e)
+            }
+        }
+    }
+
     companion object {
         private const val WEATHER_LOAD_MAX_ATTEMPTS = 3
         private const val WEATHER_RETRY_DELAY_MS = 1_500L
+        private const val DAILY_MISSION_POINTS = 20
     }
 }
