@@ -6,6 +6,7 @@ import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -70,17 +71,14 @@ fun CustomSlider(
         0f
     }
 
-    var thumbX by remember(normalizedValue, startOffset, sliderWidth) {
-        mutableFloatStateOf(
-            if (sliderWidth > 0) {
-                startOffset + normalizedValue * (sliderWidth - startOffset * 2)
-            } else {
-                startOffset
-            },
-        )
-    }
-
+    var thumbX by remember { mutableFloatStateOf(startOffset) }
     var isDragging by remember { mutableStateOf(false) }
+
+    LaunchedEffect(normalizedValue, sliderWidth, startOffset) {
+        if (!isDragging && sliderWidth > 0) {
+            thumbX = startOffset + normalizedValue * (sliderWidth - startOffset * 2)
+        }
+    }
 
     Canvas(
         modifier = modifier
@@ -88,65 +86,31 @@ fun CustomSlider(
             .height(touchAreaSize)
             .clipToBounds()
             .pointerInput(enabled) {
-                if (enabled) {
-                    detectTapGestures(
-                        onPress = { offset ->
-                            isDragging = isPointInThumb(
-                                offset.x,
-                                offset.y,
-                                thumbX,
-                                size.height / 2f,
-                                touchRadius,
-                            )
-                        },
-                        onTap = { offset ->
-                            thumbX = offset.x.coerceIn(startOffset, sliderWidth - startOffset)
-                            val newNormalizedValue =
-                                if (sliderWidth > startOffset * 2) {
-                                    ((thumbX - startOffset) / (sliderWidth - 2 * startOffset))
-                                        .coerceIn(0f, 1f)
-                                } else {
-                                    0f
-                                }
-
-                            val newValue = minValue + newNormalizedValue * (maxValue - minValue)
-                            val finalValue = if (step > 0) {
-                                (newValue / step).roundToInt() * step
-                            } else {
-                                newValue
-                            }.coerceIn(minValue, maxValue)
-
-                            onValueChange(finalValue)
-                        },
-                    )
+                if (!enabled) return@pointerInput
+                detectHorizontalDragGestures(
+                    onDragStart = { offset ->
+                        isDragging = isPointInThumb(
+                            offset.x,
+                            offset.y,
+                            thumbX,
+                            size.height / 2f,
+                            touchRadius,
+                        )
+                    },
+                    onDragEnd = { isDragging = false },
+                    onDragCancel = { isDragging = false },
+                ) { _, dragAmount ->
+                    if (isDragging) {
+                        thumbX = (thumbX + dragAmount).coerceIn(startOffset, sliderWidth - startOffset)
+                        onValueChange(computeValue(thumbX, sliderWidth, startOffset, minValue, maxValue, step))
+                    }
                 }
             }
             .pointerInput(enabled) {
-                if (enabled) {
-                    detectHorizontalDragGestures(
-                        onDragEnd = { isDragging = false },
-                    ) { _, dragAmount ->
-                        if (isDragging) {
-                            thumbX += dragAmount
-                            thumbX = thumbX.coerceIn(startOffset, sliderWidth - startOffset)
-                            val newNormalizedValue =
-                                if (sliderWidth > startOffset * 2) {
-                                    ((thumbX - startOffset) / (sliderWidth - 2 * startOffset))
-                                        .coerceIn(0f, 1f)
-                                } else {
-                                    0f
-                                }
-
-                            val newValue = minValue + newNormalizedValue * (maxValue - minValue)
-                            val finalValue = if (step > 0) {
-                                (newValue / step).roundToInt() * step
-                            } else {
-                                newValue
-                            }.coerceIn(minValue, maxValue)
-
-                            onValueChange(finalValue)
-                        }
-                    }
+                if (!enabled) return@pointerInput
+                detectTapGestures { offset ->
+                    thumbX = offset.x.coerceIn(startOffset, sliderWidth - startOffset)
+                    onValueChange(computeValue(thumbX, sliderWidth, startOffset, minValue, maxValue, step))
                 }
             },
     ) {
@@ -182,6 +146,23 @@ fun CustomSlider(
             center = Offset(normalizedThumbX, canvasHeight / 2),
         )
     }
+}
+
+private fun computeValue(
+    x: Float,
+    sliderWidth: Float,
+    startOffset: Float,
+    minValue: Float,
+    maxValue: Float,
+    step: Float,
+): Float {
+    val newNorm = if (sliderWidth > startOffset * 2) {
+        ((x - startOffset) / (sliderWidth - 2 * startOffset)).coerceIn(0f, 1f)
+    } else {
+        0f
+    }
+    val raw = minValue + newNorm * (maxValue - minValue)
+    return if (step > 0) (raw / step).roundToInt() * step else raw
 }
 
 private fun isPointInThumb(

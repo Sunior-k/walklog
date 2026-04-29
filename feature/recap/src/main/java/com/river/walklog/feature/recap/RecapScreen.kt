@@ -783,9 +783,10 @@ private fun StreakSlide(recap: MonthlyRecap) {
 
 @Composable
 private fun StreakCheckGrid(streakDays: Int) {
-    val rows = List(size = (streakDays.coerceAtLeast(1) + 6) / 7) { rowIndex ->
+    val displayDays = if (streakDays > 0) streakDays else 7
+    val rows = List(size = (displayDays + 6) / 7) { rowIndex ->
         val start = rowIndex * 7
-        val end = minOf(start + 7, streakDays)
+        val end = minOf(start + 7, displayDays)
         start until end
     }
 
@@ -795,8 +796,8 @@ private fun StreakCheckGrid(streakDays: Int) {
     ) {
         rows.forEach { row ->
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                row.forEach { _ ->
-                    StreakCheckTile(checked = streakDays > 0)
+                row.forEach { dayIndex ->
+                    StreakCheckTile(checked = dayIndex < streakDays)
                 }
             }
         }
@@ -896,7 +897,7 @@ private fun PersonaSlide(recap: MonthlyRecap) {
 @Preview(name = "01", showBackground = true)
 @Composable
 private fun RecapOpeningPreview() {
-    PreviewRecapScreen(initialPage = 0)
+    PreviewRecapScreen(initialPage = 6)
 }
 
 @Composable
