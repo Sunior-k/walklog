@@ -10,5 +10,9 @@ interface UserSettingsRepository {
     suspend fun setDailyStepGoal(steps: Int)
     suspend fun setNotificationsEnabled(enabled: Boolean)
     suspend fun setRecoveryMissionSteps(steps: Int)
+    suspend fun setNickname(nickname: String)
+    suspend fun addPoints(delta: Int)
     suspend fun setThemeMode(themeMode: ThemeMode)
+    suspend fun setLastDailyMissionAwardedDate(date: String)
+    suspend fun setLastRecoveryMissionAwardedDate(date: String)
 }

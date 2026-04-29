@@ -18,5 +18,9 @@ class DataStoreUserSettingsRepository @Inject constructor(
     override suspend fun setDailyStepGoal(steps: Int) = dataSource.setDailyStepGoal(steps)
     override suspend fun setNotificationsEnabled(enabled: Boolean) = dataSource.setNotificationsEnabled(enabled)
     override suspend fun setRecoveryMissionSteps(steps: Int) = dataSource.setRecoveryMissionSteps(steps)
+    override suspend fun setNickname(nickname: String) = dataSource.setNickname(nickname)
+    override suspend fun addPoints(delta: Int) = dataSource.addPoints(delta)
     override suspend fun setThemeMode(themeMode: ThemeMode) = dataSource.setThemeMode(themeMode)
+    override suspend fun setLastDailyMissionAwardedDate(date: String) = dataSource.setLastDailyMissionAwardedDate(date)
+    override suspend fun setLastRecoveryMissionAwardedDate(date: String) = dataSource.setLastRecoveryMissionAwardedDate(date)
 }

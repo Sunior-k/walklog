@@ -19,11 +19,15 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.layout.isImeVisible
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -64,9 +68,12 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.river.walklog.core.designsystem.R
 import com.river.walklog.core.designsystem.component.CustomSlider
+import com.river.walklog.core.designsystem.component.NicknameTextField
 import com.river.walklog.core.designsystem.component.WalkLogLottie
 import com.river.walklog.core.designsystem.foundation.WalkLogColor
 import com.river.walklog.core.designsystem.foundation.WalkLogTheme
+
+private const val TOTAL_PAGES = 4
 
 private data class OnboardingPageConfig(
     val illustrationBg: Color,
@@ -78,6 +85,14 @@ private data class OnboardingPageConfig(
 )
 
 private val pageConfigs = listOf(
+    OnboardingPageConfig(
+        illustrationBg = WalkLogColor.PrimaryContainer,
+        accentColor = WalkLogColor.Primary,
+        lottieResId = R.raw.welcome,
+        headline = "어떻게 불러드릴까요?",
+        subtitle = "닉네임을 입력하면\n더 친근하게 인사할게요",
+        ctaText = "다음",
+    ),
     OnboardingPageConfig(
         illustrationBg = WalkLogColor.PrimaryContainer,
         accentColor = WalkLogColor.Primary,
@@ -150,7 +165,8 @@ fun OnboardingRoute(
         state = state,
         onClickNext = {
             when (state.currentPage) {
-                0 -> {
+                0 -> viewModel.handleIntent(OnboardingIntent.OnClickNext)
+                1 -> {
                     if (HealthConnectClient.getSdkStatus(context) == HealthConnectClient.SDK_AVAILABLE) {
                         healthPermissionsLauncher.launch(
                             setOf(
@@ -162,8 +178,8 @@ fun OnboardingRoute(
                         viewModel.handleIntent(OnboardingIntent.OnPermissionResult(false))
                     }
                 }
-                1 -> viewModel.handleIntent(OnboardingIntent.OnClickNext)
-                2 -> {
+                2 -> viewModel.handleIntent(OnboardingIntent.OnClickNext)
+                3 -> {
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
                         notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
                     } else {
@@ -172,6 +188,7 @@ fun OnboardingRoute(
                 }
             }
         },
+        onNicknameChanged = { viewModel.handleIntent(OnboardingIntent.OnNicknameChanged(it)) },
         onStepGoalChanged = { viewModel.handleIntent(OnboardingIntent.OnStepGoalChanged(it)) },
         onNotificationsToggled = { viewModel.handleIntent(OnboardingIntent.OnNotificationsToggled(it)) },
     )
@@ -181,15 +198,19 @@ fun OnboardingRoute(
 private fun OnboardingScreen(
     state: OnboardingState,
     onClickNext: () -> Unit,
+    onNicknameChanged: (String) -> Unit,
     onStepGoalChanged: (Int) -> Unit,
     onNotificationsToggled: (Boolean) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val pagerState = rememberPagerState(pageCount = { 3 })
+    val pagerState = rememberPagerState(pageCount = { TOTAL_PAGES })
 
     LaunchedEffect(state.currentPage) {
         pagerState.animateScrollToPage(state.currentPage)
     }
+
+    val isNextEnabled = !state.isCompleting &&
+        (state.currentPage != 0 || state.nickname.isNotBlank())
 
     Column(
         modifier = modifier
@@ -197,7 +218,6 @@ private fun OnboardingScreen(
             .background(Color.White)
             .statusBarsPadding(),
     ) {
-        // 페이지 컨텐츠
         HorizontalPager(
             state = pagerState,
             userScrollEnabled = false,
@@ -209,6 +229,7 @@ private fun OnboardingScreen(
                 page = page,
                 config = pageConfigs[page],
                 state = state,
+                onNicknameChanged = onNicknameChanged,
                 onStepGoalChanged = onStepGoalChanged,
                 onNotificationsToggled = onNotificationsToggled,
             )
@@ -219,13 +240,14 @@ private fun OnboardingScreen(
                 .fillMaxWidth()
                 .background(Color.White)
                 .navigationBarsPadding()
+                .imePadding()
                 .padding(horizontal = 24.dp)
                 .padding(bottom = 16.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             Button(
                 onClick = onClickNext,
-                enabled = !state.isCompleting,
+                enabled = isNextEnabled,
                 shape = RoundedCornerShape(14.dp),
                 colors = ButtonDefaults.buttonColors(
                     containerColor = WalkLogColor.Primary,
@@ -254,11 +276,13 @@ private fun OnboardingScreen(
     }
 }
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun OnboardingPage(
     page: Int,
     config: OnboardingPageConfig,
     state: OnboardingState,
+    onNicknameChanged: (String) -> Unit,
     onStepGoalChanged: (Int) -> Unit,
     onNotificationsToggled: (Boolean) -> Unit,
     modifier: Modifier = Modifier,
@@ -274,193 +298,210 @@ private fun OnboardingPage(
         label = "pulse",
     )
 
+    val hideIllustration = page == 0 && WindowInsets.isImeVisible
+
     Column(modifier = modifier.fillMaxSize()) {
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .weight(0.55f)
-                .background(config.illustrationBg),
-            contentAlignment = Alignment.Center,
-        ) {
-            // 소프트 blob
-            Canvas(Modifier.fillMaxSize()) {
-                drawCircle(
-                    color = config.accentColor.copy(alpha = 0.11f),
-                    radius = size.width * 0.52f * pulseScale,
-                    center = Offset(size.width * 0.90f, size.height * 0.10f),
-                )
-                drawCircle(
-                    color = config.accentColor.copy(alpha = 0.07f),
-                    radius = size.width * 0.40f,
-                    center = Offset(size.width * 0.06f, size.height * 0.90f),
-                )
-                drawCircle(
-                    color = config.accentColor.copy(alpha = 0.50f),
-                    radius = 8.dp.toPx() * pulseScale,
-                    center = Offset(size.width * 0.16f, size.height * 0.20f),
-                )
-                drawCircle(
-                    color = config.accentColor.copy(alpha = 0.35f),
-                    radius = 6.dp.toPx(),
-                    center = Offset(size.width * 0.84f, size.height * 0.74f),
-                )
-                drawCircle(
-                    color = config.accentColor.copy(alpha = 0.55f),
-                    radius = 5.dp.toPx() * (1f + (pulseScale - 1f) * 0.5f),
-                    center = Offset(size.width * 0.66f, size.height * 0.13f),
-                )
-            }
-
+        if (!hideIllustration) {
             Box(
                 modifier = Modifier
-                    .align(Alignment.TopEnd)
-                    .padding(20.dp)
-                    .clip(RoundedCornerShape(50))
-                    .background(config.accentColor.copy(alpha = 0.12f))
-                    .padding(horizontal = 12.dp, vertical = 6.dp),
-            ) {
-                Text(
-                    text = "0${page + 1} / 03",
-                    style = WalkLogTheme.typography.typography7SB,
-                    color = config.accentColor,
-                )
-            }
-
-            Box(
-                modifier = Modifier
-                    .size(120.dp)
-                    .shadow(
-                        elevation = 20.dp,
-                        shape = RoundedCornerShape(28.dp),
-                        clip = false,
-                        ambientColor = config.accentColor.copy(alpha = 0.2f),
-                        spotColor = config.accentColor.copy(alpha = 0.3f),
-                    )
-                    .clip(RoundedCornerShape(28.dp))
-                    .background(Color.White),
+                    .fillMaxWidth()
+                    .weight(0.55f)
+                    .background(config.illustrationBg),
                 contentAlignment = Alignment.Center,
             ) {
-                WalkLogLottie(
-                    resId = config.lottieResId,
+                // 소프트 blob
+                Canvas(Modifier.fillMaxSize()) {
+                    drawCircle(
+                        color = config.accentColor.copy(alpha = 0.11f),
+                        radius = size.width * 0.52f * pulseScale,
+                        center = Offset(size.width * 0.90f, size.height * 0.10f),
+                    )
+                    drawCircle(
+                        color = config.accentColor.copy(alpha = 0.07f),
+                        radius = size.width * 0.40f,
+                        center = Offset(size.width * 0.06f, size.height * 0.90f),
+                    )
+                    drawCircle(
+                        color = config.accentColor.copy(alpha = 0.50f),
+                        radius = 8.dp.toPx() * pulseScale,
+                        center = Offset(size.width * 0.16f, size.height * 0.20f),
+                    )
+                    drawCircle(
+                        color = config.accentColor.copy(alpha = 0.35f),
+                        radius = 6.dp.toPx(),
+                        center = Offset(size.width * 0.84f, size.height * 0.74f),
+                    )
+                    drawCircle(
+                        color = config.accentColor.copy(alpha = 0.55f),
+                        radius = 5.dp.toPx() * (1f + (pulseScale - 1f) * 0.5f),
+                        center = Offset(size.width * 0.66f, size.height * 0.13f),
+                    )
+                }
+
+                Box(
                     modifier = Modifier
-                        .fillMaxSize()
-                        .padding(8.dp),
-                )
+                        .align(Alignment.TopEnd)
+                        .padding(20.dp)
+                        .clip(RoundedCornerShape(50))
+                        .background(config.accentColor.copy(alpha = 0.12f))
+                        .padding(horizontal = 12.dp, vertical = 6.dp),
+                ) {
+                    Text(
+                        text = "0${page + 1} / 0$TOTAL_PAGES",
+                        style = WalkLogTheme.typography.typography7SB,
+                        color = config.accentColor,
+                    )
+                }
+
+                Box(
+                    modifier = Modifier
+                        .size(120.dp)
+                        .shadow(
+                            elevation = 20.dp,
+                            shape = RoundedCornerShape(28.dp),
+                            clip = false,
+                            ambientColor = config.accentColor.copy(alpha = 0.2f),
+                            spotColor = config.accentColor.copy(alpha = 0.3f),
+                        )
+                        .clip(RoundedCornerShape(28.dp))
+                        .background(Color.White),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    WalkLogLottie(
+                        resId = config.lottieResId,
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(8.dp),
+                    )
+                }
             }
         }
 
-        Column(
+        Box(
             modifier = Modifier
                 .fillMaxWidth()
                 .weight(0.45f)
-                .background(Color.White)
-                .padding(horizontal = 28.dp)
-                .padding(top = 32.dp),
+                .background(Color.White),
         ) {
-            Text(
-                text = config.headline,
-                style = WalkLogTheme.typography.subTypography2B,
-                color = WalkLogColor.TextPrimary,
-            )
-
-            Spacer(Modifier.height(12.dp))
-
-            Text(
-                text = config.subtitle,
-                style = WalkLogTheme.typography.typography6R,
-                color = WalkLogColor.TextSecondary,
-                lineHeight = 22.sp,
-            )
-
-            if (page == 1) {
-                Spacer(Modifier.height(20.dp))
-                Row(verticalAlignment = Alignment.Bottom) {
-                    Text(
-                        text = "%,d".format(state.dailyStepGoal),
-                        fontSize = 40.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = WalkLogColor.Primary,
-                    )
-                    Spacer(Modifier.width(6.dp))
-                    Text(
-                        text = "보",
-                        style = WalkLogTheme.typography.typography5M,
-                        color = WalkLogColor.Primary,
-                        modifier = Modifier.padding(bottom = 4.dp),
-                    )
-                }
-                Spacer(Modifier.height(12.dp))
-                CustomSlider(
-                    value = state.dailyStepGoal.toFloat(),
-                    onValueChange = { onStepGoalChanged(it.toInt()) },
-                    minValue = 5_000f,
-                    maxValue = 20_000f,
-                    step = 500f,
-                    thumbColor = WalkLogColor.Primary,
-                    activeBarColor = WalkLogColor.Primary,
-                    inactiveBarColor = WalkLogColor.Gray200,
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 28.dp)
+                    .padding(top = 32.dp),
+            ) {
+                Text(
+                    text = config.headline,
+                    style = WalkLogTheme.typography.subTypography2B,
+                    color = WalkLogColor.TextPrimary,
                 )
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                ) {
-                    Text(
-                        text = "5,000",
-                        style = WalkLogTheme.typography.subTypography12R,
-                        color = WalkLogColor.TextSecondary,
-                    )
-                    Text(
-                        text = "20,000",
-                        style = WalkLogTheme.typography.subTypography12R,
-                        color = WalkLogColor.TextSecondary,
+
+                Spacer(Modifier.height(12.dp))
+
+                Text(
+                    text = config.subtitle,
+                    style = WalkLogTheme.typography.typography6R,
+                    color = WalkLogColor.TextSecondary,
+                    lineHeight = 22.sp,
+                )
+
+                if (page == 0) {
+                    NicknameTextField(
+                        nickname = state.nickname,
+                        onNicknameChanged = onNicknameChanged,
+                        modifier = Modifier.padding(top = 24.dp),
                     )
                 }
-            }
 
-            if (page == 2) {
-                Spacer(Modifier.height(20.dp))
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clip(RoundedCornerShape(12.dp))
-                        .background(WalkLogColor.Gray50)
-                        .border(
-                            width = 1.dp,
-                            color = WalkLogColor.Gray100,
-                            shape = RoundedCornerShape(12.dp),
-                        )
-                        .padding(horizontal = 16.dp, vertical = 14.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    Column(modifier = Modifier.weight(1f)) {
+                if (page == 2) {
+                    Spacer(Modifier.height(20.dp))
+                    Row(verticalAlignment = Alignment.Bottom) {
                         Text(
-                            text = if (state.notificationsEnabled) "알림 켜기" else "알림 끄기",
-                            style = WalkLogTheme.typography.typography6SB,
-                            color = WalkLogColor.TextPrimary,
+                            text = "%,d".format(state.dailyStepGoal),
+                            fontSize = 40.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = WalkLogColor.Primary,
                         )
-                        Spacer(Modifier.height(2.dp))
+                        Spacer(Modifier.width(6.dp))
                         Text(
-                            text = if (state.notificationsEnabled) {
-                                "맞춤 걷기 알림을 받아요"
-                            } else {
-                                "설정에서 언제든지 변경할 수 있어요"
-                            },
+                            text = "보",
+                            style = WalkLogTheme.typography.typography5M,
+                            color = WalkLogColor.Primary,
+                            modifier = Modifier.padding(bottom = 4.dp),
+                        )
+                    }
+                    Spacer(Modifier.height(12.dp))
+                    CustomSlider(
+                        value = state.dailyStepGoal.toFloat(),
+                        onValueChange = { onStepGoalChanged(it.toInt()) },
+                        minValue = 5_000f,
+                        maxValue = 20_000f,
+                        step = 500f,
+                        thumbColor = WalkLogColor.Primary,
+                        activeBarColor = WalkLogColor.Primary,
+                        inactiveBarColor = WalkLogColor.Gray200,
+                    )
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                    ) {
+                        Text(
+                            text = "5,000",
+                            style = WalkLogTheme.typography.subTypography12R,
+                            color = WalkLogColor.TextSecondary,
+                        )
+                        Text(
+                            text = "20,000",
                             style = WalkLogTheme.typography.subTypography12R,
                             color = WalkLogColor.TextSecondary,
                         )
                     }
-                    Spacer(Modifier.width(12.dp))
-                    Switch(
-                        checked = state.notificationsEnabled,
-                        onCheckedChange = onNotificationsToggled,
-                        colors = SwitchDefaults.colors(
-                            checkedThumbColor = WalkLogColor.StaticWhite,
-                            checkedTrackColor = WalkLogColor.Primary,
-                            uncheckedThumbColor = WalkLogColor.StaticWhite,
-                            uncheckedTrackColor = WalkLogColor.Gray300,
-                        ),
-                    )
+                }
+
+                if (page == 3) {
+                    Spacer(Modifier.height(20.dp))
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(12.dp))
+                            .background(WalkLogColor.Gray50)
+                            .border(
+                                width = 1.dp,
+                                color = WalkLogColor.Gray100,
+                                shape = RoundedCornerShape(12.dp),
+                            )
+                            .padding(horizontal = 16.dp, vertical = 14.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                text = if (state.notificationsEnabled) "알림 켜기" else "알림 끄기",
+                                style = WalkLogTheme.typography.typography6SB,
+                                color = WalkLogColor.TextPrimary,
+                            )
+                            Spacer(Modifier.height(2.dp))
+                            Text(
+                                text = if (state.notificationsEnabled) {
+                                    "맞춤 걷기 알림을 받아요"
+                                } else {
+                                    "설정에서 언제든지 변경할 수 있어요"
+                                },
+                                style = WalkLogTheme.typography.subTypography12R,
+                                color = WalkLogColor.TextSecondary,
+                            )
+                        }
+                        Spacer(Modifier.width(12.dp))
+                        Switch(
+                            checked = state.notificationsEnabled,
+                            onCheckedChange = onNotificationsToggled,
+                            colors = SwitchDefaults.colors(
+                                checkedThumbColor = WalkLogColor.StaticWhite,
+                                checkedTrackColor = WalkLogColor.Primary,
+                                uncheckedThumbColor = WalkLogColor.StaticWhite,
+                                uncheckedTrackColor = WalkLogColor.Gray300,
+                            ),
+                        )
+                    }
                 }
             }
         }
@@ -475,9 +516,10 @@ private fun OnboardingScreenPreview() {
         OnboardingScreen(
             state = state,
             onClickNext = {
-                val next = (state.currentPage + 1) % 3
+                val next = (state.currentPage + 1) % TOTAL_PAGES
                 state = state.copy(currentPage = next)
             },
+            onNicknameChanged = { state = state.copy(nickname = it) },
             onStepGoalChanged = { state = state.copy(dailyStepGoal = it) },
             onNotificationsToggled = { state = state.copy(notificationsEnabled = it) },
         )
