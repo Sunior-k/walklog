@@ -22,7 +22,7 @@
 ## 1. 온보딩 — 최초 설정
 
 앱을 처음 실행하면 4단계 온보딩을 거칩니다. 각 페이지에 Lottie 애니메이션을 배치해 딱딱하지 않게 설정을 안내합니다.
-<video src="https://github.com/Sunior-k/walklog/raw/main/docs/records/onboarding.mp4" controls width="300"></video>
+<video src="https://github.com/user-attachments/assets/0a4f5a20-84c7-4a9b-8e43-be2aa9971536" controls width="300"></video>
 
 ### Page 0 — 닉네임 입력
 
@@ -44,7 +44,7 @@
 
 ## 2. 홈 화면 — 오늘의 걷기 현황
 
-<video src="https://github.com/Sunior-k/walklog/raw/main/docs/records/home_scroll.mp4" controls width="300"></video>
+<video src="https://github.com/user-attachments/assets/f0b097c2-709b-491f-bc81-533d4e68211b" controls width="300"></video>
 
 홈 화면은 오늘의 걷기 상태를 한눈에 보여주는 대시보드입니다.
 
@@ -73,7 +73,7 @@
 
 ## 3. 미션 화면 — 오늘의 목표
 
-<video src="https://github.com/Sunior-k/walklog/raw/main/docs/records/mission.mp4" controls width="300"></video>
+<video src="https://github.com/user-attachments/assets/80615d15-a408-48ae-9da8-f76dd37a139a" controls width="300"></video>
 
 오늘 달성해야 할 걸음 수 목표와 달성 현황을 카드로 보여줍니다.
 
@@ -90,7 +90,7 @@
 
 ## 4. 주간 리포트 — 아카이브 & 상세
 
-<video src="https://github.com/Sunior-k/walklog/raw/main/docs/records/weekly_report.mp4" controls width="300"></video>
+<video src="https://github.com/user-attachments/assets/34f5408a-a072-4eb0-b41b-701801ab9d5b" controls width="300"></video>
 
 최근 12주의 걷기 기록을 카드 목록으로 모아볼 수 있습니다.
 
@@ -106,7 +106,7 @@
 
 ## 5. 월간 기록 — 달력 뷰
 
-<video src="https://github.com/Sunior-k/walklog/raw/main/docs/records/history.mp4" controls width="300"></video>
+<video src="https://github.com/user-attachments/assets/de24b6d3-4fdb-45f9-b455-0a524b6437fd" controls width="300"></video>
 
 한 달 단위 캘린더로 날짜별 걸음 수를 시각화합니다. 좌우 스와이프로 월을 이동할 수 있습니다.
 
@@ -125,7 +125,7 @@
 
 ## 6. 월간 리캡 — 스토리 요약
 
-<video src="https://github.com/Sunior-k/walklog/raw/main/docs/records/recap.mp4" controls width="300"></video>
+<video src="https://github.com/user-attachments/assets/dcd878f8-d4a2-4199-96fa-7bae0fe4d2d8" controls width="300"></video>
 
 홈 화면의 리캡 카드를 탭하면 지난달 걷기 활동을 Instagram Stories 형식 8장 슬라이드로 요약해 보여줍니다.
 
@@ -148,7 +148,7 @@
 
 ## 7. 걷기 예보 — 피크아워 알림
 
-<video src="https://github.com/Sunior-k/walklog/raw/main/docs/records/walking_forecast.mp4" controls width="300"></video>
+<video src="https://github.com/user-attachments/assets/11b4d70f-3bdb-4ee3-87a6-ec3e9cf002aa" controls width="300"></video>
 
 과거 7일간의 시간대별 걷기 패턴을 분석해 사용자가 가장 잘 걷는 시간대(피크아워)를 파악하고, 그 시간에 맞춰 알림을 보냅니다.
 
@@ -163,7 +163,7 @@
 
 ## 8. 설정 — 닉네임 & 포인트
 
-<video src="https://github.com/Sunior-k/walklog/raw/main/docs/records/settings.mp4" controls width="300"></video>
+<video src="https://github.com/user-attachments/assets/f7a02b39-bb57-486a-be53-4f94f23b3158" controls width="300"></video>
 
 ### 프로필 섹션
 
@@ -183,7 +183,7 @@
 
 ## 9. 홈 위젯
 
-<video src="https://github.com/Sunior-k/walklog/raw/main/docs/records/widget.mp4" controls width="300"></video>
+<video src="https://github.com/user-attachments/assets/a14c7482-abe4-4e06-8212-dd79b2c56d27" controls width="300"></video>
 
 앱을 열지 않고도 오늘 걸음 수와 미션 진행 상태를 홈 화면에서 확인할 수 있습니다.
 
@@ -198,7 +198,7 @@
 
 ## 10. 리워드 — 보상 시스템 (예정)
 
-<video src="https://github.com/Sunior-k/walklog/raw/main/docs/records/reward.mp4" controls width="300"></video>
+<video src="https://github.com/user-attachments/assets/6212c039-a980-411a-a363-63c0b776fed1" controls width="300"></video>
 
 바텀 내비게이션의 리워드 탭에서 접근합니다. 현재는 티저 화면으로, 앞으로 추가될 기능을 미리보기 카드로 안내합니다.
 
