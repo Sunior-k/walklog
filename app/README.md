@@ -25,6 +25,7 @@ graph TB
     :feature:onboarding[onboarding]:::android-feature
     :feature:settings[settings]:::android-feature
     :feature:widget[widget]:::android-feature
+    :feature:reward[reward]:::android-feature
   end
 
   subgraph :core
@@ -33,6 +34,7 @@ graph TB
     :core:data[data]:::android-library
     :core:database[database]:::android-library
     :core:datastore[datastore]:::android-library
+    :core:native[native]:::android-library
     :core:common[common]:::jvm-library
     :core:model[model]:::jvm-library
     :core:analytics[analytics]:::android-library
@@ -47,14 +49,15 @@ graph TB
   :app -.-> :feature:onboarding
   :app -.-> :feature:settings
   :app -.-> :feature:widget
+  :app -.-> :feature:reward
   :app -.-> :core:analytics
   :app -.-> :core:data
-  :app -.-> :core:database
-  :app -.-> :core:datastore
   :app -.-> :core:designsystem
 
   :feature:home -.-> :core:domain
-  :feature:mission -.-> :core:domain
+  :feature:home -.-> :core:native
+  :feature:mission -.-> :core:data
+  :feature:mission -.-> :core:native
   :feature:recap -.-> :core:domain
   :feature:report -.-> :core:domain
   :feature:history -.-> :core:domain
@@ -64,8 +67,10 @@ graph TB
 
   :core:domain --> :core:data
   :core:domain --> :core:model
-  :core:data --> :core:database
-  :core:data --> :core:datastore
+  :core:native --> :core:common
+  :core:data --> :core:model
+  :core:data -.-> :core:database
+  :core:data -.-> :core:datastore
   :core:data -.-> :core:common
   :core:database --> :core:model
   :core:datastore --> :core:model

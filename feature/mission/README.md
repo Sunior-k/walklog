@@ -26,21 +26,22 @@ graph TB
 
   subgraph :core
     direction TB
-    :core:domain[domain]:::android-library
     :core:data[data]:::android-library
     :core:database[database]:::android-library
     :core:datastore[datastore]:::android-library
+    :core:native[native]:::android-library
     :core:common[common]:::jvm-library
     :core:model[model]:::jvm-library
     :core:analytics[analytics]:::android-library
   end
 
-  :feature:mission -.-> :core:domain
+  :feature:mission -.-> :core:data
   :feature:mission -.-> :core:analytics
-  :core:domain --> :core:data
-  :core:domain --> :core:model
-  :core:data --> :core:database
-  :core:data --> :core:datastore
+  :feature:mission -.-> :core:native
+  :core:native --> :core:common
+  :core:data --> :core:model
+  :core:data -.-> :core:database
+  :core:data -.-> :core:datastore
   :core:data -.-> :core:common
   :core:database --> :core:model
   :core:datastore --> :core:model

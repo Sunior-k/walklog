@@ -16,26 +16,6 @@ graph TB
     :feature:reward[reward]:::android-feature
   end
 
-  subgraph :core
-    direction TB
-    :core:domain[domain]:::android-library
-    :core:data[data]:::android-library
-    :core:database[database]:::android-library
-    :core:datastore[datastore]:::android-library
-    :core:common[common]:::jvm-library
-    :core:model[model]:::jvm-library
-  end
-
-  :feature:reward -.-> :core:domain
-  :feature:reward -.-> :core:common
-  :core:domain --> :core:data
-  :core:domain --> :core:model
-  :core:data --> :core:database
-  :core:data --> :core:datastore
-  :core:data -.-> :core:common
-  :core:database --> :core:model
-  :core:datastore --> :core:model
-
 classDef android-application fill:#CAFFBF,stroke:#000,stroke-width:2px,color:#000;
 classDef android-feature fill:#FFD6A5,stroke:#000,stroke-width:2px,color:#000;
 classDef android-library fill:#9BF6FF,stroke:#000,stroke-width:2px,color:#000;

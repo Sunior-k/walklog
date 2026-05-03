@@ -2,24 +2,53 @@
 
 온디바이스 분석 엔진 모듈. JNI/NDK 기반 C++ Walking Insights 엔진과 LiteRT 기반 Activity Classifier를 제공합니다.
 
-## Module Graph
+## Module dependency graph
 
+<!--region graph-->
 ```mermaid
-graph TD
-  subgraph core:native
-    N[WalkingInsightsEngine]
-    A[ActivityClassifier]
+---
+config:
+  layout: elk
+  elk:
+    nodePlacementStrategy: SIMPLE
+---
+graph TB
+  subgraph :core
+    direction TB
+    :core:native[native]:::android-library
+    :core:common[common]:::jvm-library
   end
 
-  N -..->|JNI| L[libwalking_insights.so]
-  A -..->|LiteRT| M[activity_classifier.tflite]
+  :core:native --> :core:common
 
-  F1[:feature:forecast] -.-> N
-  F2[:feature:home]     -.-> N & A
-  F3[:feature:mission]  -.-> N
+classDef android-application fill:#CAFFBF,stroke:#000,stroke-width:2px,color:#000;
+classDef android-feature fill:#FFD6A5,stroke:#000,stroke-width:2px,color:#000;
+classDef android-library fill:#9BF6FF,stroke:#000,stroke-width:2px,color:#000;
+classDef android-test fill:#A0C4FF,stroke:#000,stroke-width:2px,color:#000;
+classDef jvm-library fill:#BDB2FF,stroke:#000,stroke-width:2px,color:#000;
 ```
 
-실선 `-->` = `api()`, 점선 `-.->` = `implementation()`
+<details><summary>📋 Graph legend</summary>
+
+```mermaid
+graph TB
+  application[application]:::android-application
+  feature[feature]:::android-feature
+  library[library]:::android-library
+  test[test]:::android-test
+  jvm[jvm]:::jvm-library
+
+classDef android-application fill:#CAFFBF,stroke:#000,stroke-width:2px,color:#000;
+classDef android-feature fill:#FFD6A5,stroke:#000,stroke-width:2px,color:#000;
+classDef android-library fill:#9BF6FF,stroke:#000,stroke-width:2px,color:#000;
+classDef android-test fill:#A0C4FF,stroke:#000,stroke-width:2px,color:#000;
+classDef jvm-library fill:#BDB2FF,stroke:#000,stroke-width:2px,color:#000;
+```
+
+</details>
+
+Arrow legend: `-->` = `api()` &nbsp;·&nbsp; `-.->` = `implementation()`
+<!--endregion-->
 
 ## 구성 요소
 
