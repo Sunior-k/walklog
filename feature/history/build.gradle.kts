@@ -15,7 +15,6 @@ android {
 
 dependencies {
     implementation(projects.core.domain)
-    implementation(projects.core.common)
     implementation(projects.core.analytics)
     implementation(libs.androidx.constraintlayout)
     implementation(libs.androidx.recyclerview)

@@ -3,7 +3,6 @@ import com.google.firebase.crashlytics.buildtools.gradle.CrashlyticsExtension
 plugins {
     id("river.android.application")
     id("river.android.compose")
-    alias(libs.plugins.android.application)
     alias(libs.plugins.google.services)
     alias(libs.plugins.firebase.crashlytics)
     alias(libs.plugins.baselineprofile)
@@ -76,8 +75,6 @@ dependencies {
     // Core modules (for DI wiring at app level)
     implementation(projects.core.analytics)
     implementation(projects.core.data)
-    implementation(projects.core.database)
-    implementation(projects.core.datastore)
     implementation(projects.core.designsystem)
 
     // Material (BottomNavigationView)

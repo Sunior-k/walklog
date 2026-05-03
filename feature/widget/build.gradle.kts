@@ -9,7 +9,7 @@ android {
 }
 
 dependencies {
-    implementation(projects.core.data)
+    implementation(projects.core.domain)
 
     // Glance AppWidget
     implementation(libs.androidx.glance.appwidget)
