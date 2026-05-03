@@ -20,7 +20,8 @@ android {
 
     buildTypes {
         getByName("debug") {
-            // Debug 빌드: Crashlytics 매핑 파일 생성 비활성화
+            applicationIdSuffix = ".debug"
+            versionNameSuffix = "-debug"
             configure<CrashlyticsExtension> {
                 mappingFileUploadEnabled = false
             }
