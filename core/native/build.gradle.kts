@@ -2,6 +2,7 @@ import com.river.walklog.setNamespace
 
 plugins {
     id("river.android.library")
+    id("river.android.hilt")
 }
 
 android {
@@ -24,7 +25,7 @@ android {
 }
 
 dependencies {
-    implementation(projects.core.common)
+    api(projects.core.common)
     implementation(libs.litert)
     implementation(libs.litert.support)
 }
