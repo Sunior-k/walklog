@@ -69,6 +69,35 @@ fun RecapScreen(
     initialPage: Int = 0,
     autoAdvance: Boolean = true,
 ) {
+    if (state.isError) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(RecapColors.LoadingBackground),
+            contentAlignment = Alignment.Center,
+        ) {
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(16.dp),
+            ) {
+                Text(
+                    text = "리캡을 불러올 수 없어요",
+                    style = WalkLogTheme.typography.typography4SB,
+                    color = WalkLogColor.StaticWhite,
+                    textAlign = TextAlign.Center,
+                )
+                IconButton(onClick = onClose) {
+                    Icon(
+                        imageVector = ImageVector.vectorResource(R.drawable.ic_close),
+                        contentDescription = "닫기",
+                        tint = WalkLogColor.StaticWhite,
+                    )
+                }
+            }
+        }
+        return
+    }
+
     if (state.isLoading || state.recap == null) {
         Box(
             modifier = Modifier

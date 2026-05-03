@@ -7,6 +7,7 @@ import com.river.walklog.core.model.MonthlyRecap
 data class RecapState(
     val isLoading: Boolean = true,
     val recap: MonthlyRecap? = null,
+    val isError: Boolean = false,
 )
 
 sealed interface RecapIntent {

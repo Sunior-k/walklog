@@ -34,7 +34,10 @@ class RecapViewModel @Inject constructor(
     fun loadRecap(year: Int, month: Int) {
         getMonthlyRecap(year, month)
             .onEach { recap -> _state.update { it.copy(isLoading = false, recap = recap) } }
-            .catch { e -> crashReporter.recordException(e) }
+            .catch { e ->
+                crashReporter.recordException(e)
+                _state.update { it.copy(isLoading = false, isError = true) }
+            }
             .launchIn(viewModelScope)
     }
 
