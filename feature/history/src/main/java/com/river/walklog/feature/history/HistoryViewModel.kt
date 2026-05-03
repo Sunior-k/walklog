@@ -4,8 +4,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.river.walklog.core.analytics.CrashKeys
 import com.river.walklog.core.analytics.CrashReporter
+import com.river.walklog.core.data.repository.UserSettingsRepository
 import com.river.walklog.core.domain.usecase.GetMonthlyRecapUseCase
-import com.river.walklog.core.domain.usecase.GetUserSettingsUseCase
 import com.river.walklog.core.model.DailyStepCount
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
@@ -33,7 +33,7 @@ private const val KILOMETERS_PER_STEP = 0.00075f
 @HiltViewModel
 class HistoryViewModel @Inject constructor(
     private val getMonthlyRecap: GetMonthlyRecapUseCase,
-    private val getUserSettings: GetUserSettingsUseCase,
+    private val userSettingsRepository: UserSettingsRepository,
     private val crashReporter: CrashReporter,
 ) : ViewModel() {
 
@@ -95,7 +95,7 @@ class HistoryViewModel @Inject constructor(
         }
         collectJob = getMonthlyRecap(yearMonth.year, yearMonth.monthValue)
             .onEach { recap ->
-                val targetSteps = getUserSettings().first().dailyStepGoal
+                val targetSteps = userSettingsRepository.settings.first().dailyStepGoal
                 val dailyCounts = recap.dailyCounts
                 val selectedDateEpochDay = _state.value.selectedDateEpochDay
                 val calendarItems = buildCalendarItems(

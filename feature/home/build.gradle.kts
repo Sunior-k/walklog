@@ -10,7 +10,6 @@ android {
 
 dependencies {
     implementation(projects.core.domain)
-    implementation(projects.core.common)
     implementation(projects.core.analytics)
     implementation(projects.core.native)
     implementation(libs.androidx.health.connect)

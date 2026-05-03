@@ -1,4 +1,3 @@
-import com.river.walklog.configureHiltAndroid
 import com.river.walklog.configureKotlinAndroid
 
 plugins {
@@ -6,4 +5,3 @@ plugins {
 }
 
 configureKotlinAndroid()
-configureHiltAndroid()

@@ -3,6 +3,7 @@ import java.util.Properties
 
 plugins {
     id("river.android.library")
+    id("river.android.hilt")
     id("river.android.test")
 }
 

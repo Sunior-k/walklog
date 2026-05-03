@@ -33,8 +33,9 @@ graph TB
   :feature:widget -.-> :core:analytics
   :core:domain --> :core:data
   :core:domain --> :core:model
-  :core:data --> :core:database
-  :core:data --> :core:datastore
+  :core:data --> :core:model
+  :core:data -.-> :core:database
+  :core:data -.-> :core:datastore
   :core:data -.-> :core:common
   :core:database --> :core:model
   :core:datastore --> :core:model

@@ -2,7 +2,7 @@ package com.river.walklog.core.engine
 
 import android.content.Context
 import com.river.walklog.core.common.ActivityStateProvider
-import kotlinx.coroutines.Dispatchers
+import com.river.walklog.core.common.dispatcher.WalkLogDispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -32,6 +32,7 @@ import java.io.Closeable
 class ActivityClassifier(
     context: Context,
     private val sensorCollector: ActivitySensorCollector,
+    private val dispatchers: WalkLogDispatchers,
 ) : ActivityStateProvider, Closeable {
 
     private val interpreter: Interpreter? = runCatching {
@@ -53,7 +54,7 @@ class ActivityClassifier(
         sensorCollector.observeWindows()
             .map { window -> classify(window) }
             .onEach { state -> _isStationary.value = state == ActivityState.STATIONARY }
-            .flowOn(Dispatchers.Default)
+            .flowOn(dispatchers.default)
 
     /**
      * Classifies the current activity from a sliding sensor window.

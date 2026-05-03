@@ -1,6 +1,5 @@
 package com.river.walklog.core.data.di
 
-import com.river.walklog.core.common.dispatcher.WalkLogDispatchers
 import com.river.walklog.core.data.repository.DataStoreUserSettingsRepository
 import com.river.walklog.core.data.repository.KmaWeatherRepository
 import com.river.walklog.core.data.repository.OfflineFirstStepRepository
@@ -14,7 +13,6 @@ import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
-import kotlinx.coroutines.Dispatchers
 import javax.inject.Singleton
 
 @Module
@@ -34,14 +32,6 @@ abstract class DataModule {
     abstract fun bindWeatherRepository(impl: KmaWeatherRepository): WeatherRepository
 
     companion object {
-        @Provides
-        @Singleton
-        fun provideWalkLogDispatchers(): WalkLogDispatchers = WalkLogDispatchers(
-            io = Dispatchers.IO,
-            default = Dispatchers.Default,
-            main = Dispatchers.Main,
-        )
-
         @Provides
         @Singleton
         fun provideWeatherLocationProvider(): WeatherLocationProvider = DefaultWeatherLocationProvider()

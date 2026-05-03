@@ -2,6 +2,7 @@ package com.river.walklog.core.engine.di
 
 import android.content.Context
 import com.river.walklog.core.common.ActivityStateProvider
+import com.river.walklog.core.common.dispatcher.WalkLogDispatchers
 import com.river.walklog.core.engine.ActivityClassifier
 import com.river.walklog.core.engine.ActivitySensorCollector
 import com.river.walklog.core.engine.WalkingInsightsEngine
@@ -25,7 +26,8 @@ object NativeEngineModule {
     fun provideActivityClassifier(
         @ApplicationContext context: Context,
         sensorCollector: ActivitySensorCollector,
-    ): ActivityClassifier = ActivityClassifier(context, sensorCollector)
+        dispatchers: WalkLogDispatchers,
+    ): ActivityClassifier = ActivityClassifier(context, sensorCollector, dispatchers)
 
     @Provides
     @Singleton

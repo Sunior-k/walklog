@@ -1,8 +1,8 @@
 package com.river.walklog.core.network
 
+import com.river.walklog.core.common.dispatcher.WalkLogDispatchers
 import com.river.walklog.core.network.model.NetworkWeatherCondition
 import com.river.walklog.core.network.model.NetworkWeatherSummary
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.OkHttpClient
@@ -12,13 +12,14 @@ import javax.inject.Inject
 
 class KmaWeatherNetworkDataSource @Inject constructor(
     private val okHttpClient: OkHttpClient,
+    private val dispatchers: WalkLogDispatchers,
 ) : WeatherNetworkDataSource {
 
     override suspend fun getCurrentWeather(
         nx: Int,
         ny: Int,
         locationName: String,
-    ): NetworkWeatherSummary = withContext(Dispatchers.IO) {
+    ): NetworkWeatherSummary = withContext(dispatchers.io) {
         val serviceKey = BuildConfig.KMA_SERVICE_KEY
         if (serviceKey.isBlank()) return@withContext NetworkWeatherSummary.unavailable(locationName)
 

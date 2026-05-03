@@ -22,16 +22,16 @@ import kotlin.test.assertTrue
 class OnboardingViewModelTest {
 
     private val testDispatcher = UnconfinedTestDispatcher()
-    private lateinit var repository: UserSettingsRepository
+    private lateinit var userSettingsRepository: UserSettingsRepository
     private lateinit var crashReporter: CrashReporter
     private lateinit var viewModel: OnboardingViewModel
 
     @Before
     fun setUp() {
         Dispatchers.setMain(testDispatcher)
-        repository = mockk(relaxed = true)
+        userSettingsRepository = mockk(relaxed = true)
         crashReporter = mockk(relaxed = true)
-        viewModel = OnboardingViewModel(repository, crashReporter)
+        viewModel = OnboardingViewModel(userSettingsRepository, crashReporter)
     }
 
     @After
@@ -109,29 +109,29 @@ class OnboardingViewModelTest {
     // ─── 완료 처리 ─────────────────────────────────────────────────────────
 
     @Test
-    fun `OnClickComplete calls setDailyStepGoal with current goal`() = runTest {
+    fun `OnClickComplete saves dailyStepGoal to repository`() = runTest {
         viewModel.handleIntent(OnboardingIntent.OnStepGoalChanged(9_000))
         viewModel.handleIntent(OnboardingIntent.OnClickComplete)
         advanceUntilIdle()
 
-        coVerify { repository.setDailyStepGoal(9_000) }
+        coVerify { userSettingsRepository.setDailyStepGoal(9_000) }
     }
 
     @Test
-    fun `OnClickComplete calls setNotificationsEnabled with current value`() = runTest {
+    fun `OnClickComplete saves notificationsEnabled to repository`() = runTest {
         viewModel.handleIntent(OnboardingIntent.OnNotificationsToggled(false))
         viewModel.handleIntent(OnboardingIntent.OnClickComplete)
         advanceUntilIdle()
 
-        coVerify { repository.setNotificationsEnabled(false) }
+        coVerify { userSettingsRepository.setNotificationsEnabled(false) }
     }
 
     @Test
-    fun `OnClickComplete calls setOnboardingCompleted`() = runTest {
+    fun `OnClickComplete completes onboarding in repository`() = runTest {
         viewModel.handleIntent(OnboardingIntent.OnClickComplete)
         advanceUntilIdle()
 
-        coVerify { repository.setOnboardingCompleted() }
+        coVerify { userSettingsRepository.setOnboardingCompleted() }
     }
 
     @Test
@@ -148,15 +148,13 @@ class OnboardingViewModelTest {
         repeat(3) { viewModel.handleIntent(OnboardingIntent.OnClickNext) }
         advanceUntilIdle()
 
-        coVerify { repository.setOnboardingCompleted() }
+        coVerify { userSettingsRepository.setOnboardingCompleted() }
         assertTrue(viewModel.navigateToHome.value)
     }
 
     @Test
     fun `isCompleting is true after OnClickComplete`() = runTest {
-        // UnconfinedTestDispatcher로 즉시 실행되므로 완료 후 상태 확인
         viewModel.handleIntent(OnboardingIntent.OnClickComplete)
-        // isCompleting은 coroutine 시작 전 set → 완료 후에도 true 유지
         assertTrue(viewModel.state.value.isCompleting)
     }
 }

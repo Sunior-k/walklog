@@ -4,14 +4,12 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.river.walklog.core.analytics.CrashKeys
 import com.river.walklog.core.analytics.CrashReporter
+import com.river.walklog.core.data.repository.StepRepository
+import com.river.walklog.core.data.repository.UserSettingsRepository
+import com.river.walklog.core.data.repository.WeatherRepository
 import com.river.walklog.core.domain.usecase.AwardMissionPointsUseCase
-import com.river.walklog.core.domain.usecase.GetCurrentWeatherUseCase
-import com.river.walklog.core.domain.usecase.GetHourlyStepsForRangeUseCase
 import com.river.walklog.core.domain.usecase.GetMonthlyRecapUseCase
-import com.river.walklog.core.domain.usecase.GetUserSettingsUseCase
 import com.river.walklog.core.domain.usecase.GetWeeklyStepSummaryUseCase
-import com.river.walklog.core.domain.usecase.IsHealthConnectAvailableUseCase
-import com.river.walklog.core.domain.usecase.ObserveCurrentStepsUseCase
 import com.river.walklog.core.engine.ActivityClassifier
 import com.river.walklog.core.engine.WalkingInsightsEngine
 import com.river.walklog.core.engine.WalkingInsightsResult
@@ -41,15 +39,13 @@ import javax.inject.Inject
 
 @HiltViewModel
 class HomeViewModel @Inject constructor(
-    private val observeCurrentSteps: ObserveCurrentStepsUseCase,
+    private val stepRepository: StepRepository,
+    private val userSettingsRepository: UserSettingsRepository,
+    private val weatherRepository: WeatherRepository,
     private val getWeeklyStepSummary: GetWeeklyStepSummaryUseCase,
     private val getMonthlyRecap: GetMonthlyRecapUseCase,
-    private val getCurrentWeather: GetCurrentWeatherUseCase,
-    private val getHourlyStepsForRange: GetHourlyStepsForRangeUseCase,
-    private val isHealthConnectAvailable: IsHealthConnectAvailableUseCase,
     private val walkingInsightsEngine: WalkingInsightsEngine,
     private val activityClassifier: ActivityClassifier,
-    private val getUserSettings: GetUserSettingsUseCase,
     private val awardMissionPoints: AwardMissionPointsUseCase,
     private val crashReporter: CrashReporter,
     private val walkingReminderScheduler: WalkingReminderScheduler,
@@ -104,7 +100,7 @@ class HomeViewModel @Inject constructor(
     }
 
     private fun initSensorStatus() {
-        if (!isHealthConnectAvailable()) {
+        if (!stepRepository.isHealthConnectAvailable) {
             crashReporter.setKey(CrashKeys.SENSOR_STATUS, CrashKeys.SensorValues.UNAVAILABLE)
             crashReporter.log("Health Connect unavailable on this device")
             _state.update { it.copy(sensorStatus = SensorStatus.Unavailable) }
@@ -112,7 +108,7 @@ class HomeViewModel @Inject constructor(
     }
 
     private fun observeUserSettings() {
-        getUserSettings()
+        userSettingsRepository.settings
             .catch { throwable ->
                 crashReporter.log("User settings query failed: ${throwable.message}")
                 crashReporter.recordException(throwable)
@@ -161,7 +157,7 @@ class HomeViewModel @Inject constructor(
     private fun startLiveSteps() {
         crashReporter.log("Health Connect step polling started")
         liveStepsJob?.cancel()
-        liveStepsJob = observeCurrentSteps()
+        liveStepsJob = stepRepository.observeCurrentSteps()
             .catch { throwable ->
                 crashReporter.log("Live step sensor error: ${throwable.message}")
                 crashReporter.recordException(throwable)
@@ -201,7 +197,7 @@ class HomeViewModel @Inject constructor(
     private fun schedulePeakHourAlarm(peakHour: Int) {
         viewModelScope.launch {
             val notificationsEnabled = runCatching {
-                getUserSettings().first().notificationsEnabled
+                userSettingsRepository.settings.first().notificationsEnabled
             }.getOrDefault(true)
             if (!notificationsEnabled) {
                 walkingReminderScheduler.cancel()
@@ -219,7 +215,7 @@ class HomeViewModel @Inject constructor(
                 val today = LocalDate.now()
                 val toEpochDay = today.toEpochDay()
                 val fromEpochDay = toEpochDay - 6
-                val hourlySteps = getHourlyStepsForRange(fromEpochDay, toEpochDay)
+                val hourlySteps = stepRepository.getHourlyStepsForRange(fromEpochDay, toEpochDay)
 
                 val daysWithData = (0..6).count { dayOffset ->
                     val start = dayOffset * 24
@@ -377,7 +373,7 @@ class HomeViewModel @Inject constructor(
     private suspend fun loadWeatherWithRetry(forceRefresh: Boolean): WeatherSummary {
         var fallback = WeatherSummary.unavailable()
         repeat(WEATHER_LOAD_MAX_ATTEMPTS) { attempt ->
-            runCatching { getCurrentWeather(forceRefresh = forceRefresh || attempt > 0) }
+            runCatching { weatherRepository.getCurrentWeather(forceRefresh = forceRefresh || attempt > 0) }
                 .onSuccess { weather ->
                     if (weather.isAvailable) return weather
                     fallback = weather

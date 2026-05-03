@@ -33,18 +33,21 @@ graph TB
     :core:data[data]:::android-library
     :core:database[database]:::android-library
     :core:datastore[datastore]:::android-library
+    :core:native[native]:::android-library
     :core:common[common]:::jvm-library
     :core:model[model]:::jvm-library
     :core:analytics[analytics]:::android-library
   end
 
   :feature:home -.-> :core:domain
-  :feature:home -.-> :core:common
   :feature:home -.-> :core:analytics
+  :feature:home -.-> :core:native
   :core:domain --> :core:data
   :core:domain --> :core:model
-  :core:data --> :core:database
-  :core:data --> :core:datastore
+  :core:native --> :core:common
+  :core:data --> :core:model
+  :core:data -.-> :core:database
+  :core:data -.-> :core:datastore
   :core:data -.-> :core:common
   :core:database --> :core:model
   :core:datastore --> :core:model
