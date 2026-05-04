@@ -12,4 +12,5 @@ dependencies {
     implementation(projects.core.data)
     implementation(projects.core.analytics)
     implementation(projects.core.native)
+    implementation(libs.androidx.adaptive)
 }
