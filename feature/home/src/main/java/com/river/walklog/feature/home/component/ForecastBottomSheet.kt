@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
@@ -18,6 +19,7 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
+import androidx.compose.material3.adaptive.currentWindowAdaptiveInfo
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -36,8 +38,10 @@ import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Density
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.window.core.layout.WindowSizeClass
 import com.river.walklog.core.designsystem.foundation.WalkLogColor
 import com.river.walklog.core.designsystem.foundation.WalkLogTheme
 
@@ -55,47 +59,99 @@ fun ForecastBottomSheet(
     onClickStartWalking: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val isExpanded = currentWindowAdaptiveInfo().windowSizeClass
+        .isWidthAtLeastBreakpoint(WindowSizeClass.WIDTH_DP_MEDIUM_LOWER_BOUND)
+
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
+        sheetMaxWidth = Dp.Unspecified,
         containerColor = WalkLogTheme.colors.background,
         modifier = modifier,
     ) {
-        Column(
+        Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .navigationBarsPadding()
-                .padding(horizontal = 20.dp)
-                .padding(top = 4.dp, bottom = 20.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp),
+                .navigationBarsPadding(),
+            contentAlignment = Alignment.TopCenter,
         ) {
-            ForecastSheetHeader(
+            ForecastSheetContent(
                 title = title,
                 recommendedTimeText = recommendedTimeText,
-            )
-            if (hourlyAverages.isNotEmpty() && hourlyAverages.any { it > 0f }) {
-                ForecastLineChartCard(
-                    hourlyAverages = hourlyAverages,
-                    peakHour = peakHour,
-                )
-            }
-            ForecastDescriptionCard(description = description)
-            ForecastPatternCard(
+                description = description,
                 averageStepsAtThisTime = averageStepsAtThisTime,
                 activeDays = activeDays,
+                hourlyAverages = hourlyAverages,
+                peakHour = peakHour,
+                onClickStartWalking = onClickStartWalking,
+                modifier = if (isExpanded) {
+                    Modifier.widthIn(max = 860.dp)
+                } else {
+                    Modifier
+                },
             )
-            Button(
-                onClick = onClickStartWalking,
-                modifier = Modifier.fillMaxWidth(),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = WalkLogColor.Primary,
-                    contentColor = WalkLogColor.StaticBlack,
-                ),
-                contentPadding = PaddingValues(vertical = 16.dp),
-            ) {
-                Text(text = "지금 걸으러 가기", style = WalkLogTheme.typography.typography6SB)
-            }
         }
+    }
+}
+
+@Composable
+private fun ForecastSheetContent(
+    title: String,
+    recommendedTimeText: String,
+    description: String,
+    averageStepsAtThisTime: String,
+    activeDays: String,
+    hourlyAverages: List<Float>,
+    peakHour: Int,
+    onClickStartWalking: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Column(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(horizontal = 20.dp)
+            .padding(top = 4.dp, bottom = 20.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp),
+    ) {
+        ForecastSheetHeader(
+            title = title,
+            recommendedTimeText = recommendedTimeText,
+        )
+        ForecastChartIfAvailable(hourlyAverages = hourlyAverages, peakHour = peakHour)
+        ForecastDescriptionCard(description = description)
+        ForecastPatternCard(
+            averageStepsAtThisTime = averageStepsAtThisTime,
+            activeDays = activeDays,
+        )
+        ForecastStartButton(onClickStartWalking = onClickStartWalking)
+    }
+}
+
+@Composable
+private fun ForecastChartIfAvailable(
+    hourlyAverages: List<Float>,
+    peakHour: Int,
+) {
+    if (hourlyAverages.isNotEmpty() && hourlyAverages.any { it > 0f }) {
+        ForecastLineChartCard(
+            hourlyAverages = hourlyAverages,
+            peakHour = peakHour,
+        )
+    }
+}
+
+@Composable
+private fun ForecastStartButton(onClickStartWalking: () -> Unit) {
+    Button(
+        onClick = onClickStartWalking,
+        modifier = Modifier.fillMaxWidth(),
+        colors = ButtonDefaults.buttonColors(
+            containerColor = WalkLogColor.Primary,
+            contentColor = WalkLogColor.StaticBlack,
+        ),
+        contentPadding = PaddingValues(vertical = 16.dp),
+    ) {
+        Text(text = "지금 걸으러 가기", style = WalkLogTheme.typography.typography6SB)
     }
 }
 
