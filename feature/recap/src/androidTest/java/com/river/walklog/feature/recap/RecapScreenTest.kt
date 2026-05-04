@@ -39,7 +39,7 @@ class RecapScreenTest {
         setContent(state = RecapState(isLoading = true, recap = null))
 
         composeTestRule
-            .onNodeWithText("이번 달을")
+            .onNodeWithText("3월을\n돌아볼게요")
             .assertDoesNotExist()
     }
 
@@ -56,7 +56,12 @@ class RecapScreenTest {
 
     @Test
     fun loadedState_showsMonthLabelOnOpeningSlide() {
-        setContent(state = RecapState(isLoading = false, recap = recap(month = 3)))
+        setContent(
+            state = RecapState(
+                isLoading = false,
+                recap = monthlyRecap(month = 3),
+            ),
+        )
 
         composeTestRule
             .onNodeWithText("3월 리캡")
@@ -65,16 +70,26 @@ class RecapScreenTest {
 
     @Test
     fun loadedState_showsOpeningSlideHeadline() {
-        setContent(state = RecapState(isLoading = false, recap = recap()))
+        setContent(
+            state = RecapState(
+                isLoading = false,
+                recap = monthlyRecap(month = 3),
+            ),
+        )
 
         composeTestRule
-            .onNodeWithText("이번 달을\n돌아볼게요")
+            .onNodeWithText("3월을\n돌아볼게요")
             .assertIsDisplayed()
     }
 
     @Test
     fun loadedState_showsWalkingStorySubtitle() {
-        setContent(state = RecapState(isLoading = false, recap = recap(month = 4)))
+        setContent(
+            state = RecapState(
+                isLoading = false,
+                recap = monthlyRecap(month = 4),
+            ),
+        )
 
         composeTestRule
             .onNodeWithText("걸음으로 만든 4월 이야기")
@@ -87,7 +102,10 @@ class RecapScreenTest {
     fun closeButton_clicked_invokesOnCloseCallback() {
         var closed = false
         setContent(
-            state = RecapState(isLoading = false, recap = recap()),
+            state = RecapState(
+                isLoading = false,
+                recap = monthlyRecap(month = 3),
+            ),
             onClose = { closed = true },
         )
 
@@ -111,28 +129,24 @@ class RecapScreenTest {
         }
     }
 
-    private fun recap(
+    private fun monthlyRecap(
         year: Int = 2025,
         month: Int = 3,
-        totalSteps: Int = 120_000,
-        averageStepsPerDay: Int = 4_000,
-        achievedDays: Int = 15,
-        longestStreak: Int = 5,
     ) = MonthlyRecap(
         year = year,
         month = month,
-        totalSteps = totalSteps,
-        averageStepsPerDay = averageStepsPerDay,
+        totalSteps = 120_000,
+        averageStepsPerDay = 4_000,
         bestDay = DailyStepCount(
             dateEpochDay = LocalDate.of(year, month, 15).toEpochDay(),
             steps = 9_000,
             targetSteps = 6_000,
         ),
-        achievedDays = achievedDays,
+        achievedDays = 15,
         totalDays = 30,
-        longestStreak = longestStreak,
+        longestStreak = 5,
         activeDays = 20,
-        estimatedCalories = (totalSteps * 0.04f).toInt(),
+        estimatedCalories = 4_800,
         dailyCounts = emptyList(),
     )
 }

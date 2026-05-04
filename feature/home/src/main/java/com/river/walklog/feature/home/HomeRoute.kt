@@ -417,10 +417,10 @@ private fun HomeExpandedContent(
                                 .fillMaxWidth()
                                 .weight(1f),
                         )
-                    } else {
+                    } else if (!state.isRecapPreviewLoading) {
                         FoldHomeAccentCard(
-                            title = "리캡 준비 중",
-                            description = "이번 달 걸음 기록을 모으고 있어요",
+                            title = "리캡을 불러올 수 없어요",
+                            description = "잠시 후 다시 확인해 주세요",
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .weight(1f),

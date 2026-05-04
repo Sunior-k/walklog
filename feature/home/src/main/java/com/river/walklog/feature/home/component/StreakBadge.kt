@@ -14,18 +14,23 @@ import com.river.walklog.core.designsystem.foundation.WalkLogTheme
 
 @Composable
 fun StreakBadge(
-    streakDays: Int,
+    streakDays: Int?,
     modifier: Modifier = Modifier,
 ) {
-    val backgroundColor = if (streakDays > 0) {
+    val backgroundColor = if (streakDays != null && streakDays > 0) {
         WalkLogTheme.colors.primaryContainer
     } else {
         WalkLogTheme.colors.surfaceVariant
     }
-    val textColor = if (streakDays > 0) {
+    val textColor = if (streakDays != null && streakDays > 0) {
         WalkLogTheme.colors.onPrimaryContainer
     } else {
         WalkLogTheme.colors.onSurfaceVariant
+    }
+    val text = when {
+        streakDays == null -> "스트릭 확인 중"
+        streakDays > 0 -> "🔥 ${streakDays}일 연속"
+        else -> "스트릭 없음"
     }
 
     Row(
@@ -35,7 +40,7 @@ fun StreakBadge(
         horizontalArrangement = Arrangement.Center,
     ) {
         Text(
-            text = if (streakDays > 0) "🔥 ${streakDays}일 연속" else "스트릭 없음",
+            text = text,
             style = WalkLogTheme.typography.typography6SB,
             color = textColor,
         )
