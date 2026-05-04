@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.river.walklog.core.analytics.CrashKeys
 import com.river.walklog.core.analytics.CrashReporter
+import com.river.walklog.core.data.repository.StepRepository
 import com.river.walklog.core.data.repository.UserSettingsRepository
 import com.river.walklog.core.domain.usecase.GetMonthlyRecapUseCase
 import com.river.walklog.core.model.DailyStepCount
@@ -13,10 +14,11 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
-import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
 import java.time.LocalDate
 import java.time.YearMonth
 import java.time.format.DateTimeFormatter
@@ -33,6 +35,7 @@ private const val KILOMETERS_PER_STEP = 0.00075f
 @HiltViewModel
 class HistoryViewModel @Inject constructor(
     private val getMonthlyRecap: GetMonthlyRecapUseCase,
+    private val stepRepository: StepRepository,
     private val userSettingsRepository: UserSettingsRepository,
     private val crashReporter: CrashReporter,
 ) : ViewModel() {
@@ -42,6 +45,7 @@ class HistoryViewModel @Inject constructor(
 
     private var currentYearMonth: YearMonth = YearMonth.now()
     private var collectJob: Job? = null
+    private var selectedDayTimelineJob: Job? = null
 
     init {
         crashReporter.setKey(CrashKeys.SCREEN, CrashKeys.Screens.HISTORY)
@@ -76,17 +80,23 @@ class HistoryViewModel @Inject constructor(
                         item
                     }
                 },
-                selectedDaySummary = selectedDay.toSelectedDaySummary(previousDay),
+                selectedDaySummary = selectedDay.toSelectedDaySummary(
+                    previousDay = previousDay,
+                    monthDays = dayItems,
+                ),
             )
         }
+        loadSelectedDayTimeline(selectedDay)
     }
 
     private fun loadMonth(yearMonth: YearMonth) {
         val today = YearMonth.now()
         collectJob?.cancel()
+        selectedDayTimelineJob?.cancel()
         _state.update {
             it.copy(
                 isLoading = true,
+                items = emptyList(),
                 monthLabel = yearMonth.format(MONTH_FORMATTER),
                 selectedDateEpochDay = null,
                 selectedDaySummary = null,
@@ -94,8 +104,8 @@ class HistoryViewModel @Inject constructor(
             )
         }
         collectJob = getMonthlyRecap(yearMonth.year, yearMonth.monthValue)
-            .onEach { recap ->
-                val targetSteps = userSettingsRepository.settings.first().dailyStepGoal
+            .combine(userSettingsRepository.settings) { recap, settings -> recap to settings.dailyStepGoal }
+            .onEach { (recap, targetSteps) ->
                 val dailyCounts = recap.dailyCounts
                 val selectedDateEpochDay = _state.value.selectedDateEpochDay
                 val calendarItems = buildCalendarItems(
@@ -120,11 +130,15 @@ class HistoryViewModel @Inject constructor(
                         items = calendarItems,
                         totalStepsText = "%,d 보".format(totalSteps),
                         achievementRateText = "$achievedPct%",
-                        selectedDaySummary = selectedDay?.toSelectedDaySummary(previousDay),
+                        selectedDaySummary = selectedDay?.toSelectedDaySummary(
+                            previousDay = previousDay,
+                            monthDays = dayItems,
+                        ),
                         isLoading = false,
                         isEmpty = totalSteps == 0,
                     )
                 }
+                selectedDay?.let { loadSelectedDayTimeline(it) }
             }
             .catch { e -> crashReporter.recordException(e) }
             .launchIn(viewModelScope)
@@ -174,6 +188,7 @@ class HistoryViewModel @Inject constructor(
 
     private fun CalendarItem.Day.toSelectedDaySummary(
         previousDay: CalendarItem.Day?,
+        monthDays: List<CalendarItem.Day>,
     ): SelectedDaySummary {
         val calories = (steps * CALORIES_PER_STEP).toInt()
         val distance = steps * KILOMETERS_PER_STEP
@@ -189,7 +204,60 @@ class HistoryViewModel @Inject constructor(
             achievementFraction = if (hasData) (steps.toFloat() / targetSteps).coerceIn(0f, 1f) else 0f,
             comparisonSign = buildComparisonSign(previousDay),
             isPastDay = LocalDate.ofEpochDay(dateEpochDay).isBefore(LocalDate.now()),
+            insightText = buildInsightText(previousDay),
+            monthRankText = buildMonthRankText(monthDays),
         )
+    }
+
+    private fun loadSelectedDayTimeline(selectedDay: CalendarItem.Day) {
+        selectedDayTimelineJob?.cancel()
+        if (!selectedDay.hasData) return
+
+        selectedDayTimelineJob = viewModelScope.launch {
+            runCatching {
+                stepRepository.getHourlyStepsForRange(
+                    fromEpochDay = selectedDay.dateEpochDay,
+                    toEpochDay = selectedDay.dateEpochDay,
+                )
+            }.onSuccess { hourlySteps ->
+                val timelineSegments = hourlySteps.toTimelineSegments()
+                _state.update { state ->
+                    if (state.selectedDateEpochDay != selectedDay.dateEpochDay) {
+                        state
+                    } else {
+                        state.copy(
+                            selectedDaySummary = state.selectedDaySummary?.copy(
+                                timelineSegments = timelineSegments,
+                            ),
+                        )
+                    }
+                }
+            }.onFailure { e ->
+                crashReporter.recordException(e)
+            }
+        }
+    }
+
+    private fun FloatArray.toTimelineSegments(): List<SelectedDayTimelineSegment> {
+        if (size < 24 || all { it <= 0f }) return emptyList()
+
+        val morningSteps = sliceArray(0..11).sum().toInt()
+        val afternoonSteps = sliceArray(12..17).sum().toInt()
+        val eveningSteps = sliceArray(18..23).sum().toInt()
+        val segments = listOf(
+            "오전" to morningSteps,
+            "오후" to afternoonSteps,
+            "저녁" to eveningSteps,
+        )
+        val maxSteps = segments.maxOf { it.second }.coerceAtLeast(1)
+
+        return segments.map { (label, steps) ->
+            SelectedDayTimelineSegment(
+                label = label,
+                stepsText = "%,d보".format(steps),
+                fraction = steps.toFloat() / maxSteps,
+            )
+        }
     }
 
     private fun CalendarItem.Day.buildTargetStatusText(): String = when {
@@ -214,5 +282,28 @@ class HistoryViewModel @Inject constructor(
             diff < 0 -> "전날보다 %,d보".format(diff)
             else -> "전날과 같아요"
         }
+    }
+
+    private fun CalendarItem.Day.buildInsightText(previousDay: CalendarItem.Day?): String {
+        if (!hasData) return "이날은 분석할 걸음 기록이 없어요"
+
+        val previousDiff = if (previousDay?.hasData == true) steps - previousDay.steps else null
+        return when {
+            isAchieved && previousDiff != null && previousDiff > 0 -> "목표를 달성했고 전날보다 %,d보 더 걸었어요".format(previousDiff)
+            isAchieved -> "목표를 달성한 날이에요"
+            previousDiff != null && previousDiff > 0 -> "전날보다 %,d보 더 걸었어요".format(previousDiff)
+            previousDiff != null && previousDiff < 0 -> "전날보다 %,d보 적게 걸었어요".format(-previousDiff)
+            else -> "목표까지 %,d보 남았어요".format((targetSteps - steps).coerceAtLeast(0))
+        }
+    }
+
+    private fun CalendarItem.Day.buildMonthRankText(monthDays: List<CalendarItem.Day>): String {
+        if (!hasData) return "이번 달 순위 없음"
+
+        val activeDays = monthDays.filter { it.hasData && it.steps > 0 }
+        if (activeDays.isEmpty()) return "이번 달 순위 없음"
+
+        val rank = activeDays.count { it.steps > steps } + 1
+        return "이번 달 ${rank}위 / ${activeDays.size}일"
     }
 }

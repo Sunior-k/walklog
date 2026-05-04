@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="history_insight_card">#1E1E1E</color>
+    <color name="history_insight_metric">#2B2B2B</color>
+    <color name="history_insight_title">#C4C4C4</color>
+    <color name="history_insight_text">#F8F8F8</color>
+    <color name="history_insight_metric_label">#C4C4C4</color>
+    <color name="history_insight_metric_value">#F8F8F8</color>
+</resources>
