@@ -318,7 +318,12 @@ class HomeViewModel @Inject constructor(
         val today = LocalDate.now()
         val recapMonth = YearMonth.from(today).minusMonths(1)
         recapPreviewJob?.cancel()
-        _state.update { it.copy(isRecapPreviewLoading = true) }
+        _state.update {
+            it.copy(
+                isRecapPreviewLoading = true,
+                recapMonthLabel = recapMonth.monthLabel(),
+            )
+        }
         recapPreviewJob = getMonthlyRecap(recapMonth.year, recapMonth.monthValue)
             .catch { throwable ->
                 crashReporter.log("Monthly recap query failed: ${throwable.message}")
@@ -336,6 +341,8 @@ class HomeViewModel @Inject constructor(
             }
             .launchIn(viewModelScope)
     }
+
+    private fun YearMonth.monthLabel(): String = "${monthValue}월"
 
     private fun loadCurrentStreak() {
         val today = LocalDate.now()
