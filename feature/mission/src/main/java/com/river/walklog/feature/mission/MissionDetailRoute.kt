@@ -142,6 +142,14 @@ private fun MissionDetailCompactContent(
             isCompleted = state.isCompleted,
         )
         MissionWeatherCard(state = state, onRefreshWeather = onRefreshWeather)
+        MissionTimelineCard(
+            missionType = state.missionType,
+            isCompleted = state.isCompleted,
+            targetSteps = state.targetSteps,
+            currentSteps = state.currentSteps,
+            rewardText = state.rewardText,
+            recommendedTimeText = state.recommendedTimeText,
+        )
         Spacer(modifier = Modifier.height(12.dp))
     }
 }
@@ -195,6 +203,7 @@ private fun MissionDetailExpandedContent(
                 currentSteps = state.currentSteps,
                 rewardText = state.rewardText,
                 recommendedTimeText = state.recommendedTimeText,
+                stretchContent = true,
                 modifier = Modifier.weight(1f),
             )
         }
@@ -466,6 +475,7 @@ private fun MissionTimelineCard(
     rewardText: String,
     recommendedTimeText: String,
     modifier: Modifier = Modifier,
+    stretchContent: Boolean = false,
 ) {
     val progress = if (targetSteps <= 0) 0f else (currentSteps.toFloat() / targetSteps).coerceIn(0f, 1f)
     val remaining = (targetSteps - currentSteps).coerceAtLeast(0)
@@ -516,7 +526,7 @@ private fun MissionTimelineCard(
             .background(WalkLogTheme.colors.surface)
             .border(0.5.dp, WalkLogTheme.colors.outlineVariant, RoundedCornerShape(24.dp))
             .padding(20.dp),
-        verticalArrangement = Arrangement.SpaceBetween,
+        verticalArrangement = if (stretchContent) Arrangement.SpaceBetween else Arrangement.spacedBy(18.dp),
     ) {
         Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
             Text(
@@ -534,8 +544,8 @@ private fun MissionTimelineCard(
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .weight(1f),
-            verticalArrangement = Arrangement.SpaceEvenly,
+                .then(if (stretchContent) Modifier.weight(1f) else Modifier),
+            verticalArrangement = if (stretchContent) Arrangement.SpaceEvenly else Arrangement.spacedBy(10.dp),
         ) {
             timelineItems.forEachIndexed { index, item ->
                 MissionTimelineStep(

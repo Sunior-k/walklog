@@ -33,6 +33,7 @@ import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import java.time.LocalDate
 import java.time.LocalTime
+import java.time.YearMonth
 import java.time.format.DateTimeFormatter
 import java.util.Locale
 import javax.inject.Inject
@@ -58,6 +59,7 @@ class HomeViewModel @Inject constructor(
     private var activityJob: Job? = null
     private var weatherJob: Job? = null
     private var recapPreviewJob: Job? = null
+    private var currentStreakJob: Job? = null
     private var latestWeeklySummary: WeeklyStepSummary? = null
 
     init {
@@ -68,6 +70,7 @@ class HomeViewModel @Inject constructor(
         observeUserSettings()
         collectWeeklySummary()
         loadRecapPreview()
+        loadCurrentStreak()
         loadWalkingInsights()
         loadWeather()
         scheduleMidnightRefresh()
@@ -313,17 +316,39 @@ class HomeViewModel @Inject constructor(
 
     private fun loadRecapPreview() {
         val today = LocalDate.now()
+        val recapMonth = YearMonth.from(today).minusMonths(1)
         recapPreviewJob?.cancel()
-        recapPreviewJob = getMonthlyRecap(today.year, today.monthValue)
+        _state.update { it.copy(isRecapPreviewLoading = true) }
+        recapPreviewJob = getMonthlyRecap(recapMonth.year, recapMonth.monthValue)
             .catch { throwable ->
                 crashReporter.log("Monthly recap query failed: ${throwable.message}")
                 crashReporter.recordException(throwable)
+                _state.update { it.copy(isRecapPreviewLoading = false) }
             }
             .onEach { recap ->
                 _state.update { state ->
                     state.copy(
+                        isRecapPreviewLoading = false,
                         recapMonthLabel = recap.monthLabel,
                         recapTotalStepsText = "%,d보".format(recap.totalSteps),
+                    )
+                }
+            }
+            .launchIn(viewModelScope)
+    }
+
+    private fun loadCurrentStreak() {
+        val today = LocalDate.now()
+        currentStreakJob?.cancel()
+        currentStreakJob = getMonthlyRecap(today.year, today.monthValue)
+            .catch { throwable ->
+                crashReporter.log("Current streak query failed: ${throwable.message}")
+                crashReporter.recordException(throwable)
+                _state.update { it.copy(streakDays = 0) }
+            }
+            .onEach { recap ->
+                _state.update { state ->
+                    state.copy(
                         streakDays = computeCurrentStreak(
                             dailyCounts = recap.dailyCounts,
                             today = today,
@@ -345,6 +370,7 @@ class HomeViewModel @Inject constructor(
                 initDateText()
                 collectWeeklySummary()
                 loadRecapPreview()
+                loadCurrentStreak()
                 loadWalkingInsights()
             }
         }
@@ -356,6 +382,7 @@ class HomeViewModel @Inject constructor(
             _state.update { it.copy(isLoading = true) }
             collectWeeklySummary()
             loadRecapPreview()
+            loadCurrentStreak()
             loadWalkingInsights()
             loadWeather(forceRefresh = true)
             _state.update { it.copy(isLoading = false) }

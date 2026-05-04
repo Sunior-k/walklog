@@ -13,7 +13,7 @@ import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.update
-import java.time.LocalDate
+import java.time.YearMonth
 import javax.inject.Inject
 
 @HiltViewModel
@@ -27,8 +27,8 @@ class RecapViewModel @Inject constructor(
 
     init {
         crashReporter.setKey(CrashKeys.SCREEN, CrashKeys.Screens.RECAP)
-        val today = LocalDate.now()
-        loadRecap(today.year, today.monthValue)
+        val recapMonth = YearMonth.now().minusMonths(1)
+        loadRecap(recapMonth.year, recapMonth.monthValue)
     }
 
     fun loadRecap(year: Int, month: Int) {

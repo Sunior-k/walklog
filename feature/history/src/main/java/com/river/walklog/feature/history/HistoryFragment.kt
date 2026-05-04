@@ -95,6 +95,14 @@ class HistoryFragment : Fragment() {
         val isEmpty = state.isEmpty
         val showContent = !isLoading && !isEmpty
 
+        val hasSelection = state.selectedDaySummary != null
+        val selectedDateHeader = tvSelectedDate.parent as? View
+        selectedDateHeader?.isVisible = hasSelection
+        if (!hasSelection) {
+            groupHasData.isVisible = false
+            groupNoData.isVisible = false
+        }
+
         state.selectedDaySummary?.let { summary ->
             tvSelectedDate.text = summary.dateText
             applyChipStyle(summary)
@@ -126,7 +134,6 @@ class HistoryFragment : Fragment() {
 
         if (isExpanded) {
             selectedDayContainer.isVisible = showContent
-            val hasSelection = state.selectedDaySummary != null
             binding.groupSelectPrompt?.isVisible = showContent && !hasSelection
         } else {
             selectedDayContainer.isVisible = showContent && state.selectedDaySummary != null

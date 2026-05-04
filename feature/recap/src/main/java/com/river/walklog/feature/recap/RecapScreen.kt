@@ -49,7 +49,6 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.river.walklog.core.designsystem.R
@@ -387,7 +386,7 @@ private fun OpeningSlide(recap: MonthlyRecap) {
                 textAlign = TextAlign.Center,
             )
             Text(
-                text = "이번 달을\n돌아볼게요",
+                text = "${recap.monthLabel}을\n돌아볼게요",
                 style = WalkLogTheme.typography.typography1B,
                 color = WalkLogColor.StaticWhite,
                 textAlign = TextAlign.Center,
@@ -429,7 +428,7 @@ private fun TotalStepsSlide(recap: MonthlyRecap) {
                     modifier = Modifier.size(32.dp),
                 )
             }
-            SlideLabel("이번 달 총 걸음 수")
+            SlideLabel("${recap.monthLabel} 총 걸음 수")
             AnimatedCounter(
                 target = recap.totalSteps,
                 style = WalkLogTheme.typography.typography1B,
@@ -510,7 +509,7 @@ private fun CaloriesSlide(recap: MonthlyRecap) {
                     modifier = Modifier.size(32.dp),
                 )
             }
-            SlideLabel("이번 달 소모한 칼로리")
+            SlideLabel("${recap.monthLabel} 소모한 칼로리")
             AnimatedCounter(
                 target = recap.estimatedCalories,
                 style = WalkLogTheme.typography.typography1B,
@@ -884,7 +883,7 @@ private fun PersonaSlide(recap: MonthlyRecap) {
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
             Text(
-                text = "이번 달 당신은",
+                text = "${recap.monthLabel} 당신은",
                 style = WalkLogTheme.typography.typography5SB,
                 color = WalkLogColor.StaticWhite.copy(alpha = 0.5f),
                 textAlign = TextAlign.Center,
@@ -920,44 +919,3 @@ private fun PersonaSlide(recap: MonthlyRecap) {
         }
     }
 }
-
-// ─── Preview ──────────────────────────────────────────────────────────────────
-
-@Preview(name = "01", showBackground = true)
-@Composable
-private fun RecapOpeningPreview() {
-    PreviewRecapScreen(initialPage = 6)
-}
-
-@Composable
-private fun PreviewRecapScreen(initialPage: Int) {
-    WalkLogTheme {
-        RecapScreen(
-            state = RecapState(
-                isLoading = false,
-                recap = previewRecap,
-            ),
-            onClose = {},
-            initialPage = initialPage,
-            autoAdvance = false,
-        )
-    }
-}
-
-private val previewRecap = MonthlyRecap(
-    year = 2025,
-    month = 4,
-    totalSteps = 182_400,
-    averageStepsPerDay = 6_080,
-    bestDay = DailyStepCount(
-        dateEpochDay = java.time.LocalDate.of(2025, 4, 15).toEpochDay(),
-        steps = 12_340,
-        targetSteps = 6_000,
-    ),
-    achievedDays = 18,
-    totalDays = 30,
-    longestStreak = 7,
-    activeDays = 24,
-    estimatedCalories = 7_296,
-    dailyCounts = emptyList(),
-)
