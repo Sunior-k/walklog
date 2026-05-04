@@ -8,7 +8,7 @@
         <item name="postSplashScreenTheme">@style/Theme.walklog</item>
     </style>
 
-    <style name="Theme.walklog" parent="Theme.AppCompat.DayNight.NoActionBar">
+    <style name="Theme.walklog" parent="Theme.MaterialComponents.DayNight.NoActionBar">
         <item name="android:colorAccent">@color/walklog_primary</item>
         <item name="android:windowLightStatusBar">false</item>
         <item name="android:windowLightNavigationBar">false</item>

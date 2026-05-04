@@ -13,7 +13,7 @@ class PeakHourAlarmReceiver : BroadcastReceiver() {
         val manager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
         ensureChannel(manager)
         val notification = NotificationCompat.Builder(context, CHANNEL_ID)
-            .setSmallIcon(com.river.walklog.core.designsystem.R.drawable.ic_default)
+            .setSmallIcon(com.river.walklog.core.designsystem.R.drawable.ic_footprint)
             .setContentTitle("걷기 좋은 시간이에요!")
             .setContentText("평소 이 시간대에 가장 많이 걸으셨어요. 지금 걸어보세요!")
             .setPriority(NotificationCompat.PRIORITY_DEFAULT)

@@ -80,6 +80,7 @@ dependencies {
 
     // Material (BottomNavigationView)
     implementation(libs.material)
+    implementation(libs.androidx.constraintlayout)
 
     // Navigation — Fragment (XML base)
     implementation(libs.androidx.navigation.fragment)

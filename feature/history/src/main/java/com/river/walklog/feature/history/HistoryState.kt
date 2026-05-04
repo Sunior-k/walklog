@@ -25,4 +25,13 @@ data class SelectedDaySummary(
     val achievementFraction: Float,
     val comparisonSign: Int?, // 1=증가, 0=동일, -1=감소, null=비교불가
     val isPastDay: Boolean,
+    val insightText: String = "",
+    val monthRankText: String = "",
+    val timelineSegments: List<SelectedDayTimelineSegment> = emptyList(),
+)
+
+data class SelectedDayTimelineSegment(
+    val label: String,
+    val stepsText: String,
+    val fraction: Float,
 )

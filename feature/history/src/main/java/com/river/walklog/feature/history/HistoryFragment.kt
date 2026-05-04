@@ -28,6 +28,8 @@ class HistoryFragment : Fragment() {
     private var _binding: FragmentHistoryBinding? = null
     private val binding get() = _binding!!
 
+    private val isExpanded get() = resources.configuration.screenWidthDp >= 600
+
     private val viewModel: HistoryViewModel by viewModels()
     private val calendarAdapter = CalendarAdapter { day ->
         viewModel.onDaySelected(day.dateEpochDay)
@@ -75,7 +77,9 @@ class HistoryFragment : Fragment() {
     private fun observeState() {
         viewLifecycleOwner.lifecycleScope.launch {
             viewLifecycleOwner.repeatOnLifecycle(androidx.lifecycle.Lifecycle.State.STARTED) {
-                viewModel.state.collectLatest { state -> renderState(state) }
+                viewModel.state.collectLatest { state ->
+                    renderState(state)
+                }
             }
         }
     }
@@ -115,16 +119,26 @@ class HistoryFragment : Fragment() {
                 pbGoalProgress.progress = (summary.achievementFraction * 100).toInt()
                 applyProgressBarStyle(summary.isAchieved)
                 applyComparisonStyle(summary)
+                applyInsightStyle(summary)
+                applyTimelineStyle(summary)
             }
         }
 
-        selectedDayContainer.isVisible = showContent && state.selectedDaySummary != null
+        if (isExpanded) {
+            selectedDayContainer.isVisible = showContent
+            val hasSelection = state.selectedDaySummary != null
+            binding.groupSelectPrompt?.isVisible = showContent && !hasSelection
+        } else {
+            selectedDayContainer.isVisible = showContent && state.selectedDaySummary != null
+        }
         progressBar.isVisible = isLoading
-        rvCalendar.isVisible = showContent
+        if (!showContent) rvCalendar.isVisible = false
         emptyState.isVisible = !isLoading && isEmpty
         statsContainer.isVisible = showContent
 
-        if (!isLoading) calendarAdapter.submitList(state.items)
+        calendarAdapter.submitList(state.items) {
+            rvCalendar.isVisible = showContent
+        }
     }
 
     private fun applyChipStyle(summary: SelectedDaySummary) = with(binding) {
@@ -181,6 +195,43 @@ class HistoryFragment : Fragment() {
         pbGoalProgress.progressBackgroundTintList = ColorStateList.valueOf(
             ContextCompat.getColor(ctx, DesignR.color.walklog_gray_100),
         )
+    }
+
+    private fun applyInsightStyle(summary: SelectedDaySummary) = with(binding) {
+        val insightContainer = groupSelectedInsight ?: return
+        insightContainer.isVisible = summary.hasData && summary.insightText.isNotBlank()
+        if (!insightContainer.isVisible) return
+
+        tvSelectedInsight?.text = summary.insightText
+        tvSelectedMonthRank?.text = summary.monthRankText
+        tvSelectedInsightSteps?.text = "${summary.stepsText}보"
+        tvSelectedInsightGoal?.text = "${(summary.achievementFraction * 100).toInt()}%"
+    }
+
+    private fun applyTimelineStyle(summary: SelectedDaySummary) = with(binding) {
+        val timelineContainer = groupSelectedTimeline ?: return
+        val segments = summary.timelineSegments
+        timelineContainer.isVisible = summary.hasData && segments.size >= 3
+        if (!timelineContainer.isVisible) return
+
+        val ctx = requireContext()
+        val progressTint = ColorStateList.valueOf(ContextCompat.getColor(ctx, DesignR.color.walklog_primary))
+        val trackTint = ColorStateList.valueOf(ContextCompat.getColor(ctx, DesignR.color.walklog_gray_100))
+
+        listOf(
+            Triple(tvTimelineMorningLabel, tvTimelineMorningSteps, pbTimelineMorning),
+            Triple(tvTimelineAfternoonLabel, tvTimelineAfternoonSteps, pbTimelineAfternoon),
+            Triple(tvTimelineEveningLabel, tvTimelineEveningSteps, pbTimelineEvening),
+        ).zip(segments).forEach { (views, segment) ->
+            val (labelView, stepsView, progressView) = views
+            labelView.text = segment.label
+            stepsView.text = segment.stepsText
+            progressView.apply {
+                progress = (segment.fraction * 100).toInt()
+                progressTintList = progressTint
+                progressBackgroundTintList = trackTint
+            }
+        }
     }
 
     override fun onDestroyView() {

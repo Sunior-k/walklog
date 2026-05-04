@@ -13,4 +13,5 @@ dependencies {
     implementation(projects.core.analytics)
     implementation(projects.core.native)
     implementation(libs.androidx.health.connect)
+    implementation(libs.androidx.adaptive)
 }

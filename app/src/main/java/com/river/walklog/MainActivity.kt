@@ -22,6 +22,8 @@ import androidx.work.ExistingWorkPolicy
 import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.WorkManager
 import com.google.android.material.bottomnavigation.BottomNavigationView
+import com.google.android.material.navigation.NavigationBarView
+import com.google.android.material.navigationrail.NavigationRailView
 import com.river.walklog.core.analytics.CrashReporter
 import com.river.walklog.core.data.repository.UserSettingsRepository
 import com.river.walklog.core.model.ThemeMode
@@ -125,12 +127,15 @@ class MainActivity : AppCompatActivity() {
         this.navController = navController
         setStartDestination(navController, graphStartDestination)
 
-        val bottomNav = findViewById<BottomNavigationView>(R.id.bottom_navigation)
-        bindBottomNavigation(bottomNav, navController)
-        applyBottomNavigationInsets(bottomNav)
-        syncBottomNavigationWithDestination(bottomNav, navController)
+        val navView = findNavigationView()
+        bindNavigationView(navView, navController)
+        when (navView) {
+            is BottomNavigationView -> applyBottomNavigationInsets(navView)
+            is NavigationRailView -> applyNavigationRailInsets(navView)
+        }
+        syncNavigationWithDestination(navView, navController)
         restoreVisibleDestinationAfterRecreation(
-            bottomNav = bottomNav,
+            navView = navView,
             navController = navController,
             restoredDestination = restoredDestination,
         )
@@ -179,59 +184,57 @@ class MainActivity : AppCompatActivity() {
         navController.setGraph(graph, null)
     }
 
-    private fun syncBottomNavigationWithDestination(
-        bottomNav: BottomNavigationView,
+    private fun syncNavigationWithDestination(
+        navView: NavigationBarView,
         navController: NavController,
     ) {
         navController.addOnDestinationChangedListener { _, destination, _ ->
-            syncBottomNavigationState(bottomNav, destination.id)
+            syncNavigationState(navView, destination.id)
         }
-        syncBottomNavigationState(bottomNav, navController.currentDestination?.id)
+        syncNavigationState(navView, navController.currentDestination?.id)
     }
 
     private fun restoreVisibleDestinationAfterRecreation(
-        bottomNav: BottomNavigationView,
+        navView: NavigationBarView,
         navController: NavController,
         restoredDestination: Int?,
     ) {
-        bottomNav.post {
+        navView.post {
             if (
                 restoredDestination != null &&
                 restoredDestination != navController.currentDestination?.id
             ) {
                 navigateToRestoredDestination(navController, restoredDestination)
             }
-            syncBottomNavigationState(bottomNav, navController.currentDestination?.id)
+            syncNavigationState(navView, navController.currentDestination?.id)
         }
     }
 
-    // 테마 재생성과 탭 복원 모두 같은 옵션으로 이동하도록 BottomNav 처리.
-    private fun bindBottomNavigation(
-        bottomNav: BottomNavigationView,
+    private fun bindNavigationView(
+        navView: NavigationBarView,
         navController: NavController,
     ) {
-        bottomNav.setOnItemSelectedListener { item ->
+        navView.setOnItemSelectedListener { item ->
             if (item.itemId in bottomNavDestinations) {
                 navigateToBottomNavDestination(navController, item.itemId)
             } else {
                 false
             }
         }
-        bottomNav.setOnItemReselectedListener { item ->
+        navView.setOnItemReselectedListener { item ->
             if (item.itemId in bottomNavDestinations) {
                 navigateToBottomNavDestination(navController, item.itemId)
             }
         }
     }
 
-    // 그래프 변경이나 복원 이동 후 현재 destination을 BottomNav에 반영.
-    private fun syncBottomNavigationState(
-        bottomNav: BottomNavigationView,
+    private fun syncNavigationState(
+        navView: NavigationBarView,
         destinationId: Int?,
     ) {
-        bottomNav.isVisible = destinationId in bottomNavDestinations
+        navView.isVisible = destinationId in bottomNavDestinations
         if (destinationId in bottomNavDestinations) {
-            bottomNav.menu.findItem(destinationId ?: return)?.isChecked = true
+            navView.menu.findItem(destinationId ?: return)?.isChecked = true
         }
     }
 
@@ -282,6 +285,22 @@ class MainActivity : AppCompatActivity() {
             insets
         }
     }
+
+    private fun applyNavigationRailInsets(navRail: NavigationRailView) {
+        val initialTopPadding = navRail.paddingTop
+        val initialBottomPadding = navRail.paddingBottom
+        ViewCompat.setOnApplyWindowInsetsListener(navRail) { view, insets ->
+            val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
+            view.updatePadding(
+                top = initialTopPadding + systemBars.top,
+                bottom = initialBottomPadding + systemBars.bottom,
+            )
+            insets
+        }
+    }
+
+    private fun findNavigationView(): NavigationBarView =
+        (findViewById(R.id.nav_rail) ?: findViewById(R.id.bottom_navigation))!!
 
     private fun applySystemBarAppearance() {
         val currentNightMode = resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK
