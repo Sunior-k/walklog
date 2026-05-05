@@ -1,6 +1,6 @@
 ![WalkLog banner](docs/screenshots/banner.png)
 
-> Health Connect + Weather-aware Android walking companion built with Kotlin, Jetpack Compose, Clean Architecture, and production-grade engineering practices.
+> A Health Connect-powered Android walking companion that turns daily steps into missions, reports, recaps, and widgets.
 
 [![Kotlin](https://img.shields.io/badge/Kotlin-2.1.0-7F52FF?logo=kotlin&logoColor=white)](https://kotlinlang.org)
 [![Android Gradle Plugin](https://img.shields.io/badge/AGP-8.13.1-3DDC84?logo=android&logoColor=white)](https://developer.android.com/build)
