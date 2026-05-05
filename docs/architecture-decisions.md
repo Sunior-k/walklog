@@ -1,6 +1,7 @@
 # 아키텍처 결정 기록
 
 > 각 설계 결정의 **이유**와 **트레이드오프**를 기록했습니다.
+>
 > 참고: [Now in Android](https://github.com/android/nowinandroid) · [Guide to app architecture](https://developer.android.com/topic/architecture) · [Clean Architecture by Robert C. Martin](https://blog.cleancoder.com/uncle-bob/2012/08/13/the-clean-architecture.html)
 
 ---
@@ -504,26 +505,54 @@ Kotlin FloatArray(4) → WalkingInsightsResult
 
 ### 결정
 
-스마트폰 가속도계 · 자이로스코프 데이터를 기반으로 사용자의 활동 상태(WALKING / STATIONARY / UNKNOWN)를 분류하는 LiteRT 모델을 `core:native`에 통합했습니다.
+WalkLog의 걸음 수 산정과 미션 달성 판단은 **Health Connect `StepsRecord.COUNT_TOTAL` 집계값**을 기준으로 합니다.
+
+LiteRT 기반 `ActivityClassifier`는 걸음 수의 source of truth가 아니라, 사용자의 현재 활동 상태(WALKING / STATIONARY / UNKNOWN)를 분류하기 위한 **보조 파이프라인**입니다.
+
+현재 저장소에는 다음 코드만 포함되어 있습니다.
+
+- `ActivitySensorCollector`: 가속도계 · 자이로스코프 센서 윈도우 수집
+- `ActivityClassifier`: LiteRT `Interpreter` 래핑 및 활동 상태 분류
+- `ActivityStateProvider`: `isStationary` 상태를 외부에 노출하는 인터페이스
+
+실제 모델 파일(`activity_classifier.tflite`)은 아직 배치하지 않았습니다. 모델 파일이 없으면 `ActivityClassifier`는 모든 입력에 대해 `UNKNOWN`을 반환합니다.
 
 ```
+Health Connect StepsRecord.COUNT_TOTAL
+        ↓ AggregateRequest / aggregateGroupByDuration
+StepRepository
+        ↓
+Home / Mission / History / Report
+
 SensorManager (accel + gyro)
-        ↓ 50Hz 슬라이딩 윈도우 수집
-ActivityClassifier.classify(sensorWindow: FloatArray)
+        ↓ SENSOR_DELAY_FASTEST (accel 이벤트 주도, gyro 값을 hold·합성)
+ActivitySensorCollector
+        ↓ FloatArray(300) — 50샘플 × 6채널 non-overlapping 윈도우 emit
+ActivityClassifier
         ↓ Interpreter.run([1, 50, 6] → [1, 3])
 ActivityState (WALKING / STATIONARY / UNKNOWN)
-        ↓
-feature:forecast (예보 보정 신호)
-feature:home     (걷기 상태 확인)
+        ├─ isStationary: StateFlow<Boolean>  ← ActivityStateProvider 구현체로 Hilt 바인딩
+        └─ HomeState.activityState (보조 상태 표시 후보)
 ```
 
 ### 이유
 
-`TYPE_STEP_COUNTER`는 누적 걸음 수만 반환합니다. 사용자가 실제로 걷고 있는지, 기기를 흔들거나 차량에 탑승한 건지는 구분하지 않습니다.
-센서 퓨전 기반 HAR 모델을 보조 신호로 사용하면:
+Health Connect는 기기와 건강 앱이 기록한 걸음 데이터를 앱이 직접 센서를 소유하지 않고 읽을 수 있게 해줍니다. `AggregateRequest`는 중복 제거를 적용하므로 복수 앱이 같은 구간을 기록해도 WalkLog는 단일 집계값을 기준으로 화면과 미션을 계산할 수 있습니다.
 
-- 예보 화면: 실제 걷기 중인 시간대만 집계해 피크 시간대 정확도 향상
-- 미션 화면: 목표 달성 여부를 걸음 수 + 활동 상태로 교차 확인
+LiteRT 파이프라인은 Health Connect 경로와 분리했습니다.
+
+| 구성 요소 | 책임 |
+|---|---|
+| `ActivitySensorCollector` | `SENSOR_DELAY_FASTEST`로 가속도계 · 자이로스코프를 수집하고, `[ax, ay, az, gx, gy, gz]` 샘플 50개를 `FloatArray(300)`으로 emit |
+| `ActivityClassifier` | 센서 윈도우를 `[1, 50, 6]` 텐서로 변환하고 LiteRT `Interpreter`로 활동 상태를 추론 |
+| `ActivityStateProvider` | `isStationary: StateFlow<Boolean>`을 외부 레이어에 노출 |
+
+위 구조는 센서 수집과 추론 책임을 분리합니다. `ActivityClassifier`는 `ActivityStateProvider`를 구현하고, Hilt `SingletonComponent`에서 `provideActivityStateProvider(classifier)`로 바인딩됩니다.
+
+센서 퓨전 기반 HAR 모델을 별도 보조 신호로 두면:
+
+- 홈 화면: 사용자가 현재 걷고 있는지 여부를 별도 상태로 노출할 수 있음
+- 향후 실험: HC 걸음 수와 활동 상태를 비교해 기기 흔들림 같은 오탐 가능성을 분석할 수 있음
 
 LiteRT를 선택한 이유:
 
@@ -536,7 +565,17 @@ LiteRT를 선택한 이유:
 
 ### 트레이드오프
 
-모델 파일(`.tflite`)은 별도 변환 및 배포 관리가 필요합니다. 초기 버전은 UCI HAR Dataset 기반 공개 모델을 변환해 사용하며, 정확도 개선은 온디바이스 피드백 루프로 확장 가능합니다.
+Health Connect를 기준으로 하면 앱이 자체 센서 수집으로 걸음 수를 재계산하지 않아도 됩니다. 데이터 출처가 일관되고 배터리 비용도 낮습니다.
+
+대신 플랫폼 권한과 Health Connect 사용 가능 여부에 의존합니다. 실시간성도 Health Connect 갱신 주기와 권한 상태의 영향을 받습니다.
+
+LiteRT 모델 파일(`.tflite`)은 별도 변환 및 배포 관리가 필요합니다. 모델을 앱에 포함하기 전까지는 코드 경로만 존재하고 실제 HAR 분류는 활성화되지 않습니다.
+
+초기 버전은 UCI HAR Dataset 기반 공개 모델을 변환해 사용할 수 있습니다. 다만 스마트폰 위치와 사용자 보행 패턴에 따른 정확도 편차가 크므로, 모델 배치 후에는 실기기 센서 로그로 다음 항목을 검증해야 합니다.
+
+- 입력 스케일
+- 클래스 인덱스 매핑
+- 배터리 사용량
 
 ---
 
