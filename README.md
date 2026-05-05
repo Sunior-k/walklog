@@ -210,17 +210,28 @@ object CrashKeys {
 
 ### Baseline Profile
 
-`:benchmark` 모듈에 `BaselineProfileGenerator`를 작성해 앱 시작 경로와 주요 사용자 흐름을 ART에 미리 학습시킵니다.
+`:benchmark` 모듈은 Now in Android 패턴에 따라 Baseline Profile 생성과 성능 측정을 화면 단위 서브 패키지로 분리합니다.
 
 ```bash
-./gradlew :benchmark:connectedBenchmarkAndroidTest
+# Baseline Profile 생성
+./gradlew :app:generateBaselineProfile
+
+# 시작 시간 측정 (None / Partial(Disable) / Partial(Require) / Full — 4가지 CompilationMode)
+./gradlew :benchmark:connectedBenchmarkAndroidTest \
+  -Pandroid.testInstrumentationRunnerArguments.class=com.river.walklog.benchmark.startup.StartupBenchmark
+
+# 홈 스크롤 프레임 성능 측정 (None / Partial(Require) / Full — 3가지 CompilationMode)
+./gradlew :benchmark:connectedBenchmarkAndroidTest \
+  -Pandroid.testInstrumentationRunnerArguments.class=com.river.walklog.benchmark.home.ScrollHomeFeedBenchmark
 ```
 
 **커버하는 사용자 흐름:**
-- 콜드 스타트 → 홈 화면 진입
-- 홈 화면 스크롤
-- 주간 리포트 진입 → 뒤로가기
-- 미션 상세 진입 → 뒤로가기
+- `StartupBaselineProfile`: 콜드 스타트 → 홈 화면 진입 (`includeInStartupProfile = true`)
+- `HomeBaselineProfile`: 홈 스크롤 · 주간 리포트 진입 · 미션 상세 진입
+
+**측정 항목:**
+- `StartupBenchmark`: `StartupTimingMetric` + JIT / ClassInit `TraceSectionMetric` — 20 이터레이션, COLD 스타트
+- `ScrollHomeFeedBenchmark`: `FrameTimingMetric` — 10 이터레이션, WARM 스타트
 
 ### R8 Full Mode
 
@@ -380,7 +391,7 @@ Room DB(걸음 수 이력)와 DataStore(닉네임·포인트·설정)는 클라�
 ./gradlew :core:domain:test
 ./gradlew :core:data:test
 ./gradlew :feature:home:connectedAndroidTest
-./gradlew :benchmark:connectedBenchmarkAndroidTest
+./gradlew :app:generateBaselineProfile
 ./gradlew projectDependencyGraph
 ```
 
