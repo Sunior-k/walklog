@@ -36,13 +36,9 @@ feature:home → HomeViewModel → StepRepository → StepRepositoryImpl
 
 `isShrinkResources = true`를 함께 적용하면 코드에서 참조되지 않는 drawable, string, layout도 APK에서 제외됩니다.
 
-**실제 효과 (일반적인 Android 앱 기준):**
+**WalkLog에서는 `nonMinifiedRelease`와 `release`를 비교해 R8 효과를 측정합니다.**
 
-| 대상 | 제거 비율 |
-|---|---|
-| 미사용 라이브러리 코드 | 20~60% |
-| 미사용 리소스 | 5~15% |
-| 전체 APK 크기 | 통상 30~50% 감소 |
+`debug` 빌드는 디버깅 메타데이터와 debug 전용 설정이 포함되므로 R8 효과만 비교하기에는 기준이 섞입니다. 따라서 release 기반이지만 R8을 끈 `nonMinifiedRelease`를 기준선으로 두고, R8과 resource shrink가 켜진 `release`와 비교합니다.
 
 ### 2-2. Obfuscation (난독화)
 
@@ -186,10 +182,17 @@ AGP가 이걸 자동으로 적용하므로, 아래 라이브러리는 별도 규
 ## 5. 빌드 결과 확인
 
 ```bash
-# release 빌드 후 생성되는 파일들
+# R8 적용 전/후를 같은 release 계열에서 비교
+./gradlew :app:assembleNonMinifiedRelease :app:assembleRelease
+```
+
+생성 파일:
+
+```bash
 app/build/outputs/
-  apk/release/app-release.apk        # 최종 APK
-  mapping/release/mapping.txt        # 난독화 매핑 테이블
+  apk/nonMinifiedRelease/app-nonMinifiedRelease.apk    # release 기반, R8 off
+  apk/release/app-release.apk                         # release 기반, R8 on
+  mapping/release/mapping.txt                         # 난독화 매핑 테이블
 
 # mapping.txt 예시
 com.river.walklog.feature.home.HomeViewModel -> a.b.c.d:
@@ -197,14 +200,60 @@ com.river.walklog.feature.home.HomeViewModel -> a.b.c.d:
     void collectSteps() -> b
 ```
 
-### APK 분석 방법
+### APK 크기 측정
 
-Android Studio → **Build → Analyze APK** 에서 R8 적용 전후 크기 비교 가능:
+```bash
+stat -f "%z %N" app/build/outputs/apk/nonMinifiedRelease/app-nonMinifiedRelease.apk
+stat -f "%z %N" app/build/outputs/apk/release/app-release.apk
+```
+
+### DEX 크기 측정
+
+```bash
+unzip -l app/build/outputs/apk/nonMinifiedRelease/app-nonMinifiedRelease.apk | rg "classes.*\\.dex"
+unzip -l app/build/outputs/apk/release/app-release.apk | rg "classes.*\\.dex"
+```
+
+DEX 합산 크기는 출력된 `classes*.dex`의 byte 값을 모두 더해 계산합니다.
+
+### 리소스/네이티브 라이브러리 구성 확인
+
+```bash
+unzip -l app/build/outputs/apk/nonMinifiedRelease/app-nonMinifiedRelease.apk > /tmp/walklog-non-minified-release-apk.txt
+unzip -l app/build/outputs/apk/release/app-release.apk > /tmp/walklog-release-apk.txt
+```
+
+Android Studio → **Build → Analyze APK** 에서도 APK 내부 구성과 파일별 크기를 확인할 수 있습니다.
+
+### WalkLog 실측 결과
+
+측정 환경:
+
+| 항목 | 값 |
+|---|---|
+| 비교 기준 | `nonMinifiedRelease` vs `release` |
+| Build command | `./gradlew :app:assembleNonMinifiedRelease :app:assembleRelease` |
+| AGP | 8.13.1 |
+| R8 적용 | `release`만 `isMinifyEnabled=true`, `isShrinkResources=true` |
+
+측정값:
+
+| 항목 | nonMinifiedRelease | release | 변화 |
+|---|---:|---:|---:|
+| APK 크기 | 69,469,747 bytes (66 MB) | 32,686,358 bytes (31 MB) | -53.0% |
+| DEX 합산 크기 | 44,247,932 bytes | 8,438,072 bytes | -80.9% |
+| `classes*.dex` 개수 | 5개 | 2개 | 3개 감소 |
+| `mapping.txt` | 없음 | 71 MB 생성 | 난독화 적용 |
+
+감소율 계산:
 
 ```
-적용 전 (debug):    classes.dex ~ 8MB
-적용 후 (release):  classes.dex ~ 3~4MB (예상치)
+(nonMinifiedRelease - release) / nonMinifiedRelease * 100
 ```
+
+`release` 빌드에서 `mapping.txt`가 생성되면 난독화가 적용된 것입니다. Crashlytics Gradle Plugin은 이 파일을 업로드해 난독화된 스택 트레이스를 원본 클래스명과 라인 번호로 복원합니다.
+
+이번 측정에서는 `mapping.txt` 상단에 `# compiler: R8`, `# compiler_version: 8.13.17`, `pg_map_hash`가 기록됐고, 실제 클래스가 `a.a`, `R8$$REMOVED$$CLASS$$...` 형태로 매핑되어 난독화와 최적화가 적용됐음을 확인했습니다.
 
 ---
 
