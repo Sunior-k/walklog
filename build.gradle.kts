@@ -48,14 +48,11 @@ tasks.register("testCoverage") {
 }
 
 gradle.projectsEvaluated {
-    tasks.named("testCoverage") {
-        dependsOn(
-            subprojects.flatMap { subproject ->
-                listOfNotNull(
-                    subproject.tasks.findByName("jacocoDebugReport"),
-                    subproject.tasks.findByName("jacocoTestReport"),
-                )
-            },
+    val coverageTasks = subprojects.flatMap { subproject ->
+        listOfNotNull(
+            subproject.tasks.findByName("jacocoDebugReport"),
+            subproject.tasks.findByName("jacocoTestReport"),
         )
     }
+    tasks.getByName("testCoverage").dependsOn(coverageTasks)
 }
