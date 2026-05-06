@@ -272,7 +272,7 @@ class MainActivity : AppCompatActivity() {
         navController: NavController,
         destinationId: Int,
     ) {
-        navController.navigate(destinationId)
+        navigateToBottomNavDestination(navController, destinationId)
     }
 
     private fun applyBottomNavigationInsets(bottomNav: BottomNavigationView) {
