@@ -14,9 +14,6 @@ fun RecapRoute(
 
     RecapScreen(
         state = state,
-        onClose = {
-            viewModel.handleIntent(RecapIntent.OnClose)
-            onBack()
-        },
+        onClose = { onBack() },
     )
 }

@@ -9,7 +9,3 @@ data class RecapState(
     val recap: MonthlyRecap? = null,
     val isError: Boolean = false,
 )
-
-sealed interface RecapIntent {
-    data object OnClose : RecapIntent
-}

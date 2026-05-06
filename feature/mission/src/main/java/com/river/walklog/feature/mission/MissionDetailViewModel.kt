@@ -45,8 +45,6 @@ class MissionDetailViewModel @Inject constructor(
 
     fun handleIntent(intent: MissionDetailIntent) {
         when (intent) {
-            MissionDetailIntent.OnClickBack -> Unit
-            MissionDetailIntent.OnClickStartWalking -> Unit
             MissionDetailIntent.OnRefreshWeather -> loadWeather(forceRefresh = true)
         }
     }

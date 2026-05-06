@@ -101,18 +101,9 @@ fun HomeRoute(
     HomeScreen(
         state = state,
         isExpanded = isExpanded,
-        onClickTodayMission = {
-            viewModel.handleIntent(HomeIntent.OnClickTodayMission)
-            onNavigateToMission()
-        },
-        onClickWeeklyReport = {
-            viewModel.handleIntent(HomeIntent.OnClickWeeklyReport)
-            onNavigateToWeeklyReport()
-        },
-        onClickForecast = {
-            viewModel.handleIntent(HomeIntent.OnClickForecast)
-            showForecastSheet = true
-        },
+        onClickTodayMission = { onNavigateToMission() },
+        onClickWeeklyReport = { onNavigateToWeeklyReport() },
+        onClickForecast = { showForecastSheet = true },
         onRefresh = { viewModel.handleIntent(HomeIntent.OnRefresh) },
         onRefreshWeather = { viewModel.handleIntent(HomeIntent.OnRefreshWeather) },
         onClickRecap = onNavigateToRecap,

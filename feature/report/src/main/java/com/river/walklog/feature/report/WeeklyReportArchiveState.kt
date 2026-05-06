@@ -9,8 +9,3 @@ data class WeeklyReportArchiveState(
     val isLoading: Boolean = true,
     val isError: Boolean = false,
 )
-
-sealed interface WeeklyReportArchiveIntent {
-    data object OnClickBack : WeeklyReportArchiveIntent
-    data class OnClickReport(val weekStartEpochDay: Long) : WeeklyReportArchiveIntent
-}

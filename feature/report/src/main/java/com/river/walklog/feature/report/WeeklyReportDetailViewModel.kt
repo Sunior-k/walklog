@@ -35,8 +35,8 @@ class WeeklyReportDetailViewModel @Inject constructor(
 
     fun handleIntent(intent: WeeklyReportDetailIntent) {
         when (intent) {
-            WeeklyReportDetailIntent.OnClickBack -> Unit
-            WeeklyReportDetailIntent.OnClickShare -> Unit
+            WeeklyReportDetailIntent.OnClickShare -> _state.update { it.copy(isSharing = true) }
+            WeeklyReportDetailIntent.OnShareComplete -> _state.update { it.copy(isSharing = false) }
         }
     }
 
@@ -57,14 +57,11 @@ class WeeklyReportDetailViewModel @Inject constructor(
                     _state.update { it.applyWeeklySummary(summary, bestHour) }
                 }
                 .catch { e ->
+                    crashReporter.log("Weekly report detail load failed: ${e.message}")
                     crashReporter.recordException(e)
                     _state.update { it.copy(isLoading = false, isError = true) }
                 }
                 .collect {}
         }
-    }
-
-    fun setSharing(isSharing: Boolean) {
-        _state.update { it.copy(isSharing = isSharing) }
     }
 }

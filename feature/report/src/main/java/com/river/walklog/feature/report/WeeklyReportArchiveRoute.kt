@@ -46,21 +46,12 @@ fun WeeklyReportArchiveRoute(
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
 
-    BackHandler {
-        viewModel.handleIntent(WeeklyReportArchiveIntent.OnClickBack)
-        onBack()
-    }
+    BackHandler { onBack() }
 
     WeeklyReportArchiveScreen(
         state = state,
-        onClickBack = {
-            viewModel.handleIntent(WeeklyReportArchiveIntent.OnClickBack)
-            onBack()
-        },
-        onClickReport = { weekStartEpochDay ->
-            viewModel.handleIntent(WeeklyReportArchiveIntent.OnClickReport(weekStartEpochDay))
-            onClickReport(weekStartEpochDay)
-        },
+        onClickBack = { onBack() },
+        onClickReport = { weekStartEpochDay -> onClickReport(weekStartEpochDay) },
     )
 }
 

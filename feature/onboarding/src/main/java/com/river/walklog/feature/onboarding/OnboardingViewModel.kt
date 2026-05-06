@@ -66,6 +66,7 @@ class OnboardingViewModel @Inject constructor(
                 userSettingsRepository.setNotificationsEnabled(current.notificationsEnabled)
                 userSettingsRepository.setOnboardingCompleted()
             }.onFailure { e ->
+                crashReporter.log("Onboarding save failed: ${e.message}")
                 crashReporter.recordException(e)
             }
             _navigateToHome.value = true

@@ -35,15 +35,10 @@ class RecapViewModel @Inject constructor(
         getMonthlyRecap(year, month)
             .onEach { recap -> _state.update { it.copy(isLoading = false, recap = recap) } }
             .catch { e ->
+                crashReporter.log("Recap load failed: ${e.message}")
                 crashReporter.recordException(e)
                 _state.update { it.copy(isLoading = false, isError = true) }
             }
             .launchIn(viewModelScope)
-    }
-
-    fun handleIntent(intent: RecapIntent) {
-        when (intent) {
-            RecapIntent.OnClose -> Unit
-        }
     }
 }

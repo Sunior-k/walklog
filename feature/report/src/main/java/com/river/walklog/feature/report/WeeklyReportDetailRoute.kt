@@ -82,21 +82,16 @@ fun WeeklyReportDetailRoute(
     }
 
     BackHandler {
-        viewModel.handleIntent(WeeklyReportDetailIntent.OnClickBack)
         onBack()
     }
 
     WeeklyReportDetailScreen(
         state = state,
         graphicsLayer = graphicsLayer,
-        onClickBack = {
-            viewModel.handleIntent(WeeklyReportDetailIntent.OnClickBack)
-            onBack()
-        },
+        onClickBack = { onBack() },
         onClickShare = {
             scope.launch {
                 viewModel.handleIntent(WeeklyReportDetailIntent.OnClickShare)
-                viewModel.setSharing(true)
                 runCatching {
                     val bitmap = graphicsLayer.toAndroidBitmapSafely()
                     val uri = shareManager.saveBitmapToCache(
@@ -107,7 +102,7 @@ fun WeeklyReportDetailRoute(
                 }.onFailure {
                     Toast.makeText(context, "리포트 공유에 실패했어요.", Toast.LENGTH_SHORT).show()
                 }
-                viewModel.setSharing(false)
+                viewModel.handleIntent(WeeklyReportDetailIntent.OnShareComplete)
             }
         },
     )
