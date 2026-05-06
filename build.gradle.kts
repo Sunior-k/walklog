@@ -41,3 +41,21 @@ afterEvaluate {
         dependsOn(ktlintFormatTasks)
     }
 }
+
+tasks.register("testCoverage") {
+    group = "verification"
+    description = "Runs unit tests and generates JaCoCo XML coverage reports for Codecov."
+}
+
+gradle.projectsEvaluated {
+    tasks.named("testCoverage") {
+        dependsOn(
+            subprojects.flatMap { subproject ->
+                listOfNotNull(
+                    subproject.tasks.findByName("jacocoDebugReport"),
+                    subproject.tasks.findByName("jacocoTestReport"),
+                )
+            },
+        )
+    }
+}
