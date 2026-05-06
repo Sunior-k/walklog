@@ -47,12 +47,15 @@ tasks.register("testCoverage") {
     description = "Runs unit tests and generates JaCoCo XML coverage reports for Codecov."
 }
 
-gradle.projectsEvaluated {
-    val coverageTasks = subprojects.flatMap { subproject ->
+subprojects {
+    afterEvaluate {
         listOfNotNull(
-            subproject.tasks.findByName("jacocoDebugReport"),
-            subproject.tasks.findByName("jacocoTestReport"),
-        )
+            tasks.findByName("jacocoDebugReport"),
+            tasks.findByName("jacocoTestReport"),
+        ).forEach { coverageTask ->
+            rootProject.tasks.named("testCoverage").configure {
+                dependsOn(coverageTask)
+            }
+        }
     }
-    tasks.getByName("testCoverage").dependsOn(coverageTasks)
 }
