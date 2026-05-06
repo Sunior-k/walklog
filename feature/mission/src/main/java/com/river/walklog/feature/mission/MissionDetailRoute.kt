@@ -67,11 +67,8 @@ fun MissionDetailRoute(
 
     MissionDetailScreen(
         state = state,
-        onClickBack = {
-            viewModel.handleIntent(MissionDetailIntent.OnClickBack)
-            onBack()
-        },
-        onClickAction = { viewModel.handleIntent(MissionDetailIntent.OnClickStartWalking) },
+        onClickBack = { onBack() },
+        onClickAction = { onBack() },
         onRefreshWeather = { viewModel.handleIntent(MissionDetailIntent.OnRefreshWeather) },
     )
 }

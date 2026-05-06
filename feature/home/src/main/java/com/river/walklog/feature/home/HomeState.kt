@@ -56,9 +56,6 @@ enum class StreakRiskLevel {
 }
 
 sealed interface HomeIntent {
-    data object OnClickTodayMission : HomeIntent
-    data object OnClickWeeklyReport : HomeIntent
-    data object OnClickForecast : HomeIntent
     data object OnRefresh : HomeIntent
     data object OnRefreshWeather : HomeIntent
     data class OnPermissionResult(val granted: Boolean) : HomeIntent

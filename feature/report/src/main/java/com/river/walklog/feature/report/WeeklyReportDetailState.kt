@@ -24,6 +24,6 @@ data class WeeklyReportDetailState(
 )
 
 sealed interface WeeklyReportDetailIntent {
-    data object OnClickBack : WeeklyReportDetailIntent
     data object OnClickShare : WeeklyReportDetailIntent
+    data object OnShareComplete : WeeklyReportDetailIntent
 }

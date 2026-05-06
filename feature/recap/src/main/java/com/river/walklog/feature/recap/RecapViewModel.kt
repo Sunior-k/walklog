@@ -40,10 +40,4 @@ class RecapViewModel @Inject constructor(
             }
             .launchIn(viewModelScope)
     }
-
-    fun handleIntent(intent: RecapIntent) {
-        when (intent) {
-            RecapIntent.OnClose -> Unit
-        }
-    }
 }

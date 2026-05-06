@@ -35,8 +35,8 @@ class WeeklyReportDetailViewModel @Inject constructor(
 
     fun handleIntent(intent: WeeklyReportDetailIntent) {
         when (intent) {
-            WeeklyReportDetailIntent.OnClickBack -> Unit
-            WeeklyReportDetailIntent.OnClickShare -> Unit
+            WeeklyReportDetailIntent.OnClickShare -> _state.update { it.copy(isSharing = true) }
+            WeeklyReportDetailIntent.OnShareComplete -> _state.update { it.copy(isSharing = false) }
         }
     }
 
@@ -62,9 +62,5 @@ class WeeklyReportDetailViewModel @Inject constructor(
                 }
                 .collect {}
         }
-    }
-
-    fun setSharing(isSharing: Boolean) {
-        _state.update { it.copy(isSharing = isSharing) }
     }
 }

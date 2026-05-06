@@ -21,7 +21,5 @@ data class MissionDetailState(
 )
 
 sealed interface MissionDetailIntent {
-    data object OnClickBack : MissionDetailIntent
-    data object OnClickStartWalking : MissionDetailIntent
     data object OnRefreshWeather : MissionDetailIntent
 }

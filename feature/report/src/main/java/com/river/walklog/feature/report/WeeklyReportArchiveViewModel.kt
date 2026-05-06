@@ -30,13 +30,6 @@ class WeeklyReportArchiveViewModel @Inject constructor(
         collectReportArchive()
     }
 
-    fun handleIntent(intent: WeeklyReportArchiveIntent) {
-        when (intent) {
-            WeeklyReportArchiveIntent.OnClickBack -> Unit
-            is WeeklyReportArchiveIntent.OnClickReport -> Unit
-        }
-    }
-
     private fun collectReportArchive() {
         getWeeklyReportArchive()
             .onEach { entries ->

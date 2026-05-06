@@ -78,17 +78,6 @@ class HomeViewModel @Inject constructor(
 
     fun handleIntent(intent: HomeIntent) {
         when (intent) {
-            HomeIntent.OnClickForecast -> {
-                crashReporter.log("Navigate → forecast bottom sheet")
-            }
-            HomeIntent.OnClickTodayMission -> {
-                crashReporter.log("Navigate → mission detail")
-                crashReporter.setKey(CrashKeys.SCREEN, CrashKeys.Screens.MISSION_DETAIL)
-            }
-            HomeIntent.OnClickWeeklyReport -> {
-                crashReporter.log("Navigate → weekly report")
-                crashReporter.setKey(CrashKeys.SCREEN, CrashKeys.Screens.WEEKLY_REPORT)
-            }
             HomeIntent.OnRefresh -> refresh()
             HomeIntent.OnRefreshWeather -> loadWeather(forceRefresh = true)
             is HomeIntent.OnPermissionResult -> handlePermissionResult(intent.granted)
