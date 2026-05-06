@@ -57,6 +57,16 @@ jobs:
       - name: Check lint
         run: ./gradlew :app:lintDebug
 
+      - name: Debug - Coverage artifacts
+        if: ${{ !cancelled() }}
+        run: |
+          echo "=== .exec files (test execution data) ==="
+          find . -name "*.exec" 2>/dev/null || echo "NONE"
+          echo "=== jacoco.xml files ==="
+          find . -name "jacoco.xml" 2>/dev/null || echo "NONE"
+          echo "=== JUnit test result XMLs ==="
+          find . -name "TEST-*.xml" -path "*/test-results/*" 2>/dev/null | head -20 || echo "NONE"
+
       - name: Find coverage reports
         id: coverage-reports
         run: |
