@@ -1,4 +1,7 @@
+import com.river.walklog.configureKotlinJacocoReport
 import com.river.walklog.findLibrary
+
+configureKotlinJacocoReport()
 
 dependencies {
     "testImplementation"(findLibrary("junit4").get())

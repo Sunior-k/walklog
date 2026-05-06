@@ -1,7 +1,9 @@
+import com.river.walklog.configureAndroidJacocoReport
 import com.river.walklog.configureAndroidUiTestOptions
 import com.river.walklog.findLibrary
 
 configureAndroidUiTestOptions()
+configureAndroidJacocoReport()
 
 dependencies {
     "testImplementation"(findLibrary("junit4").get())
