@@ -37,6 +37,11 @@ jobs:
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v4
 
+      - name: Write google-services.json
+        run: |
+          echo '${{ secrets.GOOGLE_SERVICES_JSON_DEBUG }}' | base64 --decode > app/src/debug/google-services.json
+          echo '${{ secrets.GOOGLE_SERVICES_JSON_RELEASE }}' | base64 --decode > app/google-services.json
+
       - name: Check build logic
         run: ./gradlew :build-logic:convention:check
 
@@ -134,6 +139,11 @@ jobs:
 
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v4
+
+      - name: Write google-services.json
+        run: |
+          echo '${{ secrets.GOOGLE_SERVICES_JSON_DEBUG }}' | base64 --decode > app/src/debug/google-services.json
+          echo '${{ secrets.GOOGLE_SERVICES_JSON_RELEASE }}' | base64 --decode > app/google-services.json
 
       - name: Run instrumented tests
         uses: reactivecircus/android-emulator-runner@v2
