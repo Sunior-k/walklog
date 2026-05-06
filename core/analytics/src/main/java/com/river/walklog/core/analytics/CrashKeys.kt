@@ -22,12 +22,13 @@ object CrashKeys {
     object Screens {
         const val HOME = "home"
         const val WEEKLY_REPORT = "weekly_report"
+        const val WEEKLY_REPORT_ARCHIVE = "weekly_report_archive"
         const val MISSION_DETAIL = "mission_detail"
         const val RECAP = "recap"
-        const val FORECAST = "forecast"
         const val ONBOARDING = "onboarding"
         const val SETTINGS = "settings"
         const val HISTORY = "history"
+        const val REWARD = "reward"
     }
 
     object SensorValues {

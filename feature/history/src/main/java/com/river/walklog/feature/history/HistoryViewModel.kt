@@ -140,7 +140,10 @@ class HistoryViewModel @Inject constructor(
                 }
                 selectedDay?.let { loadSelectedDayTimeline(it) }
             }
-            .catch { e -> crashReporter.recordException(e) }
+            .catch { e ->
+                crashReporter.log("History month load failed: ${e.message}")
+                crashReporter.recordException(e)
+            }
             .launchIn(viewModelScope)
     }
 
@@ -233,6 +236,7 @@ class HistoryViewModel @Inject constructor(
                     }
                 }
             }.onFailure { e ->
+                crashReporter.log("History timeline load failed: ${e.message}")
                 crashReporter.recordException(e)
             }
         }

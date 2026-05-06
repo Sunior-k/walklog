@@ -26,7 +26,7 @@ class WeeklyReportArchiveViewModel @Inject constructor(
     val state: StateFlow<WeeklyReportArchiveState> = _state.asStateFlow()
 
     init {
-        crashReporter.setKey(CrashKeys.SCREEN, CrashKeys.Screens.WEEKLY_REPORT)
+        crashReporter.setKey(CrashKeys.SCREEN, CrashKeys.Screens.WEEKLY_REPORT_ARCHIVE)
         collectReportArchive()
     }
 
@@ -44,6 +44,7 @@ class WeeklyReportArchiveViewModel @Inject constructor(
                 }
             }
             .catch { e ->
+                crashReporter.log("Weekly report archive load failed: ${e.message}")
                 crashReporter.recordException(e)
                 _state.update { it.copy(isLoading = false, isError = true) }
             }

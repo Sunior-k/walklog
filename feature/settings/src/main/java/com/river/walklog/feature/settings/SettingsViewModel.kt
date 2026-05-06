@@ -56,42 +56,60 @@ class SettingsViewModel @Inject constructor(
                     )
                 }
             }
-            .catch { e -> crashReporter.recordException(e) }
+            .catch { e ->
+                crashReporter.log("Settings load failed: ${e.message}")
+                crashReporter.recordException(e)
+            }
             .launchIn(viewModelScope)
     }
 
     private fun updateNickname(nickname: String) {
         viewModelScope.launch {
             runCatching { userSettingsRepository.setNickname(nickname.trim()) }
-                .onFailure { e -> crashReporter.recordException(e) }
+                .onFailure { e ->
+                    crashReporter.log("Nickname update failed: ${e.message}")
+                    crashReporter.recordException(e)
+                }
         }
     }
 
     private fun updateStepGoal(steps: Int) {
         viewModelScope.launch {
             runCatching { userSettingsRepository.setDailyStepGoal(steps) }
-                .onFailure { e -> crashReporter.recordException(e) }
+                .onFailure { e ->
+                    crashReporter.log("Step goal update failed: ${e.message}")
+                    crashReporter.recordException(e)
+                }
         }
     }
 
     private fun updateNotifications(enabled: Boolean) {
         viewModelScope.launch {
             runCatching { userSettingsRepository.setNotificationsEnabled(enabled) }
-                .onFailure { e -> crashReporter.recordException(e) }
+                .onFailure { e ->
+                    crashReporter.log("Notifications update failed: ${e.message}")
+                    crashReporter.recordException(e)
+                }
         }
     }
 
     private fun updateRecoverySteps(steps: Int) {
         viewModelScope.launch {
             runCatching { userSettingsRepository.setRecoveryMissionSteps(steps) }
-                .onFailure { e -> crashReporter.recordException(e) }
+                .onFailure { e ->
+                    crashReporter.log("Recovery steps update failed: ${e.message}")
+                    crashReporter.recordException(e)
+                }
         }
     }
 
     private fun updateThemeMode(themeMode: ThemeMode) {
         viewModelScope.launch {
             runCatching { userSettingsRepository.setThemeMode(themeMode) }
-                .onFailure { e -> crashReporter.recordException(e) }
+                .onFailure { e ->
+                    crashReporter.log("Theme mode update failed: ${e.message}")
+                    crashReporter.recordException(e)
+                }
         }
     }
 }
