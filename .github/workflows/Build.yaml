@@ -57,11 +57,17 @@ jobs:
       - name: Check lint
         run: ./gradlew :app:lintDebug
 
+      - name: Find coverage reports
+        id: coverage-reports
+        run: |
+          files=$(find . -name "jacoco.xml" -path "*/reports/jacoco/*" | paste -sd,)
+          echo "files=$files" >> $GITHUB_OUTPUT
+
       - name: Upload coverage to Codecov
         if: ${{ github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository }}
         uses: codecov/codecov-action@v5
         with:
-          files: '**/build/reports/jacoco/**/jacoco.xml'
+          files: ${{ steps.coverage-reports.outputs.files }}
           fail_ci_if_error: true
           flags: unit
           name: walklog-unit-tests
