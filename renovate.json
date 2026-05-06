@@ -10,6 +10,8 @@
     "dependencies"
   ],
   "assignees": ["Sunior-k"],
+  "automerge": true,
+  "automergeType": "pr",
   "prConcurrentLimit": 5,
   "prHourlyLimit": 2,
   "packageRules": [
