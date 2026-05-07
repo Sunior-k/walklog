@@ -313,8 +313,8 @@ class HistoryViewModelTest {
         val recap = emptyRecap(
             totalSteps = 13_200,
             dailyCounts = listOf(
-                DailyStepCount(dateEpochDay = firstDayEpoch, steps = 5_000),
-                DailyStepCount(dateEpochDay = secondDayEpoch, steps = 8_200),
+                DailyStepCount(dateEpochDay = firstDayEpoch, steps = 5_000, targetSteps = 10_000),
+                DailyStepCount(dateEpochDay = secondDayEpoch, steps = 8_200, targetSteps = 10_000),
             ),
         )
         stubRecap(recap)
