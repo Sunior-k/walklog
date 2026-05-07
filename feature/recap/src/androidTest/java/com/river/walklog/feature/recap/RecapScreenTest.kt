@@ -124,7 +124,7 @@ class RecapScreenTest {
     ) {
         composeTestRule.setContent {
             WalkLogTheme {
-                RecapScreen(state = state, onClose = onClose)
+                RecapScreen(state = state, onClose = onClose, autoAdvance = false)
             }
         }
     }
