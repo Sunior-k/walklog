@@ -1,6 +1,8 @@
 package com.river.walklog.core.database.dao
 
 import androidx.room.Dao
+import androidx.room.Insert
+import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import androidx.room.Upsert
 import com.river.walklog.core.database.entity.DailyStepEntity
@@ -11,6 +13,12 @@ interface DailyStepDao {
 
     @Upsert
     suspend fun upsert(entity: DailyStepEntity)
+
+    @Insert(onConflict = OnConflictStrategy.IGNORE)
+    suspend fun insertIfNotExists(entity: DailyStepEntity)
+
+    @Query("UPDATE daily_steps SET totalSteps = :totalSteps, lastUpdatedAt = :lastUpdatedAt WHERE dateEpochDay = :dateEpochDay")
+    suspend fun updateStepsOnly(dateEpochDay: Long, totalSteps: Int, lastUpdatedAt: Long): Int
 
     @Query("SELECT * FROM daily_steps WHERE dateEpochDay = :dateEpochDay")
     fun observeForDay(dateEpochDay: Long): Flow<DailyStepEntity?>
