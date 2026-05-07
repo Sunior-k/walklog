@@ -6,6 +6,7 @@ import com.river.walklog.core.data.healthconnect.HealthConnectStepDataSource
 import com.river.walklog.core.database.dao.DailyStepDao
 import com.river.walklog.core.database.entity.DailyStepEntity
 import com.river.walklog.core.model.DailyStepCount
+import com.river.walklog.core.model.UserSettings
 import io.mockk.coEvery
 import io.mockk.coJustRun
 import io.mockk.every
@@ -25,6 +26,7 @@ class OfflineFirstStepRepositoryTest {
 
     private lateinit var healthConnectDataSource: HealthConnectStepDataSource
     private lateinit var dailyStepDao: DailyStepDao
+    private lateinit var userSettingsRepository: UserSettingsRepository
     private lateinit var repository: OfflineFirstStepRepository
 
     @OptIn(ExperimentalCoroutinesApi::class)
@@ -34,9 +36,15 @@ class OfflineFirstStepRepositoryTest {
     fun setUp() {
         healthConnectDataSource = mockk()
         dailyStepDao = mockk()
+        userSettingsRepository = mockk {
+            every { settings } returns flowOf(UserSettings())
+        }
+        coEvery { dailyStepDao.updateStepsOnly(any(), any(), any()) } returns 1
+        coJustRun { dailyStepDao.insertIfNotExists(any()) }
         repository = OfflineFirstStepRepository(
             healthConnectDataSource = healthConnectDataSource,
             dailyStepDao = dailyStepDao,
+            userSettingsRepository = userSettingsRepository,
             dispatchers = WalkLogDispatchers(
                 io = testDispatcher,
                 default = testDispatcher,
@@ -62,7 +70,6 @@ class OfflineFirstStepRepositoryTest {
     fun `getStepsForDay emits DailyStepCount with 0 steps when no entity and HC returns 0`() = runTest {
         val epochDay = 19_000L
         coEvery { healthConnectDataSource.readDailySteps(any()) } returns 0
-        coJustRun { dailyStepDao.upsert(any()) }
         every { dailyStepDao.observeForDay(epochDay) } returns flowOf(null)
 
         repository.getStepsForDay(epochDay).test {
@@ -78,7 +85,6 @@ class OfflineFirstStepRepositoryTest {
         val epochDay = 19_000L
         val entity = dailyEntity(epochDay = epochDay, totalSteps = 7_500, targetSteps = 6_000)
         coEvery { healthConnectDataSource.readDailySteps(any()) } returns 7_500
-        coJustRun { dailyStepDao.upsert(any()) }
         every { dailyStepDao.observeForDay(epochDay) } returns flowOf(entity)
 
         repository.getStepsForDay(epochDay).test {
@@ -94,7 +100,6 @@ class OfflineFirstStepRepositoryTest {
         val epochDay = 20_000L
         val entity = dailyEntity(epochDay = epochDay, totalSteps = 3_000)
         coEvery { healthConnectDataSource.readDailySteps(any()) } returns 3_000
-        coJustRun { dailyStepDao.upsert(any()) }
         every { dailyStepDao.observeForDay(epochDay) } returns flowOf(entity)
 
         repository.getStepsForDay(epochDay).test {
@@ -111,7 +116,6 @@ class OfflineFirstStepRepositoryTest {
         val to = 2L
         val entity = dailyEntity(epochDay = 1L, totalSteps = 5_000)
         coEvery { healthConnectDataSource.readDailySteps(any()) } returns 0
-        coJustRun { dailyStepDao.upsert(any()) }
         every { dailyStepDao.observeForRange(from, to) } returns flowOf(listOf(entity))
 
         repository.getStepCountsForRange(from, to).test {
@@ -134,7 +138,6 @@ class OfflineFirstStepRepositoryTest {
             dailyEntity(epochDay = 102L, totalSteps = 3_000),
         )
         coEvery { healthConnectDataSource.readDailySteps(any()) } returns 0
-        coJustRun { dailyStepDao.upsert(any()) }
         every { dailyStepDao.observeForRange(from, to) } returns flowOf(entities)
 
         repository.getStepCountsForRange(from, to).test {
@@ -150,7 +153,6 @@ class OfflineFirstStepRepositoryTest {
     fun `getWeeklyStepSummary spans exactly 7 days from weekStart`() = runTest {
         val weekStart = 19_000L
         coEvery { healthConnectDataSource.readDailySteps(any()) } returns 0
-        coJustRun { dailyStepDao.upsert(any()) }
         every {
             dailyStepDao.observeForRange(weekStart, weekStart + 6)
         } returns flowOf(emptyList())
