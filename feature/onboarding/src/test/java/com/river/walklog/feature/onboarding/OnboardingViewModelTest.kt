@@ -144,8 +144,8 @@ class OnboardingViewModelTest {
 
     @Test
     fun `OnClickNext on last page triggers complete`() = runTest {
-        // 페이지 0 → 1 → 2 → complete (TOTAL_PAGES = 3)
-        repeat(3) { viewModel.handleIntent(OnboardingIntent.OnClickNext) }
+        // 페이지 0 → 1 → 2 → 3 → complete (TOTAL_PAGES = 4)
+        repeat(4) { viewModel.handleIntent(OnboardingIntent.OnClickNext) }
         advanceUntilIdle()
 
         coVerify { userSettingsRepository.setOnboardingCompleted() }

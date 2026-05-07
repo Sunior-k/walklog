@@ -1,0 +1,179 @@
+name: Build
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+  pull_request:
+
+concurrency:
+  group: build-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  local_checks:
+    name: Local Checks and APK
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Copy CI gradle.properties
+        run: mkdir -p ~/.gradle && cp .github/ci-gradle.properties ~/.gradle/gradle.properties
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v5
+        with:
+          distribution: zulu
+          java-version: 21
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Write google-services.json
+        run: |
+          echo '${{ secrets.GOOGLE_SERVICES_JSON_DEBUG }}' | base64 --decode > app/src/debug/google-services.json
+          echo '${{ secrets.GOOGLE_SERVICES_JSON_RELEASE }}' | base64 --decode > app/google-services.json
+
+      - name: Check build logic
+        run: ./gradlew :build-logic:convention:check
+
+      - name: Check Kotlin style
+        run: ./gradlew ktlintCheck
+
+      - name: Run local tests with coverage
+        run: ./gradlew testCoverage --continue --stacktrace
+
+      - name: Build debug APK
+        run: ./gradlew :app:assembleDebug
+
+      - name: Check lint
+        run: ./gradlew :app:lintDebug
+
+      - name: Debug - Coverage artifacts
+        if: ${{ !cancelled() }}
+        run: |
+          echo "=== .exec files (test execution data) ==="
+          find . -name "*.exec" 2>/dev/null || echo "NONE"
+          echo "=== jacoco.xml files ==="
+          find . -name "jacoco.xml" 2>/dev/null || echo "NONE"
+          echo "=== JUnit test result XMLs ==="
+          find . -name "TEST-*.xml" -path "*/test-results/*" 2>/dev/null | head -20 || echo "NONE"
+
+      - name: Find coverage reports
+        id: coverage-reports
+        run: |
+          files=$(find . -name "jacoco.xml" -path "*/reports/jacoco/*" | paste -sd,)
+          echo "files=$files"
+          echo "files=$files" >> $GITHUB_OUTPUT
+
+      - name: Upload coverage to Codecov
+        if: ${{ github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository }}
+        uses: codecov/codecov-action@v5
+        with:
+          files: ${{ steps.coverage-reports.outputs.files }}
+          fail_ci_if_error: true
+          flags: unit
+          name: walklog-unit-tests
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+
+      - name: Upload APKs
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: apks
+          path: '**/build/outputs/apk/**/*.apk'
+
+      - name: Upload local test results
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: local-test-results
+          path: '**/build/test-results/test*/**/*.xml'
+
+      - name: Upload coverage reports
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-reports
+          path: '**/build/reports/jacoco/'
+
+      - name: Upload lint reports
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: lint-reports
+          path: '**/build/reports/lint-results-*.html'
+
+  android_tests:
+    name: Android Tests API ${{ matrix.api-level }}
+    runs-on: ubuntu-latest
+    needs: local_checks
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        api-level: [35]
+
+    steps:
+      - name: Delete unnecessary tools
+        uses: jlumbroso/free-disk-space@v1.3.1
+        with:
+          android: false
+          tool-cache: true
+          dotnet: true
+          haskell: true
+          swap-storage: true
+          docker-images: false
+          large-packages: false
+
+      - name: Enable KVM group perms
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+          ls /dev/kvm
+
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Copy CI gradle.properties
+        run: mkdir -p ~/.gradle && cp .github/ci-gradle.properties ~/.gradle/gradle.properties
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v5
+        with:
+          distribution: zulu
+          java-version: 21
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Write google-services.json
+        run: |
+          echo '${{ secrets.GOOGLE_SERVICES_JSON_DEBUG }}' | base64 --decode > app/src/debug/google-services.json
+          echo '${{ secrets.GOOGLE_SERVICES_JSON_RELEASE }}' | base64 --decode > app/google-services.json
+
+      - name: Run instrumented tests
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: ${{ matrix.api-level }}
+          arch: x86_64
+          disable-animations: true
+          script: ./gradlew connectedDebugAndroidTest --stacktrace
+
+      - name: Upload instrumented test reports
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-test-reports-${{ matrix.api-level }}
+          path: '**/build/reports/androidTests'

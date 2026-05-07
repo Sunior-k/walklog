@@ -5,9 +5,12 @@ import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
+import androidx.compose.ui.test.onAllNodesWithText
+import androidx.compose.ui.test.onFirst
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollTo
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.river.walklog.core.designsystem.foundation.WalkLogTheme
 import com.river.walklog.core.model.MissionType
@@ -135,7 +138,8 @@ class MissionDetailScreenTest {
         setContent(state = MissionDetailState(rewardText = "+50 캐시"))
 
         composeTestRule
-            .onNodeWithText("+50 캐시")
+            .onAllNodesWithText("+50 캐시")
+            .onFirst()
             .assertIsDisplayed()
     }
 
@@ -203,6 +207,7 @@ class MissionDetailScreenTest {
 
         composeTestRule
             .onNodeWithText("어제 놓친 목표를 다시 이어가보세요")
+            .performScrollTo()
             .assertIsDisplayed()
     }
 
@@ -212,6 +217,7 @@ class MissionDetailScreenTest {
 
         composeTestRule
             .onNodeWithText("오늘도 꾸준히 걸어주셨네요")
+            .performScrollTo()
             .assertIsDisplayed()
     }
 

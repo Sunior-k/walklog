@@ -41,3 +41,21 @@ afterEvaluate {
         dependsOn(ktlintFormatTasks)
     }
 }
+
+tasks.register("testCoverage") {
+    group = "verification"
+    description = "Runs unit tests and generates JaCoCo XML coverage reports for Codecov."
+}
+
+subprojects {
+    afterEvaluate {
+        listOfNotNull(
+            tasks.findByName("jacocoDebugReport"),
+            tasks.findByName("jacocoTestReport"),
+        ).forEach { coverageTask ->
+            rootProject.tasks.named("testCoverage").configure {
+                dependsOn(coverageTask)
+            }
+        }
+    }
+}

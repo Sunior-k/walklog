@@ -6,6 +6,7 @@ import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollTo
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.river.walklog.core.designsystem.foundation.WalkLogTheme
 import com.river.walklog.feature.home.model.MissionCardUiModel
@@ -47,7 +48,7 @@ class HomeScreenTest {
         setContent(state = HomeState(sensorStatus = SensorStatus.Unavailable))
 
         composeTestRule
-            .onNodeWithText("만보계를 지원하지 않는 기기예요")
+            .onNodeWithText("Health Connect를 지원하지 않는 기기예요")
             .assertIsDisplayed()
     }
 
@@ -67,7 +68,7 @@ class HomeScreenTest {
         setContent(state = HomeState(sensorStatus = SensorStatus.PermissionRequired))
 
         composeTestRule
-            .onNodeWithText("걸음 수 측정 권한이 필요해요")
+            .onNodeWithText("Health Connect 권한이 필요해요")
             .assertIsDisplayed()
     }
 
@@ -117,6 +118,7 @@ class HomeScreenTest {
                 currentSteps = 3_000,
                 targetSteps = 6_000,
             ),
+            isExpanded = true,
         )
 
         composeTestRule
@@ -132,6 +134,7 @@ class HomeScreenTest {
                 currentSteps = 6_000,
                 targetSteps = 6_000,
             ),
+            isExpanded = true,
         )
 
         composeTestRule
@@ -155,6 +158,7 @@ class HomeScreenTest {
 
         composeTestRule
             .onNodeWithText("오늘의 만보 걷기")
+            .performScrollTo()
             .assertIsDisplayed()
     }
 
@@ -166,7 +170,9 @@ class HomeScreenTest {
             onClickTodayMission = { clicked = true },
         )
 
-        composeTestRule.onNodeWithText("오늘 미션").performClick()
+        composeTestRule.onNodeWithText("오늘 미션")
+            .performScrollTo()
+            .performClick()
 
         assertTrue(clicked)
     }
@@ -213,6 +219,7 @@ class HomeScreenTest {
 
         composeTestRule
             .onNodeWithText("3월 리캡")
+            .performScrollTo()
             .assertIsDisplayed()
     }
 
@@ -220,6 +227,7 @@ class HomeScreenTest {
 
     private fun setContent(
         state: HomeState,
+        isExpanded: Boolean = false,
         onClickTodayMission: () -> Unit = {},
         onClickWeeklyReport: () -> Unit = {},
         onClickForecast: () -> Unit = {},
@@ -231,6 +239,7 @@ class HomeScreenTest {
             WalkLogTheme {
                 HomeScreen(
                     state = state,
+                    isExpanded = isExpanded,
                     onClickTodayMission = onClickTodayMission,
                     onClickWeeklyReport = onClickWeeklyReport,
                     onClickForecast = onClickForecast,
