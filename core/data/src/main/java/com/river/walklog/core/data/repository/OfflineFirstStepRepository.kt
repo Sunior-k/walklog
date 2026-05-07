@@ -8,6 +8,7 @@ import com.river.walklog.core.model.DailyStepCount
 import com.river.walklog.core.model.WeeklyStepSummary
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
@@ -21,6 +22,7 @@ import javax.inject.Singleton
 class OfflineFirstStepRepository @Inject constructor(
     private val healthConnectDataSource: HealthConnectStepDataSource,
     private val dailyStepDao: DailyStepDao,
+    private val userSettingsRepository: UserSettingsRepository,
     private val dispatchers: WalkLogDispatchers,
 ) : StepRepository {
 
@@ -37,12 +39,14 @@ class OfflineFirstStepRepository @Inject constructor(
         while (true) {
             val today = LocalDate.now()
             val epochDay = today.toEpochDay()
+            val goalSteps = userSettingsRepository.settings.first().dailyStepGoal
             val steps = runCatching {
                 val hcSteps = healthConnectDataSource.readDailySteps(today)
                 dailyStepDao.upsert(
                     DailyStepEntity(
                         dateEpochDay = epochDay,
                         totalSteps = hcSteps,
+                        targetSteps = goalSteps,
                         lastUpdatedAt = System.currentTimeMillis(),
                     ),
                 )
@@ -125,10 +129,12 @@ class OfflineFirstStepRepository @Inject constructor(
     override suspend fun syncTodaySteps(): Int = withContext(dispatchers.io) {
         val today = LocalDate.now()
         val steps = healthConnectDataSource.readDailySteps(today)
+        val goalSteps = userSettingsRepository.settings.first().dailyStepGoal
         dailyStepDao.upsert(
             DailyStepEntity(
                 dateEpochDay = today.toEpochDay(),
                 totalSteps = steps,
+                targetSteps = goalSteps,
                 lastUpdatedAt = System.currentTimeMillis(),
             ),
         )
@@ -140,13 +146,18 @@ class OfflineFirstStepRepository @Inject constructor(
     private suspend fun seedFromHealthConnect(dateEpochDay: Long) {
         runCatching {
             val steps = healthConnectDataSource.readDailySteps(LocalDate.ofEpochDay(dateEpochDay))
-            dailyStepDao.upsert(
-                DailyStepEntity(
-                    dateEpochDay = dateEpochDay,
-                    totalSteps = steps,
-                    lastUpdatedAt = System.currentTimeMillis(),
-                ),
-            )
+            val now = System.currentTimeMillis()
+            val updated = dailyStepDao.updateStepsOnly(dateEpochDay, steps, now)
+            if (updated == 0) {
+                dailyStepDao.insertIfNotExists(
+                    DailyStepEntity(
+                        dateEpochDay = dateEpochDay,
+                        totalSteps = steps,
+                        targetSteps = DailyStepCount.DEFAULT_TARGET_STEPS,
+                        lastUpdatedAt = now,
+                    ),
+                )
+            }
         }
     }
 

@@ -105,14 +105,14 @@ class HistoryViewModel @Inject constructor(
         }
         collectJob = getMonthlyRecap(yearMonth.year, yearMonth.monthValue)
             .combine(userSettingsRepository.settings) { recap, settings -> recap to settings.dailyStepGoal }
-            .onEach { (recap, targetSteps) ->
+            .onEach { (recap, todayGoal) ->
                 val dailyCounts = recap.dailyCounts
                 val selectedDateEpochDay = _state.value.selectedDateEpochDay
                 val calendarItems = buildCalendarItems(
                     yearMonth = yearMonth,
                     dailyCounts = dailyCounts,
-                    targetSteps = targetSteps,
                     selectedDateEpochDay = selectedDateEpochDay,
+                    todayGoal = todayGoal,
                 )
                 val dayItems = calendarItems.filterIsInstance<CalendarItem.Day>()
                 val selectedDay = selectedDateEpochDay?.let { selectedEpochDay ->
@@ -121,7 +121,10 @@ class HistoryViewModel @Inject constructor(
                 val previousDay = selectedDay?.let { selected ->
                     dayItems.firstOrNull { it.dateEpochDay == selected.dateEpochDay - 1 }
                 }
-                val achievedDays = dailyCounts.count { it.steps >= targetSteps }
+                val todayEpochDay = LocalDate.now().toEpochDay()
+                val achievedDays = dailyCounts.count { count ->
+                    if (count.dateEpochDay == todayEpochDay) count.steps >= todayGoal else count.isAchieved
+                }
                 val totalDays = recap.totalDays
                 val achievedPct = if (totalDays > 0) (achievedDays * 100 / totalDays) else 0
                 val totalSteps = recap.totalSteps
@@ -150,10 +153,11 @@ class HistoryViewModel @Inject constructor(
     private fun buildCalendarItems(
         yearMonth: YearMonth,
         dailyCounts: List<DailyStepCount>,
-        targetSteps: Int,
         selectedDateEpochDay: Long?,
+        todayGoal: Int,
     ): List<CalendarItem> {
         val today = LocalDate.now()
+        val todayEpochDay = today.toEpochDay()
         val firstDay = yearMonth.atDay(1)
         // 월요일=1, 일요일=7 → 월요일 기준 오프셋 (0~6)
         val startOffset = (firstDay.dayOfWeek.value - 1)
@@ -172,13 +176,18 @@ class HistoryViewModel @Inject constructor(
             val date = yearMonth.atDay(day)
             val epochDay = date.toEpochDay()
             val stepCount = stepMap[epochDay]
+            val dayTargetSteps = if (epochDay == todayEpochDay) {
+                todayGoal
+            } else {
+                stepCount?.targetSteps ?: DailyStepCount.DEFAULT_TARGET_STEPS
+            }
             items.add(
                 CalendarItem.Day(
                     dateEpochDay = epochDay,
                     dayNumber = day,
                     steps = stepCount?.steps ?: 0,
-                    targetSteps = targetSteps,
-                    isAchieved = (stepCount?.steps ?: 0) >= targetSteps,
+                    targetSteps = dayTargetSteps,
+                    isAchieved = (stepCount?.steps ?: 0) >= dayTargetSteps,
                     isToday = date == today,
                     hasData = stepCount != null && stepCount.steps > 0,
                     isSelected = epochDay == selectedDateEpochDay,

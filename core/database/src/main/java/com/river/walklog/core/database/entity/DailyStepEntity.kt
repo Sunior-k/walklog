@@ -15,6 +15,6 @@ data class DailyStepEntity(
     @PrimaryKey
     val dateEpochDay: Long,
     val totalSteps: Int,
-    val targetSteps: Int = 6_000,
+    val targetSteps: Int,
     val lastUpdatedAt: Long,
 )
