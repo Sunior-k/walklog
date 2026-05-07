@@ -158,6 +158,7 @@ class HomeScreenTest {
 
         composeTestRule
             .onNodeWithText("오늘의 만보 걷기")
+            .performScrollTo()
             .assertIsDisplayed()
     }
 
@@ -169,7 +170,9 @@ class HomeScreenTest {
             onClickTodayMission = { clicked = true },
         )
 
-        composeTestRule.onNodeWithText("오늘 미션").performClick()
+        composeTestRule.onNodeWithText("오늘 미션")
+            .performScrollTo()
+            .performClick()
 
         assertTrue(clicked)
     }
