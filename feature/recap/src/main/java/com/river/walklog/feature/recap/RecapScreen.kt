@@ -45,7 +45,9 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextAlign
@@ -59,7 +61,11 @@ import com.river.walklog.core.model.DailyStepCount
 import com.river.walklog.core.model.MonthlyRecap
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import java.text.NumberFormat
+import java.time.LocalDate
+import java.time.format.DateTimeFormatter
 import kotlin.math.abs
+import com.river.walklog.feature.recap.R as RecapR
 
 @Composable
 fun RecapScreen(
@@ -80,7 +86,7 @@ fun RecapScreen(
                 verticalArrangement = Arrangement.spacedBy(16.dp),
             ) {
                 Text(
-                    text = "리캡을 불러올 수 없어요",
+                    text = stringResource(RecapR.string.recap_error),
                     style = WalkLogTheme.typography.typography4SB,
                     color = WalkLogColor.StaticWhite,
                     textAlign = TextAlign.Center,
@@ -88,7 +94,7 @@ fun RecapScreen(
                 IconButton(onClick = onClose) {
                     Icon(
                         imageVector = ImageVector.vectorResource(R.drawable.ic_close),
-                        contentDescription = "닫기",
+                        contentDescription = stringResource(RecapR.string.action_close),
                         tint = WalkLogColor.StaticWhite,
                     )
                 }
@@ -116,6 +122,41 @@ fun RecapScreen(
         initialPage = initialPage,
         autoAdvance = autoAdvance,
     )
+}
+
+@Composable
+private fun rememberIntegerFormat(): NumberFormat {
+    val locale = LocalConfiguration.current.locales[0]
+    return remember(locale) { NumberFormat.getIntegerInstance(locale) }
+}
+
+@Composable
+private fun rememberDecimalFormat(
+    minimumFractionDigits: Int,
+    maximumFractionDigits: Int,
+): NumberFormat {
+    val locale = LocalConfiguration.current.locales[0]
+    return remember(locale, minimumFractionDigits, maximumFractionDigits) {
+        NumberFormat.getNumberInstance(locale).apply {
+            this.minimumFractionDigits = minimumFractionDigits
+            this.maximumFractionDigits = maximumFractionDigits
+        }
+    }
+}
+
+@Composable
+private fun MonthlyRecap.monthLabelText(): String {
+    val locale = LocalConfiguration.current.locales[0]
+    return LocalDate.of(year, month, 1)
+        .format(DateTimeFormatter.ofPattern("MMMM", locale))
+}
+
+@Composable
+private fun DailyStepCount.bestDayDateText(): String {
+    val locale = LocalConfiguration.current.locales[0]
+    val pattern = stringResource(RecapR.string.recap_best_day_date_format_pattern)
+    return LocalDate.ofEpochDay(dateEpochDay)
+        .format(DateTimeFormatter.ofPattern(pattern, locale))
 }
 
 private const val SLIDE_COUNT = 8
@@ -238,7 +279,7 @@ private fun RecapPager(
         ) {
             Icon(
                 imageVector = ImageVector.vectorResource(id = if (isPaused) R.drawable.ic_play else R.drawable.ic_pause),
-                contentDescription = if (isPaused) "재생" else "일시정지",
+                contentDescription = if (isPaused) stringResource(RecapR.string.action_play) else stringResource(RecapR.string.action_pause),
                 tint = WalkLogColor.StaticWhite.copy(alpha = 0.8f),
             )
         }
@@ -253,7 +294,7 @@ private fun RecapPager(
         ) {
             Icon(
                 imageVector = ImageVector.vectorResource(R.drawable.ic_close),
-                contentDescription = "닫기",
+                contentDescription = stringResource(RecapR.string.action_close),
                 tint = WalkLogColor.StaticWhite.copy(alpha = 0.8f),
             )
         }
@@ -325,7 +366,7 @@ private fun AnimatedCounter(
     target: Int,
     style: TextStyle,
     color: Color,
-    format: (Int) -> String = { "%,d".format(it) },
+    format: (Int) -> String = { it.toString() },
 ) {
     var displayed by remember(target) { mutableIntStateOf(0) }
 
@@ -372,6 +413,8 @@ private fun SlideDescription(
 
 @Composable
 private fun OpeningSlide(recap: MonthlyRecap) {
+    val monthLabel = recap.monthLabelText()
+
     SlideScaffold(
         gradientColors = listOf(RecapColors.OpeningGradientStart, RecapColors.OpeningGradientEnd),
     ) {
@@ -380,20 +423,20 @@ private fun OpeningSlide(recap: MonthlyRecap) {
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
             Text(
-                text = "${recap.monthLabel} 리캡",
+                text = stringResource(RecapR.string.recap_title, monthLabel),
                 style = WalkLogTheme.typography.typography5SB,
                 color = WalkLogColor.StaticWhite.copy(alpha = 0.6f),
                 textAlign = TextAlign.Center,
             )
             Text(
-                text = "${recap.monthLabel}을\n돌아볼게요",
+                text = stringResource(RecapR.string.recap_opening_body, monthLabel),
                 style = WalkLogTheme.typography.typography1B,
                 color = WalkLogColor.StaticWhite,
                 textAlign = TextAlign.Center,
             )
             Spacer(modifier = Modifier.height(8.dp))
             Text(
-                text = "걸음으로 만든 ${recap.monthLabel} 이야기",
+                text = stringResource(RecapR.string.recap_opening_subtitle, monthLabel),
                 style = WalkLogTheme.typography.typography6M,
                 color = WalkLogColor.StaticWhite.copy(alpha = 0.6f),
                 textAlign = TextAlign.Center,
@@ -404,6 +447,10 @@ private fun OpeningSlide(recap: MonthlyRecap) {
 
 @Composable
 private fun TotalStepsSlide(recap: MonthlyRecap) {
+    val numberFormat = rememberIntegerFormat()
+    val monthLabel = recap.monthLabelText()
+    val stepsFmt = stringResource(RecapR.string.steps_count_format)
+
     SlideScaffold(
         gradientColors = listOf(
             RecapColors.TotalStepsGradientStart,
@@ -423,17 +470,17 @@ private fun TotalStepsSlide(recap: MonthlyRecap) {
             ) {
                 Icon(
                     imageVector = ImageVector.vectorResource(id = R.drawable.ic_footprint),
-                    contentDescription = "걸음 아이콘",
+                    contentDescription = stringResource(RecapR.string.icon_desc_step),
                     tint = WalkLogColor.StaticWhite,
                     modifier = Modifier.size(32.dp),
                 )
             }
-            SlideLabel("${recap.monthLabel} 총 걸음 수")
+            SlideLabel(stringResource(RecapR.string.recap_total_steps_label, monthLabel))
             AnimatedCounter(
                 target = recap.totalSteps,
                 style = WalkLogTheme.typography.typography1B,
                 color = WalkLogColor.StaticWhite,
-                format = { "%,d보".format(it) },
+                format = { stepsFmt.format(numberFormat.format(it)) },
             )
             Spacer(modifier = Modifier.height(4.dp))
             Box(
@@ -443,7 +490,7 @@ private fun TotalStepsSlide(recap: MonthlyRecap) {
                     .padding(horizontal = 20.dp, vertical = 10.dp),
             ) {
                 SlideDescription(
-                    "약 ${recap.distanceKm}km를 이동한 거리예요",
+                    stringResource(RecapR.string.recap_total_distance, recap.distanceKm),
                     color = WalkLogColor.StaticWhite,
                 )
             }
@@ -453,6 +500,9 @@ private fun TotalStepsSlide(recap: MonthlyRecap) {
 
 @Composable
 private fun AverageStepsSlide(recap: MonthlyRecap) {
+    val numberFormat = rememberIntegerFormat()
+    val stepsFmt = stringResource(RecapR.string.steps_count_format)
+
     SlideScaffold(
         gradientColors = listOf(
             RecapColors.AverageStepsGradientStart,
@@ -463,12 +513,12 @@ private fun AverageStepsSlide(recap: MonthlyRecap) {
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
-            SlideLabel("하루 평균 걸음 수")
+            SlideLabel(stringResource(RecapR.string.recap_avg_steps_label))
             AnimatedCounter(
                 target = recap.averageStepsPerDay,
                 style = WalkLogTheme.typography.typography1B,
                 color = WalkLogColor.StaticWhite,
-                format = { "%,d보".format(it) },
+                format = { stepsFmt.format(numberFormat.format(it)) },
             )
             Spacer(modifier = Modifier.height(4.dp))
             Box(
@@ -478,7 +528,7 @@ private fun AverageStepsSlide(recap: MonthlyRecap) {
                     .padding(horizontal = 20.dp, vertical = 10.dp),
             ) {
                 SlideDescription(
-                    "${recap.activeDays}일 동안 걸은 기록으로 계산했어요",
+                    stringResource(RecapR.string.recap_avg_steps_desc, recap.activeDays),
                     color = WalkLogColor.StaticWhite,
                 )
             }
@@ -488,9 +538,17 @@ private fun AverageStepsSlide(recap: MonthlyRecap) {
 
 @Composable
 private fun CaloriesSlide(recap: MonthlyRecap) {
+    val numberFormat = rememberIntegerFormat()
+    val monthLabel = recap.monthLabelText()
+
     SlideScaffold(
         gradientColors = listOf(RecapColors.CaloriesGradientStart, RecapColors.CaloriesGradientEnd),
     ) {
+        val caloriesText = when {
+            recap.estimatedCalories >= 500 -> stringResource(RecapR.string.calories_comparison_burger, recap.estimatedCalories / 500)
+            recap.estimatedCalories >= 200 -> stringResource(RecapR.string.calories_comparison_icecream, recap.estimatedCalories / 200)
+            else -> "${numberFormat.format(recap.estimatedCalories)}kcal"
+        }
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(16.dp),
@@ -504,17 +562,17 @@ private fun CaloriesSlide(recap: MonthlyRecap) {
             ) {
                 Icon(
                     imageVector = ImageVector.vectorResource(id = R.drawable.ic_fire),
-                    contentDescription = "칼로리 아이콘",
+                    contentDescription = stringResource(RecapR.string.icon_desc_calories),
                     tint = WalkLogColor.StaticWhite,
                     modifier = Modifier.size(32.dp),
                 )
             }
-            SlideLabel("${recap.monthLabel} 소모한 칼로리")
+            SlideLabel(stringResource(RecapR.string.recap_calories_label, monthLabel))
             AnimatedCounter(
                 target = recap.estimatedCalories,
                 style = WalkLogTheme.typography.typography1B,
                 color = WalkLogColor.StaticWhite,
-                format = { "%,dkcal".format(it) },
+                format = { "${numberFormat.format(it)}kcal" },
             )
             Spacer(modifier = Modifier.height(4.dp))
             Box(
@@ -524,7 +582,7 @@ private fun CaloriesSlide(recap: MonthlyRecap) {
                     .padding(horizontal = 20.dp, vertical = 10.dp),
             ) {
                 SlideDescription(
-                    recap.caloriesFoodComparison + "을 태웠어요",
+                    text = stringResource(RecapR.string.recap_calories_burned, caloriesText),
                     color = WalkLogColor.StaticWhite,
                 )
             }
@@ -546,7 +604,7 @@ private fun AchievementSlide(recap: MonthlyRecap) {
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
-            SlideLabel("목표를 달성한 날")
+            SlideLabel(stringResource(RecapR.string.recap_achievement_label))
             Row(
                 verticalAlignment = Alignment.Bottom,
                 horizontalArrangement = Arrangement.Center,
@@ -558,7 +616,7 @@ private fun AchievementSlide(recap: MonthlyRecap) {
                     format = { it.toString() },
                 )
                 Text(
-                    text = "일",
+                    text = stringResource(RecapR.string.day_suffix),
                     style = WalkLogTheme.typography.typography2B,
                     color = WalkLogColor.StaticWhite.copy(alpha = 0.8f),
                     modifier = Modifier.padding(bottom = 8.dp, start = 4.dp),
@@ -572,7 +630,7 @@ private fun AchievementSlide(recap: MonthlyRecap) {
                     .padding(horizontal = 20.dp, vertical = 10.dp),
             ) {
                 SlideDescription(
-                    "${recap.totalDays}일 중 ${recap.achievedDays}일 달성 ($pct%)",
+                    stringResource(RecapR.string.recap_achievement_desc, recap.totalDays, recap.achievedDays, pct),
                     color = WalkLogColor.StaticWhite,
                 )
             }
@@ -620,11 +678,11 @@ private fun BestDaySlide(recap: MonthlyRecap) {
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
-            SlideLabel("가장 많이 걸은 날")
+            SlideLabel(stringResource(RecapR.string.recap_best_day_label))
             val bestDay = recap.bestDay
             if (bestDay != null) {
                 Text(
-                    text = recap.bestDayDateText,
+                    text = bestDay.bestDayDateText(),
                     style = WalkLogTheme.typography.typography1B,
                     color = WalkLogColor.StaticWhite,
                     textAlign = TextAlign.Center,
@@ -635,7 +693,7 @@ private fun BestDaySlide(recap: MonthlyRecap) {
                 BestDayMetrics(steps = bestDay.steps)
             } else {
                 Text(
-                    text = "아직 기록이 없어요",
+                    text = stringResource(RecapR.string.recap_best_day_no_record),
                     style = WalkLogTheme.typography.typography1B,
                     color = WalkLogColor.StaticWhite.copy(alpha = 0.6f),
                     textAlign = TextAlign.Center,
@@ -647,6 +705,8 @@ private fun BestDaySlide(recap: MonthlyRecap) {
 
 @Composable
 private fun BestDayProgress(steps: Int, targetSteps: Int) {
+    val numberFormat = rememberIntegerFormat()
+    val stepsFmt = stringResource(RecapR.string.steps_count_format)
     var progressStarted by remember(steps, targetSteps) { mutableStateOf(false) }
     val targetProgress = if (targetSteps > 0) {
         (steps.toFloat() / targetSteps).coerceIn(0f, 1f)
@@ -678,12 +738,12 @@ private fun BestDayProgress(steps: Int, targetSteps: Int) {
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(4.dp),
         ) {
-            SlideDescription("걸음 수", color = WalkLogColor.StaticWhite.copy(alpha = 0.72f))
+            SlideDescription(stringResource(RecapR.string.recap_step_count_label), color = WalkLogColor.StaticWhite.copy(alpha = 0.72f))
             AnimatedCounter(
                 target = steps,
                 style = WalkLogTheme.typography.typography1B,
                 color = WalkLogColor.StaticWhite,
-                format = { "%,d보".format(it) },
+                format = { stepsFmt.format(numberFormat.format(it)) },
             )
         }
     }
@@ -691,6 +751,8 @@ private fun BestDayProgress(steps: Int, targetSteps: Int) {
 
 @Composable
 private fun BestDayMetrics(steps: Int) {
+    val numberFormat = rememberIntegerFormat()
+    val distanceFormat = rememberDecimalFormat(minimumFractionDigits = 1, maximumFractionDigits = 1)
     val calories = (steps * 0.04f).toInt()
     val distanceKm = steps * 0.00075f
 
@@ -699,13 +761,13 @@ private fun BestDayMetrics(steps: Int) {
         horizontalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         BestDayMetricBox(
-            label = "칼로리",
-            value = "%,dkcal".format(calories),
+            label = stringResource(RecapR.string.recap_calories_unit_label),
+            value = "${numberFormat.format(calories)}kcal",
             modifier = Modifier.weight(1f),
         )
         BestDayMetricBox(
-            label = "거리",
-            value = "%.1fkm".format(distanceKm),
+            label = stringResource(RecapR.string.recap_distance_unit_label),
+            value = "${distanceFormat.format(distanceKm)}km",
             modifier = Modifier.weight(1f),
         )
     }
@@ -762,12 +824,12 @@ private fun StreakSlide(recap: MonthlyRecap) {
             ) {
                 Icon(
                     imageVector = ImageVector.vectorResource(id = R.drawable.ic_fire),
-                    contentDescription = "칼로리 아이콘",
+                    contentDescription = stringResource(RecapR.string.icon_desc_calories),
                     tint = WalkLogColor.StaticWhite,
                     modifier = Modifier.size(32.dp),
                 )
             }
-            SlideLabel("최장 연속 목표 달성")
+            SlideLabel(stringResource(RecapR.string.recap_streak_label))
             Row(
                 verticalAlignment = Alignment.Bottom,
                 horizontalArrangement = Arrangement.Center,
@@ -779,7 +841,7 @@ private fun StreakSlide(recap: MonthlyRecap) {
                     format = { it.toString() },
                 )
                 Text(
-                    text = "일",
+                    text = stringResource(RecapR.string.day_suffix),
                     style = WalkLogTheme.typography.typography2B,
                     color = WalkLogColor.StaticWhite.copy(alpha = 0.8f),
                     modifier = Modifier.padding(bottom = 8.dp, start = 4.dp),
@@ -796,11 +858,11 @@ private fun StreakSlide(recap: MonthlyRecap) {
             ) {
                 SlideDescription(
                     text = when {
-                        recap.longestStreak >= 14 -> "2주 이상 쉬지 않았어요! 놀라워요 🎉"
-                        recap.longestStreak >= 7 -> "일주일 연속 달성! 대단해요!"
-                        recap.longestStreak >= 3 -> "3일 이상 연속 달성했어요"
-                        recap.longestStreak > 0 -> "이 기세로 계속 이어가요"
-                        else -> "내달엔 연속 달성에 도전해봐요!"
+                        recap.longestStreak >= 14 -> stringResource(RecapR.string.recap_streak_14_plus)
+                        recap.longestStreak >= 7 -> stringResource(RecapR.string.recap_streak_7_plus)
+                        recap.longestStreak >= 3 -> stringResource(RecapR.string.recap_streak_3_plus)
+                        recap.longestStreak > 0 -> stringResource(RecapR.string.recap_streak_positive)
+                        else -> stringResource(RecapR.string.recap_streak_zero)
                     },
                     color = WalkLogColor.StaticWhite,
                 )
@@ -875,6 +937,8 @@ private fun StreakCheckTile(checked: Boolean) {
 
 @Composable
 private fun PersonaSlide(recap: MonthlyRecap) {
+    val monthLabel = recap.monthLabelText()
+
     SlideScaffold(
         gradientColors = listOf(RecapColors.PersonaGradientStart, RecapColors.PersonaGradientEnd),
     ) {
@@ -883,13 +947,13 @@ private fun PersonaSlide(recap: MonthlyRecap) {
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
             Text(
-                text = "${recap.monthLabel} 당신은",
+                text = stringResource(RecapR.string.recap_persona_label, monthLabel),
                 style = WalkLogTheme.typography.typography5SB,
                 color = WalkLogColor.StaticWhite.copy(alpha = 0.5f),
                 textAlign = TextAlign.Center,
             )
             Text(
-                text = recap.walkerPersona,
+                text = stringResource(recap.walkerPersonaRes()),
                 style = WalkLogTheme.typography.typography1B,
                 color = RecapColors.PersonaAccent,
                 textAlign = TextAlign.Center,
@@ -902,7 +966,7 @@ private fun PersonaSlide(recap: MonthlyRecap) {
                     .padding(horizontal = 24.dp, vertical = 16.dp),
             ) {
                 Text(
-                    text = recap.walkerPersonaDescription,
+                    text = stringResource(recap.walkerPersonaDescRes()),
                     style = WalkLogTheme.typography.typography6M,
                     color = WalkLogColor.StaticWhite.copy(alpha = 0.85f),
                     textAlign = TextAlign.Center,
@@ -911,7 +975,7 @@ private fun PersonaSlide(recap: MonthlyRecap) {
             }
             Spacer(modifier = Modifier.height(8.dp))
             Text(
-                text = "다음 달도 함께해요! 🚶",
+                text = stringResource(RecapR.string.recap_persona_closing),
                 style = WalkLogTheme.typography.typography6SB,
                 color = WalkLogColor.StaticWhite.copy(alpha = 0.5f),
                 textAlign = TextAlign.Center,
