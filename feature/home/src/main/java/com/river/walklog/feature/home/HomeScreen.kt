@@ -34,8 +34,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -52,6 +54,7 @@ import com.river.walklog.core.designsystem.foundation.RecapColors
 import com.river.walklog.core.designsystem.foundation.WalkLogColor
 import com.river.walklog.core.designsystem.foundation.WalkLogTheme
 import com.river.walklog.core.engine.ActivityState
+import com.river.walklog.core.ui.withComma
 import com.river.walklog.feature.home.component.ForecastBanner
 import com.river.walklog.feature.home.component.ForecastBottomSheet
 import com.river.walklog.feature.home.component.MissionCard
@@ -59,6 +62,11 @@ import com.river.walklog.feature.home.component.PermissionRequiredCard
 import com.river.walklog.feature.home.component.SensorUnavailableCard
 import com.river.walklog.feature.home.component.StreakBadge
 import com.river.walklog.feature.home.component.WalkProgressRing
+import java.text.NumberFormat
+import java.time.LocalDate
+import java.time.YearMonth
+import java.time.format.DateTimeFormatter
+import com.river.walklog.feature.home.R as HomeR
 
 @Composable
 fun HomeRoute(
@@ -72,27 +80,27 @@ fun HomeRoute(
 
     var showForecastSheet by rememberSaveable { mutableStateOf(false) }
 
-    // ─── Health Connect READ_STEPS 권한 요청 ────────────────────────────────
+    // Health Connect 권한 요청 런처
     val healthPermissionsLauncher = rememberLauncherForActivityResult(
         PermissionController.createRequestPermissionResultContract(),
     ) { grantedPermissions: Set<String> ->
         val granted = grantedPermissions.contains(
             HealthPermission.getReadPermission(StepsRecord::class),
         )
-        viewModel.handleIntent(HomeIntent.OnPermissionResult(granted))
+        viewModel.updatePermissionResult(granted)
     }
 
-    // ─── 초기 Health Connect 권한 상태 확인 ────────────────────────────────
+    // 초기 권한 확인
     LaunchedEffect(Unit) {
         val sdkStatus = HealthConnectClient.getSdkStatus(context)
         if (sdkStatus != HealthConnectClient.SDK_AVAILABLE) {
-            viewModel.handleIntent(HomeIntent.OnPermissionResult(false))
+            viewModel.updatePermissionResult(false)
             return@LaunchedEffect
         }
         val client = HealthConnectClient.getOrCreate(context)
         val granted = client.permissionController.getGrantedPermissions()
             .contains(HealthPermission.getReadPermission(StepsRecord::class))
-        viewModel.handleIntent(HomeIntent.OnPermissionResult(granted))
+        viewModel.updatePermissionResult(granted)
     }
 
     val isExpanded = currentWindowAdaptiveInfo().windowSizeClass
@@ -101,11 +109,11 @@ fun HomeRoute(
     HomeScreen(
         state = state,
         isExpanded = isExpanded,
-        onClickTodayMission = { onNavigateToMission() },
-        onClickWeeklyReport = { onNavigateToWeeklyReport() },
+        onClickTodayMission = onNavigateToMission,
+        onClickWeeklyReport = onNavigateToWeeklyReport,
         onClickForecast = { showForecastSheet = true },
-        onRefresh = { viewModel.handleIntent(HomeIntent.OnRefresh) },
-        onRefreshWeather = { viewModel.handleIntent(HomeIntent.OnRefreshWeather) },
+        onRefresh = viewModel::refresh,
+        onRefreshWeather = viewModel::refreshWeather,
         onClickRecap = onNavigateToRecap,
         onRequestPermission = {
             if (HealthConnectClient.getSdkStatus(context) == HealthConnectClient.SDK_AVAILABLE) {
@@ -118,11 +126,11 @@ fun HomeRoute(
 
     if (showForecastSheet) {
         ForecastBottomSheet(
-            title = state.forecastTitle,
-            recommendedTimeText = state.forecastRecommendedTimeText.ifEmpty { "오늘 오후 3시가 최적이에요" },
-            description = state.forecastDescription,
-            averageStepsAtThisTime = state.forecastAverageStepsText.ifEmpty { "-" },
-            activeDays = state.forecastActiveDaysText.ifEmpty { "-" },
+            title = stringResource(HomeR.string.forecast_title),
+            recommendedTimeText = state.forecastRecommendedTimeText(),
+            description = state.forecastDescriptionText(),
+            averageStepsAtThisTime = state.forecastAverageStepsText(),
+            activeDays = state.forecastActiveDaysText(),
             hourlyAverages = state.forecastHourlyAverages,
             peakHour = state.forecastPeakHour,
             onDismiss = { showForecastSheet = false },
@@ -206,7 +214,7 @@ private fun HomeCompactContent(
             .padding(horizontal = 20.dp, vertical = 16.dp),
         verticalArrangement = Arrangement.spacedBy(20.dp),
     ) {
-        HomeHeader(userName = state.userName, todayDateText = state.todayDateText)
+        HomeHeader(userName = state.userName, todayDateText = state.todayDate.formatAsHomeDate())
 
         StreakBadge(streakDays = state.streakDays)
 
@@ -239,12 +247,17 @@ private fun HomeCompactContent(
                     isWalking = state.activityState == ActivityState.WALKING,
                 )
                 ForecastBanner(
-                    title = state.forecastTitle,
-                    description = state.forecastDescription,
+                    title = stringResource(HomeR.string.forecast_title),
+                    description = state.forecastDescriptionText(),
                     onClick = onClickForecast,
                 )
                 MissionCard(
-                    model = state.mission,
+                    title = stringResource(HomeR.string.mission_default_title),
+                    currentSteps = state.currentSteps,
+                    targetSteps = state.targetSteps,
+                    rewardText = stringResource(HomeR.string.mission_reward_default, state.missionRewardPoints),
+                    isRecovery = state.missionIsRecovery,
+                    isCompleted = state.missionIsCompleted,
                     onClick = onClickTodayMission,
                 )
             }
@@ -255,18 +268,18 @@ private fun HomeCompactContent(
         }
 
         WeatherSummaryCard(
-            locationText = state.weatherLocationText,
-            temperatureText = state.weatherTemperatureText,
-            conditionText = state.weatherConditionText,
-            adviceText = state.weatherAdviceText,
-            supportingText = state.weatherSupportingText.ifBlank { null },
+            locationText = stringResource(HomeR.string.weather_location, state.weather.locationName),
+            temperatureText = state.weather.temperatureText,
+            conditionText = stringResource(state.weather.condition.conditionRes()),
+            adviceText = stringResource(state.weather.walkingAdviceRes()),
+            supportingText = state.weatherSupportingText(),
             onRefreshClick = onRefreshWeather,
         )
 
-        if (state.recapMonthLabel.isNotEmpty()) {
+        state.recapYearMonth?.let { recapYearMonth ->
             RecapCard(
-                monthLabel = state.recapMonthLabel,
-                totalStepsText = state.recapTotalStepsText,
+                monthLabel = recapYearMonth.formatAsMonthLabel(),
+                totalStepsText = stringResource(HomeR.string.steps_format, state.recapTotalSteps.withComma()),
                 onClick = onClickRecap,
             )
         }
@@ -298,7 +311,7 @@ private fun HomeExpandedContent(
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            HomeHeader(userName = state.userName, todayDateText = state.todayDateText)
+            HomeHeader(userName = state.userName, todayDateText = state.todayDate.formatAsHomeDate())
             StreakBadge(streakDays = state.streakDays)
         }
 
@@ -361,25 +374,30 @@ private fun HomeExpandedContent(
             ) {
                 if (state.sensorStatus == SensorStatus.Available) {
                     MissionCard(
-                        model = state.mission,
+                        title = stringResource(HomeR.string.mission_default_title),
+                        currentSteps = state.currentSteps,
+                        targetSteps = state.targetSteps,
+                        rewardText = stringResource(HomeR.string.mission_reward_default, state.missionRewardPoints),
+                        isRecovery = state.missionIsRecovery,
+                        isCompleted = state.missionIsCompleted,
                         onClick = onClickTodayMission,
                         modifier = Modifier.fillMaxWidth(),
                     )
                 }
 
                 ForecastBanner(
-                    title = state.forecastTitle,
-                    description = state.forecastDescription,
+                    title = stringResource(HomeR.string.forecast_title),
+                    description = state.forecastDescriptionText(),
                     onClick = onClickForecast,
                     modifier = Modifier.fillMaxWidth(),
                 )
 
                 WeatherSummaryCard(
-                    locationText = state.weatherLocationText,
-                    temperatureText = state.weatherTemperatureText,
-                    conditionText = state.weatherConditionText,
-                    adviceText = state.weatherAdviceText,
-                    supportingText = state.weatherSupportingText.ifBlank { null },
+                    locationText = stringResource(HomeR.string.weather_location, state.weather.locationName),
+                    temperatureText = state.weather.temperatureText,
+                    conditionText = stringResource(state.weather.condition.conditionRes()),
+                    adviceText = stringResource(state.weather.walkingAdviceRes()),
+                    supportingText = state.weatherSupportingText(),
                     onRefreshClick = onRefreshWeather,
                     modifier = Modifier.fillMaxWidth(),
                 )
@@ -399,10 +417,11 @@ private fun HomeExpandedContent(
                         )
                     }
 
-                    if (state.recapMonthLabel.isNotEmpty()) {
+                    val recapYearMonth = state.recapYearMonth
+                    if (recapYearMonth != null) {
                         RecapCard(
-                            monthLabel = state.recapMonthLabel,
-                            totalStepsText = state.recapTotalStepsText,
+                            monthLabel = recapYearMonth.formatAsMonthLabel(),
+                            totalStepsText = stringResource(HomeR.string.steps_format, state.recapTotalSteps.withComma()),
                             onClick = onClickRecap,
                             modifier = Modifier
                                 .fillMaxWidth()
@@ -410,8 +429,8 @@ private fun HomeExpandedContent(
                         )
                     } else if (!state.isRecapPreviewLoading) {
                         FoldHomeAccentCard(
-                            title = "리캡을 불러올 수 없어요",
-                            description = "잠시 후 다시 확인해 주세요",
+                            title = stringResource(HomeR.string.home_recap_error_title),
+                            description = stringResource(HomeR.string.home_recap_error_desc),
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .weight(1f),
@@ -421,6 +440,79 @@ private fun HomeExpandedContent(
             }
         }
     }
+}
+
+@Composable
+private fun LocalDate.formatAsHomeDate(): String {
+    val locale = LocalConfiguration.current.locales[0]
+    val pattern = when (locale.language) {
+        "ja" -> "M月d日 EEEE"
+        "ko" -> "M월 d일 EEEE"
+        else -> "MMMM d, EEEE"
+    }
+    return format(DateTimeFormatter.ofPattern(pattern, locale))
+}
+
+@Composable
+private fun YearMonth.formatAsMonthLabel(): String {
+    val locale = LocalConfiguration.current.locales[0]
+    return atDay(1).format(DateTimeFormatter.ofPattern("MMMM", locale))
+}
+
+@Composable
+private fun HomeState.forecastDescriptionText(): String {
+    val displayHour = forecastPeakHour.toDisplayHour()
+    return if (forecastPeakHour < 12) {
+        stringResource(HomeR.string.forecast_description_am, displayHour)
+    } else {
+        stringResource(HomeR.string.forecast_description_pm, displayHour)
+    }
+}
+
+@Composable
+private fun HomeState.forecastRecommendedTimeText(): String {
+    val displayHour = forecastPeakHour.toDisplayHour()
+    return if (forecastPeakHour < 12) {
+        stringResource(HomeR.string.forecast_recommended_time_am, displayHour)
+    } else {
+        stringResource(HomeR.string.forecast_recommended_time_pm, displayHour)
+    }
+}
+
+@Composable
+private fun HomeState.forecastAverageStepsText(): String =
+    forecastAverageStepsAtPeakHour?.let {
+        stringResource(HomeR.string.forecast_avg_steps, it.withComma())
+    } ?: "-"
+
+@Composable
+private fun HomeState.forecastActiveDaysText(): String =
+    if (forecastTotalDays > 0) {
+        stringResource(HomeR.string.forecast_active_days, forecastTotalDays, forecastActiveDays)
+    } else {
+        "-"
+    }
+
+@Composable
+private fun HomeState.weatherSupportingText(): String? {
+    val locale = LocalConfiguration.current.locales[0]
+    val windFormat = NumberFormat.getNumberInstance(locale).apply {
+        minimumFractionDigits = 1
+        maximumFractionDigits = 1
+    }
+    return listOfNotNull(
+        weather.precipitationProbability?.let { stringResource(HomeR.string.weather_precipitation, it) },
+        weather.humidity?.let { stringResource(HomeR.string.weather_humidity, it) },
+        weather.windSpeedMetersPerSecond?.let {
+            stringResource(HomeR.string.weather_wind_speed, windFormat.format(it))
+        },
+    ).joinToString(" · ").ifBlank { null }
+}
+
+private fun Int.toDisplayHour(): Int = when {
+    this == 0 -> 12
+    this <= 12 -> this
+    else -> this - 12
 }
 
 @Composable
@@ -434,9 +526,9 @@ private fun DashboardProgressPanel(
     val progressPercent =
         if (targetSteps <= 0) 0 else ((currentSteps * 100) / targetSteps).coerceIn(0, 100)
     val statusText = if (remainingSteps == 0) {
-        "오늘 목표를 달성했어요"
+        stringResource(HomeR.string.home_goal_achieved)
     } else {
-        "${remainingSteps}보 남았어요"
+        stringResource(HomeR.string.home_steps_remaining, remainingSteps)
     }
 
     Column(
@@ -481,7 +573,7 @@ private fun DashboardProgressPanel(
                     color = WalkLogTheme.colors.onSurface,
                 )
                 Text(
-                    text = "$progressPercent% 완료 · 목표 $targetSteps 보",
+                    text = stringResource(HomeR.string.home_progress_detail, progressPercent, targetSteps),
                     style = WalkLogTheme.typography.typography6M,
                     color = WalkLogTheme.colors.onSurfaceVariant,
                 )
@@ -491,13 +583,13 @@ private fun DashboardProgressPanel(
                 horizontalArrangement = Arrangement.spacedBy(12.dp),
             ) {
                 DashboardMetricChip(
-                    label = "현재",
-                    value = "${currentSteps.coerceAtLeast(0)}보",
+                    label = stringResource(HomeR.string.home_current_label),
+                    value = stringResource(HomeR.string.home_steps_value, currentSteps.coerceAtLeast(0)),
                     modifier = Modifier.weight(1f),
                 )
                 DashboardMetricChip(
-                    label = "남은 걸음",
-                    value = "${remainingSteps}보",
+                    label = stringResource(HomeR.string.home_remaining_label),
+                    value = stringResource(HomeR.string.home_steps_value, remainingSteps),
                     modifier = Modifier.weight(1f),
                 )
             }
@@ -568,13 +660,12 @@ private fun FoldHomeAccentCard(
 
 private const val IndicatorTrackAlpha = 0.18f
 
-// ─── Private composables ──────────────────────────────────────────────────────
-
 @Composable
 private fun HomeHeader(userName: String, todayDateText: String) {
+    val displayName = userName.ifBlank { stringResource(HomeR.string.anonymous) }
     Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
         Text(
-            text = "${userName}님, 오늘도 걸어볼까요?",
+            text = stringResource(HomeR.string.home_greeting, displayName),
             style = WalkLogTheme.typography.typography3B,
             color = WalkLogTheme.colors.onBackground,
         )
@@ -608,7 +699,7 @@ private fun ProgressSection(currentSteps: Int, targetSteps: Int, isWalking: Bool
         )
         Spacer(modifier = Modifier.height(4.dp))
         Text(
-            text = "목표: $targetSteps 보",
+            text = stringResource(HomeR.string.home_goal_steps, targetSteps),
             style = WalkLogTheme.typography.typography7M,
             color = WalkLogTheme.colors.onSurfaceVariant,
         )
@@ -632,12 +723,12 @@ private fun WeeklyReportSummaryCard(
     ) {
         Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
             Text(
-                text = "주간 리포트 모아보기",
+                text = stringResource(HomeR.string.home_weekly_report_title),
                 style = WalkLogTheme.typography.typography5SB,
                 color = WalkLogTheme.colors.onSurface,
             )
             Text(
-                text = "완료된 주간 기록을 보고 공유해요",
+                text = stringResource(HomeR.string.home_weekly_report_subtitle),
                 style = WalkLogTheme.typography.typography7M,
                 color = WalkLogTheme.colors.onSurfaceVariant,
             )
@@ -674,12 +765,12 @@ private fun RecapCard(
     ) {
         Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
             Text(
-                text = "$monthLabel 리캡",
+                text = stringResource(HomeR.string.home_recap_label, monthLabel),
                 style = WalkLogTheme.typography.typography7SB,
                 color = WalkLogColor.StaticWhite.copy(alpha = 0.6f),
             )
             Text(
-                text = if (totalStepsText.isNotEmpty()) totalStepsText + " 걸었어요" else "리캡 보기",
+                text = if (totalStepsText.isNotEmpty()) stringResource(HomeR.string.home_recap_steps_walked, totalStepsText) else stringResource(HomeR.string.home_recap_view),
                 style = WalkLogTheme.typography.typography5SB,
                 color = WalkLogColor.StaticWhite,
             )
@@ -692,8 +783,6 @@ private fun RecapCard(
     }
 }
 
-// ─── Preview ─────────────────────────────────────────────────────────────────
-
 @Preview(showBackground = true, backgroundColor = 0xFFFFFFFF, widthDp = 390, heightDp = 844)
 @Composable
 private fun HomeScreenPreview() {
@@ -701,15 +790,12 @@ private fun HomeScreenPreview() {
         HomeScreen(
             state = HomeState(
                 userName = "익명",
-                todayDateText = "4월 10일 목요일",
+                todayDate = LocalDate.of(2025, 4, 10),
                 sensorStatus = SensorStatus.Available,
                 currentSteps = 4200,
                 streakDays = 3,
-                weeklyTotalStepsText = "42,300보",
+                weeklyTotalSteps = 42_300,
                 weeklyAchievementRateText = "86%",
-                bestDayText = "수요일",
-                bestTimeText = "오후 3시",
-                bestStreakText = "5일",
             ),
             onClickTodayMission = {},
             onClickWeeklyReport = {},
@@ -726,7 +812,10 @@ private fun HomeScreenPreview() {
 private fun HomeScreenPermissionPreview() {
     WalkLogTheme {
         HomeScreen(
-            state = HomeState(sensorStatus = SensorStatus.PermissionRequired),
+            state = HomeState(
+                sensorStatus = SensorStatus.PermissionRequired,
+                todayDate = LocalDate.of(2025, 4, 10),
+            ),
             onClickTodayMission = {},
             onClickWeeklyReport = {},
             onClickForecast = {},
@@ -744,7 +833,7 @@ private fun HomeScreenExpandedPreview() {
         HomeScreen(
             state = HomeState(
                 userName = "익명",
-                todayDateText = "4월 10일 목요일",
+                todayDate = LocalDate.of(2025, 4, 10),
                 sensorStatus = SensorStatus.Available,
                 currentSteps = 4200,
                 streakDays = 3,

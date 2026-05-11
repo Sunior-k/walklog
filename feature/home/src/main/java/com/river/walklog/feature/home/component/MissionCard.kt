@@ -15,35 +15,41 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.river.walklog.core.designsystem.component.WalkLogLinearProgressBar
 import com.river.walklog.core.designsystem.foundation.WalkLogColor
 import com.river.walklog.core.designsystem.foundation.WalkLogTheme
-import com.river.walklog.feature.home.model.MissionCardUiModel
+import com.river.walklog.feature.home.R
 
 @Composable
 fun MissionCard(
-    model: MissionCardUiModel,
+    title: String,
+    currentSteps: Int,
+    targetSteps: Int,
+    rewardText: String,
+    isRecovery: Boolean,
+    isCompleted: Boolean,
     modifier: Modifier = Modifier,
     onClick: (() -> Unit)? = null,
 ) {
-    val progress = if (model.targetSteps <= 0) {
+    val progress = if (targetSteps <= 0) {
         0f
     } else {
-        (model.currentSteps.toFloat() / model.targetSteps.toFloat()).coerceIn(0f, 1f)
+        (currentSteps.toFloat() / targetSteps.toFloat()).coerceIn(0f, 1f)
     }
 
     val cardColor = when {
-        model.isCompleted -> WalkLogTheme.colors.tertiaryContainer
-        model.isRecovery -> WalkLogTheme.colors.primaryContainer
+        isCompleted -> WalkLogTheme.colors.tertiaryContainer
+        isRecovery -> WalkLogTheme.colors.primaryContainer
         else -> WalkLogTheme.colors.surface
     }
 
     val badgeText = when {
-        model.isCompleted -> "달성 완료"
-        model.isRecovery -> "회복 미션"
-        else -> "오늘 미션"
+        isCompleted -> stringResource(R.string.mission_completed)
+        isRecovery -> stringResource(R.string.mission_recovery)
+        else -> stringResource(R.string.mission_today)
     }
 
     Column(
@@ -71,14 +77,14 @@ fun MissionCard(
                 color = WalkLogTheme.colors.onSurfaceVariant,
             )
             Text(
-                text = model.rewardText,
+                text = rewardText,
                 style = WalkLogTheme.typography.typography6B,
                 color = WalkLogTheme.colors.primary,
             )
         }
 
         Text(
-            text = model.title,
+            text = title,
             style = WalkLogTheme.typography.subTypography9B,
             color = WalkLogTheme.colors.onSurface,
         )
@@ -88,7 +94,7 @@ fun MissionCard(
             modifier = Modifier
                 .fillMaxWidth()
                 .clip(RoundedCornerShape(999.dp)),
-            color = if (model.isCompleted) WalkLogColor.Success else WalkLogColor.Primary,
+            color = if (isCompleted) WalkLogColor.Success else WalkLogColor.Primary,
             trackColor = WalkLogTheme.colors.outlineVariant,
         )
 
@@ -96,13 +102,13 @@ fun MissionCard(
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Text(
-                text = "${model.currentSteps}보",
+                text = stringResource(R.string.mission_steps_format, currentSteps),
                 style = WalkLogTheme.typography.typography6B,
                 color = WalkLogTheme.colors.onSurface,
             )
             Spacer(modifier = Modifier.width(6.dp))
             Text(
-                text = "/ ${model.targetSteps}보",
+                text = stringResource(R.string.mission_target_steps_format, targetSteps),
                 style = WalkLogTheme.typography.typography7M,
                 color = WalkLogTheme.colors.onSurfaceVariant,
             )
@@ -110,16 +116,17 @@ fun MissionCard(
     }
 }
 
-@Preview @Composable
+@Preview
+@Composable
 private fun MissionCardPreview() {
     WalkLogTheme {
         MissionCard(
-            model = MissionCardUiModel(
-                title = "오늘의 만보 걷기",
-                currentSteps = 6_500,
-                targetSteps = 10_000,
-                rewardText = "100캐시",
-            ),
+            title = "오늘의 만보 걷기",
+            currentSteps = 6_500,
+            targetSteps = 10_000,
+            rewardText = "100캐시",
+            isRecovery = false,
+            isCompleted = false,
         )
     }
 }

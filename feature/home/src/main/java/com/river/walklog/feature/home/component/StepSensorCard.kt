@@ -14,16 +14,18 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.river.walklog.core.designsystem.foundation.WalkLogColor
 import com.river.walklog.core.designsystem.foundation.WalkLogTheme
+import com.river.walklog.feature.home.R
 
 @Composable
 fun SensorUnavailableCard(modifier: Modifier = Modifier) {
     SensorStatusCard(
-        title = "Health Connect를 지원하지 않는 기기예요",
-        description = "이 기기에서는 Health Connect를 사용할 수 없어\n걸음 수를 측정할 수 없습니다.",
+        title = stringResource(R.string.sensor_unavailable_title),
+        description = stringResource(R.string.sensor_unavailable_desc),
         modifier = modifier,
     )
 }
@@ -34,8 +36,8 @@ fun PermissionRequiredCard(
     modifier: Modifier = Modifier,
 ) {
     SensorStatusCard(
-        title = "Health Connect 권한이 필요해요",
-        description = "걸음 수 데이터를 읽으려면\nHealth Connect 읽기 권한을 허용해주세요.",
+        title = stringResource(R.string.sensor_permission_title),
+        description = stringResource(R.string.sensor_permission_desc),
         modifier = modifier,
         action = {
             Button(
@@ -43,7 +45,7 @@ fun PermissionRequiredCard(
                 colors = ButtonDefaults.buttonColors(containerColor = WalkLogColor.Primary),
             ) {
                 Text(
-                    text = "권한 허용하기",
+                    text = stringResource(R.string.sensor_permission_button),
                     style = WalkLogTheme.typography.typography6SB,
                     color = WalkLogColor.StaticWhite,
                 )
@@ -55,8 +57,8 @@ fun PermissionRequiredCard(
 @Composable
 fun StepDataEmptyCard(modifier: Modifier = Modifier) {
     SensorStatusCard(
-        title = "아직 걸음 데이터가 없어요",
-        description = "조금만 움직이면 걸음 수가 측정됩니다.",
+        title = stringResource(R.string.sensor_no_data_title),
+        description = stringResource(R.string.sensor_no_data_desc),
         modifier = modifier,
     )
 }

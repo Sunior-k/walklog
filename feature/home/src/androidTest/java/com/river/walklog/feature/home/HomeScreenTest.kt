@@ -9,11 +9,12 @@ import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.river.walklog.core.designsystem.foundation.WalkLogTheme
-import com.river.walklog.feature.home.model.MissionCardUiModel
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
+import java.time.LocalDate
+import java.time.YearMonth
 
 @RunWith(AndroidJUnit4::class)
 class HomeScreenTest {
@@ -21,7 +22,9 @@ class HomeScreenTest {
     @get:Rule
     val composeTestRule = createAndroidComposeRule<ComponentActivity>()
 
-    // ─── SensorStatus.Loading ──────────────────────────────────────────────
+    private val activity get() = composeTestRule.activity
+
+    // 로딩
 
     @Test
     fun loadingState_showsSensorLoadingIndicator() {
@@ -37,18 +40,18 @@ class HomeScreenTest {
         setContent(state = HomeState(sensorStatus = SensorStatus.Loading))
 
         composeTestRule
-            .onNodeWithText("권한 허용하기")
+            .onNodeWithText(activity.getString(R.string.sensor_permission_button))
             .assertDoesNotExist()
     }
 
-    // ─── SensorStatus.Unavailable ──────────────────────────────────────────
+    // 센서 사용 불가
 
     @Test
     fun unavailableState_showsSensorUnavailableMessage() {
         setContent(state = HomeState(sensorStatus = SensorStatus.Unavailable))
 
         composeTestRule
-            .onNodeWithText("Health Connect를 지원하지 않는 기기예요")
+            .onNodeWithText(activity.getString(R.string.sensor_unavailable_title))
             .assertIsDisplayed()
     }
 
@@ -57,18 +60,18 @@ class HomeScreenTest {
         setContent(state = HomeState(sensorStatus = SensorStatus.Unavailable))
 
         composeTestRule
-            .onNodeWithText("주간 리포트 모아보기")
+            .onNodeWithText(activity.getString(R.string.home_weekly_report_title))
             .assertDoesNotExist()
     }
 
-    // ─── SensorStatus.PermissionRequired ──────────────────────────────────
+    // 센서 권한 필요
 
     @Test
     fun permissionRequired_showsPermissionRequestMessage() {
         setContent(state = HomeState(sensorStatus = SensorStatus.PermissionRequired))
 
         composeTestRule
-            .onNodeWithText("Health Connect 권한이 필요해요")
+            .onNodeWithText(activity.getString(R.string.sensor_permission_title))
             .assertIsDisplayed()
     }
 
@@ -77,7 +80,7 @@ class HomeScreenTest {
         setContent(state = HomeState(sensorStatus = SensorStatus.PermissionRequired))
 
         composeTestRule
-            .onNodeWithText("권한 허용하기")
+            .onNodeWithText(activity.getString(R.string.sensor_permission_button))
             .assertIsDisplayed()
     }
 
@@ -89,12 +92,14 @@ class HomeScreenTest {
             onRequestPermission = { permissionRequested = true },
         )
 
-        composeTestRule.onNodeWithText("권한 허용하기").performClick()
+        composeTestRule
+            .onNodeWithText(activity.getString(R.string.sensor_permission_button))
+            .performClick()
 
         assertTrue(permissionRequested)
     }
 
-    // ─── SensorStatus.Available ────────────────────────────────────────────
+    // 센서 사용 가능
 
     @Test
     fun availableState_showsCurrentStepCount() {
@@ -106,7 +111,7 @@ class HomeScreenTest {
         )
 
         composeTestRule
-            .onNodeWithText("4200보")
+            .onNodeWithText(activity.getString(R.string.steps_format, "4,200"))
             .assertIsDisplayed()
     }
 
@@ -122,7 +127,7 @@ class HomeScreenTest {
         )
 
         composeTestRule
-            .onNodeWithText("3000보 남았어요")
+            .onNodeWithText(activity.getString(R.string.home_steps_remaining, 3000))
             .assertIsDisplayed()
     }
 
@@ -138,7 +143,7 @@ class HomeScreenTest {
         )
 
         composeTestRule
-            .onNodeWithText("오늘 목표를 달성했어요")
+            .onNodeWithText(activity.getString(R.string.home_goal_achieved))
             .assertIsDisplayed()
     }
 
@@ -147,17 +152,13 @@ class HomeScreenTest {
         setContent(
             state = HomeState(
                 sensorStatus = SensorStatus.Available,
-                mission = MissionCardUiModel(
-                    title = "오늘의 만보 걷기",
-                    currentSteps = 3_000,
-                    targetSteps = 6_000,
-                    rewardText = "+20 캐시",
-                ),
+                currentSteps = 3_000,
+                targetSteps = 6_000,
             ),
         )
 
         composeTestRule
-            .onNodeWithText("오늘의 만보 걷기")
+            .onNodeWithText(activity.getString(R.string.mission_default_title))
             .performScrollTo()
             .assertIsDisplayed()
     }
@@ -170,41 +171,42 @@ class HomeScreenTest {
             onClickTodayMission = { clicked = true },
         )
 
-        composeTestRule.onNodeWithText("오늘 미션")
+        composeTestRule
+            .onNodeWithText(activity.getString(R.string.mission_today))
             .performScrollTo()
             .performClick()
 
         assertTrue(clicked)
     }
 
-    // ─── Header ────────────────────────────────────────────────────────────
+    // 헤더
 
     @Test
     fun header_showsUserGreetingWithName() {
         setContent(state = HomeState(userName = "익명"))
 
         composeTestRule
-            .onNodeWithText("익명님, 오늘도 걸어볼까요?")
+            .onNodeWithText(activity.getString(R.string.home_greeting, "익명"))
             .assertIsDisplayed()
     }
 
     @Test
     fun header_showsTodayDateText() {
-        setContent(state = HomeState(todayDateText = "4월 16일 수요일"))
+        setContent(state = HomeState(todayDate = LocalDate.of(2025, 4, 16)))
 
         composeTestRule
             .onNodeWithText("4월 16일 수요일")
             .assertIsDisplayed()
     }
 
-    // ─── Recap card ────────────────────────────────────────────────────────
+    // 리캡 카드
 
     @Test
     fun recapCard_isHidden_whenMonthLabelIsEmpty() {
-        setContent(state = HomeState(recapMonthLabel = ""))
+        setContent(state = HomeState(recapYearMonth = null))
 
         composeTestRule
-            .onNodeWithText("리캡 보기")
+            .onNodeWithText(activity.getString(R.string.home_recap_view))
             .assertDoesNotExist()
     }
 
@@ -212,18 +214,18 @@ class HomeScreenTest {
     fun recapCard_isVisible_whenMonthLabelIsSet() {
         setContent(
             state = HomeState(
-                recapMonthLabel = "3월",
-                recapTotalStepsText = "120,000보",
+                recapYearMonth = YearMonth.of(2025, 3),
+                recapTotalSteps = 120_000,
             ),
         )
 
         composeTestRule
-            .onNodeWithText("3월 리캡")
+            .onNodeWithText(activity.getString(R.string.home_recap_label, "3월"))
             .performScrollTo()
             .assertIsDisplayed()
     }
 
-    // ─── Helper ────────────────────────────────────────────────────────────
+    // helper
 
     private fun setContent(
         state: HomeState,

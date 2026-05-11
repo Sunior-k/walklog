@@ -3,9 +3,10 @@ package com.river.walklog.feature.home.component
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithText
+import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.river.walklog.core.designsystem.foundation.WalkLogTheme
-import com.river.walklog.feature.home.model.MissionCardUiModel
+import com.river.walklog.feature.home.R
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -18,111 +19,111 @@ class MissionCardTest {
     @get:Rule
     val composeTestRule = createComposeRule()
 
-    // ─── Badge text ────────────────────────────────────────────────────────
+    private val context = ApplicationProvider.getApplicationContext<android.content.Context>()
+
+    // badge
 
     @Test
-    fun `default state shows 오늘 미션 badge`() {
-        setContent(model = model())
+    fun `default state shows today mission badge`() {
+        setContent()
 
         composeTestRule
-            .onNodeWithText("오늘 미션")
+            .onNodeWithText(context.getString(R.string.mission_today))
             .assertIsDisplayed()
     }
 
     @Test
-    fun `recovery state shows 회복 미션 badge`() {
-        setContent(model = model(isRecovery = true))
+    fun `recovery state shows recovery mission badge`() {
+        setContent(isRecovery = true)
 
         composeTestRule
-            .onNodeWithText("회복 미션")
+            .onNodeWithText(context.getString(R.string.mission_recovery))
             .assertIsDisplayed()
     }
 
     @Test
-    fun `completed state shows 달성 완료 badge`() {
-        setContent(model = model(isCompleted = true))
+    fun `completed state shows completed badge`() {
+        setContent(isCompleted = true)
 
         composeTestRule
-            .onNodeWithText("달성 완료")
+            .onNodeWithText(context.getString(R.string.mission_completed))
             .assertIsDisplayed()
     }
 
-    // ─── Title ─────────────────────────────────────────────────────────────
+    // title
 
     @Test
     fun `title is displayed`() {
-        setContent(model = model(title = "오늘의 만보 걷기"))
+        setContent(title = "오늘의 만보 걷기")
 
         composeTestRule
             .onNodeWithText("오늘의 만보 걷기")
             .assertIsDisplayed()
     }
 
-    // ─── Step count ────────────────────────────────────────────────────────
+    // step count
 
     @Test
     fun `current steps are displayed`() {
-        setContent(model = model(currentSteps = 3_200, targetSteps = 6_000))
+        setContent(currentSteps = 3_200, targetSteps = 6_000)
 
         composeTestRule
-            .onNodeWithText("3200보")
+            .onNodeWithText(context.getString(R.string.mission_steps_format, 3_200))
             .assertIsDisplayed()
     }
 
     @Test
-    fun `target steps are displayed with separator`() {
-        setContent(model = model(currentSteps = 3_200, targetSteps = 6_000))
+    fun `target steps are displayed`() {
+        setContent(currentSteps = 3_200, targetSteps = 6_000)
 
         composeTestRule
-            .onNodeWithText("/ 6000보")
+            .onNodeWithText(context.getString(R.string.mission_target_steps_format, 6_000))
             .assertIsDisplayed()
     }
 
-    // ─── Reward text ───────────────────────────────────────────────────────
+    // reward text
 
     @Test
     fun `reward text is displayed`() {
-        setContent(model = model(rewardText = "+20 캐시"))
+        setContent(rewardText = "+20 캐시")
 
         composeTestRule
             .onNodeWithText("+20 캐시")
             .assertIsDisplayed()
     }
 
-    // ─── Zero steps edge case ──────────────────────────────────────────────
+    // edge cases
 
     @Test
     fun `zero current steps renders without error`() {
-        setContent(model = model(currentSteps = 0, targetSteps = 6_000))
+        setContent(currentSteps = 0, targetSteps = 6_000)
 
         composeTestRule
-            .onNodeWithText("0보")
+            .onNodeWithText(context.getString(R.string.mission_steps_format, 0))
             .assertIsDisplayed()
     }
 
-    // ─── Helper ────────────────────────────────────────────────────────────
+    // helper
 
-    private fun setContent(model: MissionCardUiModel) {
-        composeTestRule.setContent {
-            WalkLogTheme {
-                MissionCard(model = model)
-            }
-        }
-    }
-
-    private fun model(
+    private fun setContent(
         title: String = "오늘 목표까지 조금만 더",
         currentSteps: Int = 3_000,
         targetSteps: Int = 6_000,
         rewardText: String = "+20 캐시",
         isRecovery: Boolean = false,
         isCompleted: Boolean = false,
-    ) = MissionCardUiModel(
-        title = title,
-        currentSteps = currentSteps,
-        targetSteps = targetSteps,
-        rewardText = rewardText,
-        isRecovery = isRecovery,
-        isCompleted = isCompleted,
-    )
+    ) {
+        composeTestRule.setContent {
+            WalkLogTheme {
+                MissionCard(
+                    title = title,
+                    currentSteps = currentSteps,
+                    targetSteps = targetSteps,
+                    rewardText = rewardText,
+                    isRecovery = isRecovery,
+                    isCompleted = isCompleted,
+                )
+            }
+        }
+    }
 }
