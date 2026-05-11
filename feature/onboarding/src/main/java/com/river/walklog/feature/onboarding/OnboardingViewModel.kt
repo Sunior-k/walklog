@@ -24,40 +24,40 @@ class OnboardingViewModel @Inject constructor(
     private val _state = MutableStateFlow(OnboardingState())
     val state: StateFlow<OnboardingState> = _state.asStateFlow()
 
-    private val _navigateToHome = MutableStateFlow(false)
-    val navigateToHome: StateFlow<Boolean> = _navigateToHome.asStateFlow()
-
     init {
         crashReporter.setKey(CrashKeys.SCREEN, CrashKeys.Screens.ONBOARDING)
     }
 
-    fun handleIntent(intent: OnboardingIntent) {
-        when (intent) {
-            OnboardingIntent.OnClickNext -> advancePage()
-            OnboardingIntent.OnClickBack -> retreatPage()
-            is OnboardingIntent.OnNicknameChanged ->
-                _state.update { it.copy(nickname = intent.nickname) }
-            is OnboardingIntent.OnStepGoalChanged ->
-                _state.update { it.copy(dailyStepGoal = intent.steps) }
-            is OnboardingIntent.OnNotificationsToggled ->
-                _state.update { it.copy(notificationsEnabled = intent.enabled) }
-            is OnboardingIntent.OnPermissionResult -> advancePage()
-            OnboardingIntent.OnClickComplete -> complete()
-        }
-    }
-
-    private fun advancePage() {
+    fun advancePage() {
         val next = _state.value.currentPage + 1
         if (next >= TOTAL_PAGES) complete() else _state.update { it.copy(currentPage = next) }
     }
 
-    private fun retreatPage() {
+    fun retreatPage() {
         val prev = _state.value.currentPage - 1
         if (prev >= 0) _state.update { it.copy(currentPage = prev) }
     }
 
-    private fun complete() {
+    fun updateNickname(nickname: String) {
+        _state.update { it.copy(nickname = nickname) }
+    }
+
+    fun updateStepGoal(steps: Int) {
+        _state.update { it.copy(dailyStepGoal = steps) }
+    }
+
+    fun updateNotifications(enabled: Boolean) {
+        _state.update { it.copy(notificationsEnabled = enabled) }
+    }
+
+    fun clearNavigationDestination() {
+        _state.update { it.copy(navigationDestination = null) }
+    }
+
+    fun complete() {
         val current = _state.value
+        if (current.isCompleting) return
+
         _state.update { it.copy(isCompleting = true) }
         viewModelScope.launch {
             runCatching {
@@ -69,7 +69,9 @@ class OnboardingViewModel @Inject constructor(
                 crashReporter.log("Onboarding save failed: ${e.message}")
                 crashReporter.recordException(e)
             }
-            _navigateToHome.value = true
+            _state.update {
+                it.copy(navigationDestination = OnboardingNavigationDestination.Home)
+            }
         }
     }
 }

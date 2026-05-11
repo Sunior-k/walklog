@@ -9,8 +9,10 @@ import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.SideEffect
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.graphics.toArgb
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.platform.LocalView
@@ -88,6 +90,12 @@ fun WalkLogTheme(
     content: @Composable () -> Unit,
 ) {
     val colors = if (darkTheme) DarkColorScheme else LightColorScheme
+    val locale = LocalConfiguration.current.locales[0]
+    val fontScale = when (locale.language) {
+        "en", "ja" -> 0.9f
+        else -> 1.0f
+    }
+    val scaledTypography = remember(fontScale) { Typography.scale(fontScale) }
 
     if (!LocalInspectionMode.current) {
         val view = LocalView.current
@@ -108,7 +116,7 @@ fun WalkLogTheme(
 
     CompositionLocalProvider(
         LocalColors provides colors,
-        LocalTypography provides Typography,
+        LocalTypography provides scaledTypography,
         LocalDarkTheme provides darkTheme,
         LocalDensity provides Density(LocalDensity.current.density, 1f),
     ) {

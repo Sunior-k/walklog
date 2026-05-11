@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="no_data_past_message">No records for this day</string>
+    <string name="no_data_past_sub_message">Try walking more next time</string>
+    <string name="no_data_today_message">No records yet today</string>
+    <string name="no_data_today_sub_message">Start walking and it\'ll show up here</string>
+
+    <string name="total_steps_format">%1$s steps</string>
+
+    <string name="target_status_no_data">No step data for this day</string>
+    <string name="target_status_achieved">Goal reached</string>
+    <string name="target_status_remaining">%1$s steps to goal</string>
+
+    <string name="comparison_no_data">No data to compare with yesterday</string>
+    <string name="comparison_no_prev_data">No previous day data</string>
+    <string name="comparison_positive">+%1$s steps from yesterday</string>
+    <string name="comparison_negative">%1$s fewer steps than yesterday</string>
+    <string name="comparison_same">Same as yesterday</string>
+
+    <string name="insight_no_data">No step data to analyze for this day</string>
+    <string name="insight_achieved_with_increase">Goal reached and %1$s more steps than yesterday</string>
+    <string name="insight_achieved">You hit your goal today</string>
+    <string name="insight_increase">%1$s more steps than yesterday</string>
+    <string name="insight_decrease">%1$s fewer steps than yesterday</string>
+    <string name="insight_remaining">%1$s steps left to reach your goal</string>
+
+    <string name="month_rank_none">No rank this month</string>
+    <string name="month_rank">Rank %1$d of %2$d days this month</string>
+
+    <string name="timeline_morning">Morning</string>
+    <string name="timeline_afternoon">Afternoon</string>
+    <string name="timeline_evening">Evening</string>
+    <string name="timeline_steps_format">%1$s steps</string>
+
+    <string name="chip_achieved">Goal reached ✓</string>
+    <string name="chip_no_record">No record</string>
+
+    <string name="history_total_steps_label">Steps this month</string>
+    <string name="history_achievement_rate_label">Goal rate</string>
+    <string name="history_empty_title">No step records this month</string>
+    <string name="history_empty_description">Start walking and it\'ll show up here</string>
+    <string name="history_steps_unit">steps</string>
+    <string name="history_calories_label">Calories</string>
+    <string name="history_distance_label">Distance</string>
+    <string name="history_steps_label_short">Steps</string>
+    <string name="history_goal_label_short">Goal</string>
+    <string name="history_timeline_title">Daily timeline</string>
+    <string name="history_timeline_subtitle">Step distribution by time of day</string>
+    <string name="history_prev_month_cd">Previous month</string>
+    <string name="history_next_month_cd">Next month</string>
+    <string name="history_month_format_pattern">MMMM yyyy</string>
+    <string name="history_date_format_pattern">MMM d (EEE)</string>
+    <string name="history_select_date_prompt">Select a date</string>
+</resources>

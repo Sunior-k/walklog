@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Weather conditions -->
+    <string name="weather_condition_clear">Clear</string>
+    <string name="weather_condition_partly_cloudy">Partly cloudy</string>
+    <string name="weather_condition_cloudy">Cloudy</string>
+    <string name="weather_condition_rain">Rain</string>
+    <string name="weather_condition_rain_snow">Rain/Snow</string>
+    <string name="weather_condition_snow">Snow</string>
+    <string name="weather_condition_shower">Shower</string>
+    <string name="weather_condition_unknown">Unavailable</string>
+
+    <!-- Weather advice -->
+    <string name="weather_advice_unavailable">Couldn\'t load weather data</string>
+    <string name="weather_advice_snow">Snow expected — watch your step</string>
+    <string name="weather_advice_rain">Rain expected — grab an umbrella</string>
+    <string name="weather_advice_shower">Showers possible — keep your walk short</string>
+    <string name="weather_advice_wind">Strong winds — indoor walking works too</string>
+    <string name="weather_advice_cold">It\'s cold out. Bundle up before you walk</string>
+    <string name="weather_advice_hot">It\'s hot out. Bring water and take it easy</string>
+    <string name="weather_advice_clear">Clear skies — a great day for a walk</string>
+    <string name="weather_advice_default">Check the forecast and plan your walk</string>
+    <string name="weather_loading">Loading weather…</string>
+    <string name="weather_default_location">Based on Seoul</string>
+
+    <!-- Weather supporting text -->
+    <string name="weather_precipitation">Precipitation %1$d%%</string>
+    <string name="weather_humidity">Humidity %1$d%%</string>
+    <string name="weather_wind_speed">Wind %1$sm/s</string>
+    <string name="weather_location">Based on %1$s</string>
+
+    <!-- Recommended time -->
+    <string name="recommended_time_am">%1$d AM</string>
+    <string name="recommended_time_pm">%1$d PM</string>
+
+    <!-- Mission detail top bar -->
+    <string name="mission_detail_title">Mission details</string>
+    <string name="back_button_cd">Back</string>
+
+    <!-- Mission type badge -->
+    <string name="mission_type_completed">Completed</string>
+    <string name="mission_type_recovery">Recovery</string>
+    <string name="mission_type_today">Today\'s mission</string>
+
+    <!-- Mission default content -->
+    <string name="mission_default_title">Just a little more to reach today\'s goal</string>
+    <string name="mission_default_description">We\'ve set up today\'s mission to help you build a consistent walking habit.</string>
+    <string name="mission_reward_default">+%1$d cash</string>
+
+    <!-- Mission progress card -->
+    <string name="mission_reward_label">Reward</string>
+    <string name="mission_goal_achieved">Goal reached 🎉</string>
+    <string name="mission_steps_remaining">%1$d steps left</string>
+    <string name="mission_steps_current">%1$d steps</string>
+    <string name="mission_steps_target">/ %1$d steps</string>
+    <string name="mission_progress_rate">Progress</string>
+    <string name="mission_remaining_steps">Remaining</string>
+    <string name="mission_ring_goal">Goal %1$d steps</string>
+
+    <!-- Mission guide card -->
+    <string name="guide_title_completed">Great job keeping it up today</string>
+    <string name="guide_title_recovery">Pick up where you left off yesterday</string>
+    <string name="guide_title_default">Now\'s a great time to walk</string>
+    <string name="guide_desc_completed">You\'re on a roll. Keep it going tomorrow.</string>
+    <string name="guide_desc_recovery">Complete the recovery mission to keep your streak.</string>
+    <string name="guide_desc_default">Around %1$s is usually when you walk the most.</string>
+
+    <!-- Mission timeline card -->
+    <string name="timeline_title">Mission timeline</string>
+    <string name="timeline_status_completed">Today\'s mission done</string>
+    <string name="timeline_next_checkpoint">Next checkpoint</string>
+    <string name="timeline_start_completed">Started</string>
+    <string name="timeline_start_recovery">Recover missed steps at your own pace</string>
+    <string name="timeline_start_default">Start with a short walk around the suggested time</string>
+    <string name="timeline_reward_available">Reward available</string>
+    <string name="timeline_remaining">%1$d steps to finish</string>
+    <string name="timeline_midpoint_remaining">%1$d steps to midpoint</string>
+    <string name="timeline_start_recommend">Suggested start: %1$s</string>
+    <string name="timeline_item1_started">You\'ve already started today\'s mission.</string>
+    <string name="timeline_item1_notstarted">This is the easiest first stretch.</string>
+    <string name="timeline_midpoint_title">Midpoint</string>
+    <string name="timeline_item2_half_done">You\'re more than halfway there.</string>
+    <string name="timeline_item2_half_notdone">Once you reach this point, finishing gets much easier.</string>
+    <string name="timeline_reward_earned">Reward earned</string>
+    <string name="timeline_reward_pending">Completion reward</string>
+    <string name="timeline_reward_available_desc">You can claim today\'s reward.</string>
+    <string name="timeline_reward_steps_more">%1$d more steps to unlock.</string>
+
+    <!-- Mission bottom bar -->
+    <string name="mission_action_completed">Already completed</string>
+    <string name="mission_action_start">Start walking</string>
+</resources>

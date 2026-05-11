@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="anonymous">익명</string>
+
+    <!-- Weather conditions -->
+    <string name="weather_condition_clear">맑음</string>
+    <string name="weather_condition_partly_cloudy">구름많음</string>
+    <string name="weather_condition_cloudy">흐림</string>
+    <string name="weather_condition_rain">비</string>
+    <string name="weather_condition_rain_snow">비/눈</string>
+    <string name="weather_condition_snow">눈</string>
+    <string name="weather_condition_shower">소나기</string>
+    <string name="weather_condition_unknown">정보 없음</string>
+
+    <!-- Weather advice -->
+    <string name="weather_advice_unavailable">날씨 정보를 불러오지 못했어요</string>
+    <string name="weather_advice_snow">눈 예보가 있어 미끄럼에 주의하세요</string>
+    <string name="weather_advice_rain">비 예보가 있어 우산을 챙기세요</string>
+    <string name="weather_advice_shower">소나기 가능성이 있어 짧게 걸어보세요</string>
+    <string name="weather_advice_wind">바람이 강해 실내 걷기도 좋아요</string>
+    <string name="weather_advice_cold">추운 날씨예요. 따뜻하게 입고 걸어보세요</string>
+    <string name="weather_advice_hot">더운 날씨예요. 물을 챙기고 무리하지 마세요</string>
+    <string name="weather_advice_clear">맑은 날씨예요. 가볍게 걷기 좋아요</string>
+    <string name="weather_advice_default">오늘 날씨를 확인하고 걷기 계획을 세워보세요</string>
+    <string name="weather_loading">날씨 정보를 불러오는 중이에요</string>
+    <string name="weather_default_location">서울 기준</string>
+
+    <!-- Weather supporting text -->
+    <string name="weather_precipitation">강수 %1$d%%</string>
+    <string name="weather_humidity">습도 %1$d%%</string>
+    <string name="weather_wind_speed">풍속 %1$sm/s</string>
+    <string name="weather_location">%1$s 기준</string>
+
+    <!-- Forecast -->
+    <string name="forecast_title">걷기 예보</string>
+    <string name="forecast_am">오전</string>
+    <string name="forecast_pm">오후</string>
+    <string name="forecast_description">오늘 %1$s %2$d시는 평소 가장 많이 걷는 시간이에요</string>
+    <string name="forecast_description_am">오늘 오전 %1$d시는 평소 가장 많이 걷는 시간이에요</string>
+    <string name="forecast_description_pm">오늘 오후 %1$d시는 평소 가장 많이 걷는 시간이에요</string>
+    <string name="forecast_recommended_time">오늘 %1$s %2$d시</string>
+    <string name="forecast_recommended_time_am">오늘 오전 %1$d시</string>
+    <string name="forecast_recommended_time_pm">오늘 오후 %1$d시</string>
+    <string name="forecast_avg_steps">평균 %1$s보</string>
+    <string name="forecast_active_days">최근 %1$d일 중 %2$d일</string>
+    <string name="forecast_default_recommended">오늘 오후 3시가 최적이에요</string>
+
+    <!-- Steps -->
+    <string name="steps_format">%1$s보</string>
+
+    <!-- Home UI -->
+    <string name="home_greeting">%1$s님, 오늘도 걸어볼까요?</string>
+    <string name="home_goal_achieved">오늘 목표를 달성했어요</string>
+    <string name="home_steps_remaining">%1$d보 남았어요</string>
+    <string name="home_progress_detail">%1$d%% 완료 · 목표 %2$d 보</string>
+    <string name="home_goal_steps">목표: %1$d 보</string>
+    <string name="home_current_label">현재</string>
+    <string name="home_remaining_label">남은 걸음</string>
+    <string name="home_steps_value">%1$d보</string>
+    <string name="home_weekly_report_title">주간 리포트 모아보기</string>
+    <string name="home_weekly_report_subtitle">완료된 주간 기록을 보고 공유해요</string>
+    <string name="home_recap_label">%1$s 리캡</string>
+    <string name="home_recap_steps_walked">%1$s 걸었어요</string>
+    <string name="home_recap_view">리캡 보기</string>
+    <string name="home_recap_error_title">리캡을 불러올 수 없어요</string>
+    <string name="home_recap_error_desc">잠시 후 다시 확인해 주세요</string>
+
+    <!-- Forecast bottom sheet -->
+    <string name="forecast_sheet_today_recommended">오늘의 추천 시간</string>
+    <string name="forecast_sheet_why_title">왜 이 시간대를 추천하나요?</string>
+    <string name="forecast_sheet_pattern_title">최근 7일 패턴</string>
+    <string name="forecast_sheet_avg_steps_label">이 시간 평균 걸음 수</string>
+    <string name="forecast_sheet_active_days_label">활동이 있었던 날</string>
+    <string name="forecast_sheet_start_walking">지금 걸으러 가기</string>
+    <string name="forecast_sheet_weekly_chart">주간 시간대별 활동</string>
+    <string name="forecast_sheet_peak_hour">최고 %1$d시</string>
+
+    <!-- Sensor status -->
+    <string name="sensor_unavailable_title">Health Connect를 지원하지 않는 기기예요</string>
+    <string name="sensor_unavailable_desc">이 기기에서는 Health Connect를 사용할 수 없어\n걸음 수를 측정할 수 없습니다.</string>
+    <string name="sensor_permission_title">Health Connect 권한이 필요해요</string>
+    <string name="sensor_permission_desc">걸음 수 데이터를 읽으려면\nHealth Connect 읽기 권한을 허용해주세요.</string>
+    <string name="sensor_permission_button">권한 허용하기</string>
+    <string name="sensor_no_data_title">아직 걸음 데이터가 없어요</string>
+    <string name="sensor_no_data_desc">조금만 움직이면 걸음 수가 측정됩니다.</string>
+
+    <!-- Mission card -->
+    <string name="mission_completed">달성 완료</string>
+    <string name="mission_recovery">회복 미션</string>
+    <string name="mission_today">오늘 미션</string>
+    <string name="mission_default_title">오늘 목표 달성까지 조금만 더 걸어보세요</string>
+    <string name="mission_steps_format">%1$d보</string>
+    <string name="mission_target_steps_format">/ %1$d보</string>
+    <string name="mission_reward_default">+%1$d 캐시</string>
+
+    <!-- Streak badge -->
+    <string name="streak_loading">스트릭 확인 중</string>
+    <string name="streak_consecutive">🔥 %1$d일 연속</string>
+    <string name="streak_none">스트릭 없음</string>
+
+    <!-- Notification -->
+    <string name="notification_walking_title">걷기 좋은 시간이에요!</string>
+    <string name="notification_walking_text">평소 이 시간대에 가장 많이 걸으셨어요. 지금 걸어보세요!</string>
+    <string name="notification_channel_name">걷기 알림</string>
+    <string name="notification_channel_desc">평소 걷기 패턴 기반 걷기 권유 알림</string>
+</resources>

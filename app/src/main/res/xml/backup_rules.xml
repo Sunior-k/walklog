@@ -9,7 +9,7 @@
 -->
 <full-backup-content>
 
-    <!-- Room DB: 걸음 수 이력 (개인 건강 데이터) — 백업 제외 -->
+    <!-- Room DB: 걸음 수 이력 — 백업 제외 -->
     <exclude domain="database" path="." />
 
     <!-- DataStore: 앱 설정값 — 기기 고유 상태, 복원 시 불일치 위험 -->

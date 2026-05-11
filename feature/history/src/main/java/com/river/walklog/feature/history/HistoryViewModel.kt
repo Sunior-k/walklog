@@ -21,14 +21,9 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import java.time.LocalDate
 import java.time.YearMonth
-import java.time.format.DateTimeFormatter
-import java.util.Locale
 import javax.inject.Inject
 import kotlin.math.sign
 
-private val DAY_LABELS = listOf("월", "화", "수", "목", "금", "토", "일")
-private val MONTH_FORMATTER = DateTimeFormatter.ofPattern("yyyy년 M월", Locale.KOREAN)
-private val SELECTED_DATE_FORMATTER = DateTimeFormatter.ofPattern("M월 d일 (E)", Locale.KOREAN)
 private const val CALORIES_PER_STEP = 0.04f
 private const val KILOMETERS_PER_STEP = 0.00075f
 
@@ -97,7 +92,7 @@ class HistoryViewModel @Inject constructor(
             it.copy(
                 isLoading = true,
                 items = emptyList(),
-                monthLabel = yearMonth.format(MONTH_FORMATTER),
+                yearMonth = yearMonth,
                 selectedDateEpochDay = null,
                 selectedDaySummary = null,
                 canNavigateForward = yearMonth < today,
@@ -131,12 +126,12 @@ class HistoryViewModel @Inject constructor(
                 _state.update {
                     it.copy(
                         items = calendarItems,
-                        totalStepsText = "%,d 보".format(totalSteps),
-                        achievementRateText = "$achievedPct%",
                         selectedDaySummary = selectedDay?.toSelectedDaySummary(
                             previousDay = previousDay,
                             monthDays = dayItems,
                         ),
+                        totalSteps = totalSteps,
+                        achievementRatePct = achievedPct,
                         isLoading = false,
                         isEmpty = totalSteps == 0,
                     )
@@ -166,7 +161,7 @@ class HistoryViewModel @Inject constructor(
         val items = mutableListOf<CalendarItem>()
 
         // 요일 헤더
-        DAY_LABELS.forEach { items.add(CalendarItem.DayLabel(it)) }
+        (1..7).forEach { items.add(CalendarItem.DayLabel(it)) }
 
         // 앞쪽 빈 셀
         repeat(startOffset) { index -> items.add(CalendarItem.Empty(index)) }
@@ -204,20 +199,26 @@ class HistoryViewModel @Inject constructor(
     ): SelectedDaySummary {
         val calories = (steps * CALORIES_PER_STEP).toInt()
         val distance = steps * KILOMETERS_PER_STEP
+        val activeDays = monthDays.filter { it.hasData && it.steps > 0 }
+        val rank = if (hasData && activeDays.isNotEmpty()) {
+            activeDays.count { it.steps > steps } + 1
+        } else {
+            null
+        }
         return SelectedDaySummary(
-            dateText = LocalDate.ofEpochDay(dateEpochDay).format(SELECTED_DATE_FORMATTER),
-            stepsText = "%,d".format(steps),
-            caloriesText = "%,d kcal".format(calories),
-            distanceText = String.format(Locale.KOREAN, "%.1f km", distance),
-            targetStatusText = buildTargetStatusText(),
-            comparisonText = buildComparisonText(previousDay),
+            dateEpochDay = dateEpochDay,
+            steps = steps,
+            calories = calories,
+            distanceKm = distance,
+            remainingSteps = (targetSteps - steps).coerceAtLeast(0),
+            comparisonDiff = buildComparisonDiff(previousDay),
             hasData = hasData,
             isAchieved = isAchieved,
             achievementFraction = if (hasData) (steps.toFloat() / targetSteps).coerceIn(0f, 1f) else 0f,
             comparisonSign = buildComparisonSign(previousDay),
             isPastDay = LocalDate.ofEpochDay(dateEpochDay).isBefore(LocalDate.now()),
-            insightText = buildInsightText(previousDay),
-            monthRankText = buildMonthRankText(monthDays),
+            monthRank = rank,
+            activeDaysInMonth = activeDays.size,
         )
     }
 
@@ -258,25 +259,19 @@ class HistoryViewModel @Inject constructor(
         val afternoonSteps = sliceArray(12..17).sum().toInt()
         val eveningSteps = sliceArray(18..23).sum().toInt()
         val segments = listOf(
-            "오전" to morningSteps,
-            "오후" to afternoonSteps,
-            "저녁" to eveningSteps,
+            TimelineSegmentType.Morning to morningSteps,
+            TimelineSegmentType.Afternoon to afternoonSteps,
+            TimelineSegmentType.Evening to eveningSteps,
         )
         val maxSteps = segments.maxOf { it.second }.coerceAtLeast(1)
 
-        return segments.map { (label, steps) ->
+        return segments.map { (labelRes, steps) ->
             SelectedDayTimelineSegment(
-                label = label,
-                stepsText = "%,d보".format(steps),
+                type = labelRes,
+                steps = steps,
                 fraction = steps.toFloat() / maxSteps,
             )
         }
-    }
-
-    private fun CalendarItem.Day.buildTargetStatusText(): String = when {
-        !hasData -> "이날은 걸음 기록이 없어요"
-        isAchieved -> "목표 달성"
-        else -> "목표까지 %,d보".format(targetSteps - steps)
     }
 
     private fun CalendarItem.Day.buildComparisonSign(previousDay: CalendarItem.Day?): Int? {
@@ -285,38 +280,6 @@ class HistoryViewModel @Inject constructor(
         return diff.sign
     }
 
-    private fun CalendarItem.Day.buildComparisonText(previousDay: CalendarItem.Day?): String {
-        if (!hasData) return "기록이 없어 전날 비교가 없어요"
-        if (previousDay == null || !previousDay.hasData) return "전날 기록 없음"
-
-        val diff = steps - previousDay.steps
-        return when {
-            diff > 0 -> "전날보다 +%,d보".format(diff)
-            diff < 0 -> "전날보다 %,d보".format(diff)
-            else -> "전날과 같아요"
-        }
-    }
-
-    private fun CalendarItem.Day.buildInsightText(previousDay: CalendarItem.Day?): String {
-        if (!hasData) return "이날은 분석할 걸음 기록이 없어요"
-
-        val previousDiff = if (previousDay?.hasData == true) steps - previousDay.steps else null
-        return when {
-            isAchieved && previousDiff != null && previousDiff > 0 -> "목표를 달성했고 전날보다 %,d보 더 걸었어요".format(previousDiff)
-            isAchieved -> "목표를 달성한 날이에요"
-            previousDiff != null && previousDiff > 0 -> "전날보다 %,d보 더 걸었어요".format(previousDiff)
-            previousDiff != null && previousDiff < 0 -> "전날보다 %,d보 적게 걸었어요".format(-previousDiff)
-            else -> "목표까지 %,d보 남았어요".format((targetSteps - steps).coerceAtLeast(0))
-        }
-    }
-
-    private fun CalendarItem.Day.buildMonthRankText(monthDays: List<CalendarItem.Day>): String {
-        if (!hasData) return "이번 달 순위 없음"
-
-        val activeDays = monthDays.filter { it.hasData && it.steps > 0 }
-        if (activeDays.isEmpty()) return "이번 달 순위 없음"
-
-        val rank = activeDays.count { it.steps > steps } + 1
-        return "이번 달 ${rank}위 / ${activeDays.size}일"
-    }
+    private fun CalendarItem.Day.buildComparisonDiff(previousDay: CalendarItem.Day?): Int? =
+        if (hasData && previousDay?.hasData == true) steps - previousDay.steps else null
 }

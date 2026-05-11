@@ -5,6 +5,7 @@ import android.content.Intent
 import android.graphics.Bitmap
 import android.net.Uri
 import androidx.core.content.FileProvider
+import com.river.walklog.feature.report.R
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.File
@@ -29,8 +30,8 @@ class ReportShareManager(private val context: Context) {
 
     fun shareImage(
         imageUri: Uri,
-        chooserTitle: String = "주간 리포트 공유",
-        shareText: String = "이번 주 나의 걷기 리포트를 확인해보세요!",
+        chooserTitle: String = context.getString(R.string.report_share_chooser_title),
+        shareText: String = context.getString(R.string.report_share_text),
     ) {
         val intent = Intent(Intent.ACTION_SEND).apply {
             type = "image/png"

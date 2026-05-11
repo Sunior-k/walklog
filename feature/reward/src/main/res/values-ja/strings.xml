@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="reward_coming_soon">✦  近日公開予定  ✦</string>
+    <string name="reward_tagline">歩くほど、増える報酬</string>
+    <string name="reward_preview_section">プレビュー</string>
+    <string name="reward_footer">今後のアップデートで提供されます</string>
+    <string name="reward_footer_tagline">コツコツした歩みが輝く報酬として返ってきます</string>
+
+    <!-- Feature items -->
+    <string name="reward_feature1_title">ポイント積立</string>
+    <string name="reward_feature1_subtitle">歩くごとにポイント</string>
+    <string name="reward_feature2_title">バッジコレクション</string>
+    <string name="reward_feature2_subtitle">実績バッジを集める</string>
+    <string name="reward_feature3_title">リワードストア</string>
+    <string name="reward_feature3_subtitle">ポイントで交換</string>
+    <string name="reward_feature4_title">レベル報酬</string>
+    <string name="reward_feature4_subtitle">レベルアップギフト</string>
+</resources>

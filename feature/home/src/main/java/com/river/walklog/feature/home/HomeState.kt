@@ -2,46 +2,41 @@ package com.river.walklog.feature.home
 
 import androidx.compose.runtime.Immutable
 import com.river.walklog.core.engine.ActivityState
-import com.river.walklog.feature.home.model.MissionCardUiModel
+import com.river.walklog.core.model.WeatherSummary
+import java.time.LocalDate
+import java.time.YearMonth
 
 @Immutable
 data class HomeState(
-    val userName: String = "익명",
-    val todayDateText: String = "",
+    val userName: String = "",
+    val todayDate: LocalDate = LocalDate.now(),
     val sensorStatus: SensorStatus = SensorStatus.Loading,
     val currentSteps: Int = 0,
     val targetSteps: Int = 10_000,
     val streakDays: Int? = null,
-    val forecastTitle: String = "걷기 예보",
-    val forecastDescription: String = "오늘 오후 3시는 평소 가장 많이 걷는 시간이에요",
-    val forecastRecommendedTimeText: String = "",
-    val forecastAverageStepsText: String = "",
-    val forecastActiveDaysText: String = "",
     val forecastHourlyAverages: List<Float> = emptyList(),
-    val forecastPeakHour: Int = -1,
-    val weatherLocationText: String = "서울 기준",
-    val weatherTemperatureText: String = "-",
-    val weatherConditionText: String = "정보 없음",
-    val weatherAdviceText: String = "날씨 정보를 불러오는 중이에요",
-    val weatherSupportingText: String = "",
-    val mission: MissionCardUiModel = MissionCardUiModel(
-        title = "오늘 목표 달성까지 조금만 더 걸어보세요",
-        currentSteps = 0,
-        targetSteps = 10_000,
-        rewardText = "+20 캐시",
-    ),
-    val weeklyTotalStepsText: String = "-",
+    val forecastPeakHour: Int = DEFAULT_FORECAST_PEAK_HOUR,
+    val forecastAverageStepsAtPeakHour: Int? = null,
+    val forecastTotalDays: Int = 0,
+    val forecastActiveDays: Int = 0,
+    val weather: WeatherSummary = WeatherSummary.unavailable(),
+    val missionRewardPoints: Int = 20,
+    val missionIsRecovery: Boolean = false,
+    val missionIsCompleted: Boolean = false,
+    val weeklyTotalSteps: Int = 0,
     val weeklyAchievementRateText: String = "-",
-    val bestDayText: String = "-",
-    val bestTimeText: String = "-",
-    val bestStreakText: String = "-",
+    val bestDayEpochDay: Long? = null,
     val isLoading: Boolean = false,
     val isRecapPreviewLoading: Boolean = true,
-    val recapMonthLabel: String = "",
-    val recapTotalStepsText: String = "",
+    val recapYearMonth: YearMonth? = null,
+    val recapTotalSteps: Int = 0,
     val streakRiskLevel: StreakRiskLevel = StreakRiskLevel.LOW,
     val activityState: ActivityState = ActivityState.UNKNOWN,
-)
+) {
+    companion object {
+        const val DEFAULT_FORECAST_PEAK_HOUR = 15
+    }
+}
 
 enum class StreakRiskLevel {
     LOW, MEDIUM, HIGH;
@@ -53,10 +48,4 @@ enum class StreakRiskLevel {
             else -> HIGH
         }
     }
-}
-
-sealed interface HomeIntent {
-    data object OnRefresh : HomeIntent
-    data object OnRefreshWeather : HomeIntent
-    data class OnPermissionResult(val granted: Boolean) : HomeIntent
 }

@@ -37,6 +37,7 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -44,6 +45,7 @@ import androidx.compose.ui.unit.sp
 import androidx.window.core.layout.WindowSizeClass
 import com.river.walklog.core.designsystem.foundation.WalkLogColor
 import com.river.walklog.core.designsystem.foundation.WalkLogTheme
+import com.river.walklog.feature.home.R
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -151,7 +153,7 @@ private fun ForecastStartButton(onClickStartWalking: () -> Unit) {
         ),
         contentPadding = PaddingValues(vertical = 16.dp),
     ) {
-        Text(text = "지금 걸으러 가기", style = WalkLogTheme.typography.typography6SB)
+        Text(text = stringResource(R.string.forecast_sheet_start_walking), style = WalkLogTheme.typography.typography6SB)
     }
 }
 
@@ -183,7 +185,7 @@ private fun ForecastLineChartCard(
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Text(
-                text = "주간 시간대별 활동",
+                text = stringResource(R.string.forecast_sheet_weekly_chart),
                 style = WalkLogTheme.typography.typography6SB,
                 color = WalkLogTheme.colors.onSurface,
             )
@@ -195,7 +197,7 @@ private fun ForecastLineChartCard(
                         .padding(horizontal = 8.dp, vertical = 4.dp),
                 ) {
                     Text(
-                        text = "최고 ${peakHour}시",
+                        text = stringResource(R.string.forecast_sheet_peak_hour, peakHour),
                         style = WalkLogTheme.typography.typography7SB,
                         color = WalkLogColor.Primary,
                     )
@@ -327,8 +329,6 @@ private fun buildSmoothPath(points: List<Offset>): Path = Path().apply {
     }
 }
 
-// ─── Other sections ───────────────────────────────────────────────────────────
-
 @Composable
 private fun ForecastSheetHeader(title: String, recommendedTimeText: String) {
     Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
@@ -349,7 +349,7 @@ private fun ForecastSheetHeader(title: String, recommendedTimeText: String) {
                 .padding(horizontal = 12.dp, vertical = 8.dp),
         ) {
             Text(
-                text = "오늘의 추천 시간",
+                text = stringResource(R.string.forecast_sheet_today_recommended),
                 style = WalkLogTheme.typography.typography7SB,
                 color = WalkLogTheme.colors.onSecondaryContainer,
             )
@@ -368,7 +368,7 @@ private fun ForecastDescriptionCard(description: String) {
         verticalArrangement = Arrangement.spacedBy(6.dp),
     ) {
         Text(
-            text = "왜 이 시간대를 추천하나요?",
+            text = stringResource(R.string.forecast_sheet_why_title),
             style = WalkLogTheme.typography.typography6SB,
             color = WalkLogTheme.colors.onSurface,
         )
@@ -394,12 +394,12 @@ private fun ForecastPatternCard(
         verticalArrangement = Arrangement.spacedBy(14.dp),
     ) {
         Text(
-            text = "최근 7일 패턴",
+            text = stringResource(R.string.forecast_sheet_pattern_title),
             style = WalkLogTheme.typography.typography6SB,
             color = WalkLogTheme.colors.onSurface,
         )
-        ForecastInfoRow("이 시간 평균 걸음 수", averageStepsAtThisTime)
-        ForecastInfoRow("활동이 있었던 날", activeDays)
+        ForecastInfoRow(stringResource(R.string.forecast_sheet_avg_steps_label), averageStepsAtThisTime)
+        ForecastInfoRow(stringResource(R.string.forecast_sheet_active_days_label), activeDays)
     }
 }
 

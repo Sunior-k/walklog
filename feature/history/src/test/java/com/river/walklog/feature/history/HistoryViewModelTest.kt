@@ -51,22 +51,18 @@ class HistoryViewModelTest {
         Dispatchers.resetMain()
     }
 
-    // ─── 초기 상태 ─────────────────────────────────────────────────────────
-
     @Test
-    fun `initial state shows current month label`() = runTest {
+    fun `initial state exposes current year month`() = runTest {
         stubRecap(emptyRecap())
-        val viewModel = HistoryViewModel(getMonthlyRecap, stepRepository, userSettingsRepository, crashReporter)
+        val viewModel = createViewModel()
 
-        val today = YearMonth.now()
-        assertTrue(viewModel.state.value.monthLabel.contains("${today.year}년"))
-        assertTrue(viewModel.state.value.monthLabel.contains("${today.monthValue}월"))
+        assertEquals(YearMonth.now(), viewModel.state.value.yearMonth)
     }
 
     @Test
     fun `canNavigateForward is false for current month`() = runTest {
         stubRecap(emptyRecap())
-        val viewModel = HistoryViewModel(getMonthlyRecap, stepRepository, userSettingsRepository, crashReporter)
+        val viewModel = createViewModel()
 
         assertFalse(viewModel.state.value.canNavigateForward)
     }
@@ -74,7 +70,7 @@ class HistoryViewModelTest {
     @Test
     fun `isEmpty is true when recap has zero totalSteps`() = runTest {
         stubRecap(emptyRecap(totalSteps = 0))
-        val viewModel = HistoryViewModel(getMonthlyRecap, stepRepository, userSettingsRepository, crashReporter)
+        val viewModel = createViewModel()
 
         assertTrue(viewModel.state.value.isEmpty)
     }
@@ -82,30 +78,30 @@ class HistoryViewModelTest {
     @Test
     fun `isEmpty is false when recap has steps`() = runTest {
         stubRecap(emptyRecap(totalSteps = 50_000))
-        val viewModel = HistoryViewModel(getMonthlyRecap, stepRepository, userSettingsRepository, crashReporter)
+        val viewModel = createViewModel()
 
         assertFalse(viewModel.state.value.isEmpty)
     }
 
-    // ─── totalStepsText ────────────────────────────────────────────────────
+    // totalSteps
 
     @Test
-    fun `totalStepsText formats steps with comma separator`() = runTest {
+    fun `totalSteps exposes recap total steps`() = runTest {
         stubRecap(emptyRecap(totalSteps = 123_456))
-        val viewModel = HistoryViewModel(getMonthlyRecap, stepRepository, userSettingsRepository, crashReporter)
+        val viewModel = createViewModel()
 
-        assertEquals("123,456 보", viewModel.state.value.totalStepsText)
+        assertEquals(123_456, viewModel.state.value.totalSteps)
     }
 
     @Test
-    fun `totalStepsText is 0 보 for empty recap`() = runTest {
+    fun `totalSteps is 0 for empty recap`() = runTest {
         stubRecap(emptyRecap(totalSteps = 0))
-        val viewModel = HistoryViewModel(getMonthlyRecap, stepRepository, userSettingsRepository, crashReporter)
+        val viewModel = createViewModel()
 
-        assertEquals("0 보", viewModel.state.value.totalStepsText)
+        assertEquals(0, viewModel.state.value.totalSteps)
     }
 
-    // ─── achievementRateText ───────────────────────────────────────────────
+    // achievementRateText
 
     @Test
     fun `achievementRateText is 50 percent for half achieved month`() = runTest {
@@ -117,7 +113,7 @@ class HistoryViewModelTest {
             )
         }
         stubRecap(emptyRecap(achievedDays = 15, totalDays = 30, dailyCounts = dailyCounts))
-        val viewModel = HistoryViewModel(getMonthlyRecap, stepRepository, userSettingsRepository, crashReporter)
+        val viewModel = createViewModel()
 
         assertEquals("50%", viewModel.state.value.achievementRateText)
     }
@@ -125,7 +121,7 @@ class HistoryViewModelTest {
     @Test
     fun `achievementRateText is 0 percent for empty recap`() = runTest {
         stubRecap(emptyRecap(achievedDays = 0, totalDays = 0))
-        val viewModel = HistoryViewModel(getMonthlyRecap, stepRepository, userSettingsRepository, crashReporter)
+        val viewModel = createViewModel()
 
         assertEquals("0%", viewModel.state.value.achievementRateText)
     }
@@ -140,30 +136,30 @@ class HistoryViewModelTest {
             )
         }
         stubRecap(emptyRecap(achievedDays = 28, totalDays = 28, dailyCounts = dailyCounts))
-        val viewModel = HistoryViewModel(getMonthlyRecap, stepRepository, userSettingsRepository, crashReporter)
+        val viewModel = createViewModel()
 
         assertEquals("100%", viewModel.state.value.achievementRateText)
     }
 
-    // ─── 달력 아이템 구조 ──────────────────────────────────────────────────
+    // 달력
 
     @Test
     fun `calendar items start with 7 day labels`() = runTest {
         stubRecap(emptyRecap())
-        val viewModel = HistoryViewModel(getMonthlyRecap, stepRepository, userSettingsRepository, crashReporter)
+        val viewModel = createViewModel()
 
         val labels = viewModel.state.value.items.take(7)
         assertTrue(labels.all { it is CalendarItem.DayLabel })
         assertEquals(
-            listOf("월", "화", "수", "목", "금", "토", "일"),
-            labels.map { (it as CalendarItem.DayLabel).label },
+            (1..7).toList(),
+            labels.map { (it as CalendarItem.DayLabel).dayOfWeek },
         )
     }
 
     @Test
     fun `calendar items contain correct number of Day cells for current month`() = runTest {
         stubRecap(emptyRecap())
-        val viewModel = HistoryViewModel(getMonthlyRecap, stepRepository, userSettingsRepository, crashReporter)
+        val viewModel = createViewModel()
 
         val dayItems = viewModel.state.value.items.filterIsInstance<CalendarItem.Day>()
         assertEquals(YearMonth.now().lengthOfMonth(), dayItems.size)
@@ -172,7 +168,7 @@ class HistoryViewModelTest {
     @Test
     fun `day items are numbered 1 to length of month in order`() = runTest {
         stubRecap(emptyRecap())
-        val viewModel = HistoryViewModel(getMonthlyRecap, stepRepository, userSettingsRepository, crashReporter)
+        val viewModel = createViewModel()
 
         val dayNumbers = viewModel.state.value.items
             .filterIsInstance<CalendarItem.Day>()
@@ -190,7 +186,7 @@ class HistoryViewModelTest {
             ),
         )
         stubRecap(recap)
-        val viewModel = HistoryViewModel(getMonthlyRecap, stepRepository, userSettingsRepository, crashReporter)
+        val viewModel = createViewModel()
 
         val firstDay = viewModel.state.value.items
             .filterIsInstance<CalendarItem.Day>()
@@ -202,7 +198,7 @@ class HistoryViewModelTest {
     @Test
     fun `day item with no data has 0 steps and hasData false`() = runTest {
         stubRecap(emptyRecap())
-        val viewModel = HistoryViewModel(getMonthlyRecap, stepRepository, userSettingsRepository, crashReporter)
+        val viewModel = createViewModel()
 
         val firstDay = viewModel.state.value.items
             .filterIsInstance<CalendarItem.Day>()
@@ -222,19 +218,20 @@ class HistoryViewModelTest {
             ),
         )
         stubRecap(recap)
-        val viewModel = HistoryViewModel(getMonthlyRecap, stepRepository, userSettingsRepository, crashReporter)
+        val viewModel = createViewModel()
 
         viewModel.onDaySelected(firstDayEpoch)
 
         val summary = viewModel.state.value.selectedDaySummary
-        assertEquals("10,000", summary?.stepsText)
-        assertEquals("400 kcal", summary?.caloriesText)
-        assertEquals("7.5 km", summary?.distanceText)
-        assertEquals("목표 달성", summary?.targetStatusText)
-        assertEquals("전날 기록 없음", summary?.comparisonText)
+        assertEquals(10_000, summary?.steps)
+        assertEquals(400, summary?.calories)
+        assertEquals(7.5f, summary?.distanceKm)
+        assertEquals(0, summary?.remainingSteps)
+        assertEquals(null, summary?.comparisonDiff)
         assertEquals(true, summary?.hasData)
-        assertEquals("목표를 달성한 날이에요", summary?.insightText)
-        assertEquals("이번 달 1위 / 1일", summary?.monthRankText)
+        assertEquals(true, summary?.isAchieved)
+        assertEquals(1, summary?.monthRank)
+        assertEquals(1, summary?.activeDaysInMonth)
     }
 
     @Test
@@ -242,7 +239,7 @@ class HistoryViewModelTest {
         val today = YearMonth.now()
         val firstDayEpoch = today.atDay(1).toEpochDay()
         stubRecap(emptyRecap(totalSteps = 1))
-        val viewModel = HistoryViewModel(getMonthlyRecap, stepRepository, userSettingsRepository, crashReporter)
+        val viewModel = createViewModel()
 
         viewModel.onDaySelected(firstDayEpoch)
 
@@ -262,11 +259,11 @@ class HistoryViewModelTest {
             ),
         )
         stubRecap(recap)
-        val viewModel = HistoryViewModel(getMonthlyRecap, stepRepository, userSettingsRepository, crashReporter)
+        val viewModel = createViewModel()
 
         viewModel.onDaySelected(firstDayEpoch)
 
-        assertEquals("목표까지 5,500보", viewModel.state.value.selectedDaySummary?.targetStatusText)
+        assertEquals(5_500, viewModel.state.value.selectedDaySummary?.remainingSteps)
     }
 
     @Test
@@ -284,7 +281,7 @@ class HistoryViewModelTest {
             ),
         )
 
-        val viewModel = HistoryViewModel(getMonthlyRecap, stepRepository, userSettingsRepository, crashReporter)
+        val viewModel = createViewModel()
         viewModel.onDaySelected(firstDayEpoch)
 
         updates.emit(
@@ -302,7 +299,7 @@ class HistoryViewModelTest {
 
         assertTrue(selectedDay.isSelected)
         assertEquals(firstDayEpoch, viewModel.state.value.selectedDateEpochDay)
-        assertEquals("9,000", viewModel.state.value.selectedDaySummary?.stepsText)
+        assertEquals(9_000, viewModel.state.value.selectedDaySummary?.steps)
     }
 
     @Test
@@ -318,16 +315,14 @@ class HistoryViewModelTest {
             ),
         )
         stubRecap(recap)
-        val viewModel = HistoryViewModel(getMonthlyRecap, stepRepository, userSettingsRepository, crashReporter)
+        val viewModel = createViewModel()
 
         viewModel.onDaySelected(secondDayEpoch)
 
-        assertEquals("전날보다 +3,200보", viewModel.state.value.selectedDaySummary?.comparisonText)
-        assertEquals(
-            "전날보다 3,200보 더 걸었어요",
-            viewModel.state.value.selectedDaySummary?.insightText,
-        )
-        assertEquals("이번 달 1위 / 2일", viewModel.state.value.selectedDaySummary?.monthRankText)
+        assertEquals(3_200, viewModel.state.value.selectedDaySummary?.comparisonDiff)
+        assertEquals(1, viewModel.state.value.selectedDaySummary?.comparisonSign)
+        assertEquals(1, viewModel.state.value.selectedDaySummary?.monthRank)
+        assertEquals(2, viewModel.state.value.selectedDaySummary?.activeDaysInMonth)
     }
 
     @Test
@@ -347,13 +342,23 @@ class HistoryViewModelTest {
                 ),
             ),
         )
-        val viewModel = HistoryViewModel(getMonthlyRecap, stepRepository, userSettingsRepository, crashReporter)
+        val viewModel = createViewModel()
 
         viewModel.onDaySelected(firstDayEpoch)
 
         val segments = viewModel.state.value.selectedDaySummary?.timelineSegments.orEmpty()
-        assertEquals(listOf("오전", "오후", "저녁"), segments.map { it.label })
-        assertEquals(listOf("1,200보", "2,000보", "800보"), segments.map { it.stepsText })
+        assertEquals(
+            listOf(
+                TimelineSegmentType.Morning,
+                TimelineSegmentType.Afternoon,
+                TimelineSegmentType.Evening,
+            ),
+            segments.map { it.type },
+        )
+        assertEquals(
+            listOf(1_200, 2_000, 800),
+            segments.map { it.steps },
+        )
         assertEquals(1f, segments[1].fraction)
     }
 
@@ -362,34 +367,32 @@ class HistoryViewModelTest {
         val today = YearMonth.now()
         val secondDayEpoch = today.atDay(2).toEpochDay()
         stubRecap(emptyRecap(totalSteps = 1))
-        val viewModel = HistoryViewModel(getMonthlyRecap, stepRepository, userSettingsRepository, crashReporter)
+        val viewModel = createViewModel()
 
         viewModel.onDaySelected(secondDayEpoch)
 
         val summary = viewModel.state.value.selectedDaySummary
-        assertEquals("이날은 걸음 기록이 없어요", summary?.targetStatusText)
-        assertEquals("기록이 없어 전날 비교가 없어요", summary?.comparisonText)
+        assertEquals(false, summary?.isAchieved)
+        assertEquals(null, summary?.comparisonDiff)
         assertEquals(false, summary?.hasData)
     }
 
-    // ─── 월 이동 ───────────────────────────────────────────────────────────
+    // 월 이동
 
     @Test
-    fun `onPreviousMonth shows previous month label`() = runTest {
+    fun `onPreviousMonth exposes previous year month`() = runTest {
         stubRecap(emptyRecap())
-        val viewModel = HistoryViewModel(getMonthlyRecap, stepRepository, userSettingsRepository, crashReporter)
+        val viewModel = createViewModel()
 
         viewModel.onPreviousMonth()
 
-        val prevMonth = YearMonth.now().minusMonths(1)
-        assertTrue(viewModel.state.value.monthLabel.contains("${prevMonth.year}년"))
-        assertTrue(viewModel.state.value.monthLabel.contains("${prevMonth.monthValue}월"))
+        assertEquals(YearMonth.now().minusMonths(1), viewModel.state.value.yearMonth)
     }
 
     @Test
     fun `onPreviousMonth enables canNavigateForward`() = runTest {
         stubRecap(emptyRecap())
-        val viewModel = HistoryViewModel(getMonthlyRecap, stepRepository, userSettingsRepository, crashReporter)
+        val viewModel = createViewModel()
 
         viewModel.onPreviousMonth()
 
@@ -399,31 +402,38 @@ class HistoryViewModelTest {
     @Test
     fun `onNextMonth is no-op when canNavigateForward is false`() = runTest {
         stubRecap(emptyRecap())
-        val viewModel = HistoryViewModel(getMonthlyRecap, stepRepository, userSettingsRepository, crashReporter)
-        val labelBefore = viewModel.state.value.monthLabel
+        val viewModel = createViewModel()
+        val monthBefore = viewModel.state.value.yearMonth
 
         viewModel.onNextMonth()
 
-        assertEquals(labelBefore, viewModel.state.value.monthLabel)
+        assertEquals(monthBefore, viewModel.state.value.yearMonth)
     }
 
     @Test
     fun `onNextMonth after onPreviousMonth returns to current month`() = runTest {
         stubRecap(emptyRecap())
-        val viewModel = HistoryViewModel(getMonthlyRecap, stepRepository, userSettingsRepository, crashReporter)
-        val originalLabel = viewModel.state.value.monthLabel
+        val viewModel = createViewModel()
+        val originalMonth = viewModel.state.value.yearMonth
 
         viewModel.onPreviousMonth()
         viewModel.onNextMonth()
 
-        assertEquals(originalLabel, viewModel.state.value.monthLabel)
+        assertEquals(originalMonth, viewModel.state.value.yearMonth)
     }
 
-    // ─── Helpers ───────────────────────────────────────────────────────────
+    // helper
 
     private fun stubRecap(recap: MonthlyRecap) {
         every { getMonthlyRecap(any(), any()) } returns flowOf(recap)
     }
+
+    private fun createViewModel(): HistoryViewModel = HistoryViewModel(
+        getMonthlyRecap = getMonthlyRecap,
+        stepRepository = stepRepository,
+        userSettingsRepository = userSettingsRepository,
+        crashReporter = crashReporter,
+    )
 
     private fun emptyRecap(
         totalSteps: Int = 0,

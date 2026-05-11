@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="anonymous">Anonymous</string>
+    <string name="settings_nickname_display">%1$s</string>
+    <string name="settings_steps_format">%1$s steps</string>
+
+    <string name="settings_title">Settings</string>
+    <string name="settings_edit_nickname">Edit nickname</string>
+    <string name="settings_section_step_goal">Step goal</string>
+    <string name="settings_daily_step_goal_title">Daily step goal</string>
+    <string name="settings_section_recovery_mission">Recovery mission</string>
+    <string name="settings_recovery_mission_title">Recovery mission steps</string>
+    <string name="settings_section_notifications">Notifications</string>
+    <string name="settings_notifications_title">Walking forecast alerts</string>
+    <string name="settings_notifications_description">Sends a notification during your most active hours</string>
+    <string name="settings_section_theme">Theme</string>
+    <string name="settings_theme_title">App theme</string>
+    <string name="settings_theme_description">Choose your preferred color scheme</string>
+    <string name="settings_theme_system">System default</string>
+    <string name="settings_theme_light">Light</string>
+    <string name="settings_theme_dark">Dark</string>
+    <string name="settings_section_app_info">App info</string>
+    <string name="settings_oss_licenses">Open-source licenses</string>
+
+    <string name="nickname_edit_title">Edit nickname</string>
+    <string name="nickname_edit_description">Letters only (A–Z and Korean)</string>
+    <string name="nickname_edit_placeholder">Enter your nickname</string>
+    <string name="nickname_edit_save">Save</string>
+</resources>

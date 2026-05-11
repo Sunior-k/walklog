@@ -141,8 +141,6 @@ class OfflineFirstStepRepository @Inject constructor(
         steps
     }
 
-    // ─── Private ──────────────────────────────────────────────────────────────
-
     private suspend fun seedFromHealthConnect(dateEpochDay: Long) {
         runCatching {
             val steps = healthConnectDataSource.readDailySteps(LocalDate.ofEpochDay(dateEpochDay))

@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="anonymous">익명</string>
+    <string name="settings_nickname_display">%1$s님</string>
+    <string name="settings_steps_format">%1$s 보</string>
+
+    <string name="settings_title">설정</string>
+    <string name="settings_edit_nickname">닉네임 수정</string>
+    <string name="settings_section_step_goal">걸음 목표</string>
+    <string name="settings_daily_step_goal_title">하루 목표 걸음 수</string>
+    <string name="settings_section_recovery_mission">회복 미션</string>
+    <string name="settings_recovery_mission_title">회복 미션 걸음 수</string>
+    <string name="settings_section_notifications">알림</string>
+    <string name="settings_notifications_title">걷기 예보 알림</string>
+    <string name="settings_notifications_description">행동 확률이 높은 시간대에 알림을 보내요</string>
+    <string name="settings_section_theme">테마</string>
+    <string name="settings_theme_title">화면 테마</string>
+    <string name="settings_theme_description">앱 화면 색상을 선택해요</string>
+    <string name="settings_theme_system">시스템 설정</string>
+    <string name="settings_theme_light">라이트</string>
+    <string name="settings_theme_dark">다크</string>
+    <string name="settings_section_app_info">앱 정보</string>
+    <string name="settings_oss_licenses">오픈소스 라이선스</string>
+
+    <string name="nickname_edit_title">닉네임 수정</string>
+    <string name="nickname_edit_description">영어, 한국어만 입력할 수 있어요</string>
+    <string name="nickname_edit_placeholder">닉네임을 입력해주세요</string>
+    <string name="nickname_edit_save">저장하기</string>
+</resources>

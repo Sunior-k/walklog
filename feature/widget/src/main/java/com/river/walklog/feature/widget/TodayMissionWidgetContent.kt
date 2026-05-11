@@ -32,6 +32,7 @@ import androidx.glance.text.FontWeight
 import androidx.glance.text.Text
 import androidx.glance.text.TextStyle
 import com.river.walklog.core.designsystem.foundation.WalkLogColor
+import java.text.NumberFormat
 
 private val WidgetPrimary = ColorProvider(
     day = WalkLogColor.Primary,
@@ -51,6 +52,7 @@ internal fun TodayMissionWidgetContent(
 ) {
     val context = LocalContext.current
     val launchIntent = context.packageManager.getLaunchIntentForPackage(context.packageName)
+    val numberFormat = NumberFormat.getNumberInstance(context.resources.configuration.locales[0])
 
     val progress = if (targetSteps > 0) {
         (currentSteps.toFloat() / targetSteps).coerceIn(0f, 1f)
@@ -73,13 +75,12 @@ internal fun TodayMissionWidgetContent(
         modifier = rootModifier,
         verticalAlignment = Alignment.Vertical.CenterVertically,
     ) {
-        // ── 헤더 ──────────────────────────────────────────────────────────────
         Row(
             modifier = GlanceModifier.fillMaxWidth(),
             verticalAlignment = Alignment.Vertical.CenterVertically,
         ) {
             Text(
-                text = "워크로그",
+                text = context.getString(R.string.widget_app_name),
                 style = TextStyle(
                     color = WidgetPrimary,
                     fontSize = 13.sp,
@@ -96,7 +97,7 @@ internal fun TodayMissionWidgetContent(
             ) {
                 Image(
                     provider = ImageProvider(R.drawable.ic_widget_refresh),
-                    contentDescription = "새로고침",
+                    contentDescription = context.getString(R.string.widget_refresh_cd),
                     colorFilter = ColorFilter.tint(GlanceTheme.colors.onSurfaceVariant),
                     modifier = GlanceModifier.size(20.dp),
                 )
@@ -106,18 +107,16 @@ internal fun TodayMissionWidgetContent(
         Spacer(modifier = GlanceModifier.height(10.dp))
 
         if (isLoading) {
-            // ── 로딩 상태 ──────────────────────────────────────────────────────
             Text(
-                text = "걸음 수 불러오는 중...",
+                text = context.getString(R.string.widget_loading),
                 style = TextStyle(
                     color = GlanceTheme.colors.onSurfaceVariant,
                     fontSize = 13.sp,
                 ),
             )
         } else {
-            // ── 걸음 수 ──────────────────────────────────────────────────────
             Text(
-                text = "%,d보".format(currentSteps),
+                text = context.getString(R.string.widget_steps_current, numberFormat.format(currentSteps)),
                 style = TextStyle(
                     color = if (isAchieved) WidgetPrimary else GlanceTheme.colors.onSurface,
                     fontSize = 26.sp,
@@ -128,7 +127,7 @@ internal fun TodayMissionWidgetContent(
             Spacer(modifier = GlanceModifier.height(2.dp))
 
             Text(
-                text = "목표 %,d보".format(targetSteps),
+                text = context.getString(R.string.widget_goal_steps, numberFormat.format(targetSteps)),
                 style = TextStyle(
                     color = GlanceTheme.colors.onSurfaceVariant,
                     fontSize = 11.sp,
@@ -137,7 +136,6 @@ internal fun TodayMissionWidgetContent(
 
             Spacer(modifier = GlanceModifier.height(10.dp))
 
-            // ── 프로그레스 바 ─────────────────────────────────────────────────
             val barWidth = LocalSize.current.width - 32.dp
 
             Box(
@@ -162,16 +160,15 @@ internal fun TodayMissionWidgetContent(
 
             Spacer(modifier = GlanceModifier.height(8.dp))
 
-            // ── 상태 / 보상 ──────────────────────────────────────────────────
             Row(
                 modifier = GlanceModifier.fillMaxWidth(),
                 verticalAlignment = Alignment.Vertical.CenterVertically,
             ) {
                 Text(
                     text = if (isAchieved) {
-                        "오늘 목표 달성!"
+                        context.getString(R.string.widget_goal_achieved)
                     } else {
-                        "%,d보 남았어요".format(remainingSteps)
+                        context.getString(R.string.widget_steps_remaining, numberFormat.format(remainingSteps))
                     },
                     style = TextStyle(
                         color = if (isAchieved) WidgetPrimary else GlanceTheme.colors.onSurfaceVariant,
@@ -180,7 +177,7 @@ internal fun TodayMissionWidgetContent(
                 )
                 Spacer(modifier = GlanceModifier.defaultWeight())
                 Text(
-                    text = "+20 캐시",
+                    text = context.getString(R.string.widget_reward),
                     style = TextStyle(
                         color = WidgetPrimary,
                         fontSize = 12.sp,

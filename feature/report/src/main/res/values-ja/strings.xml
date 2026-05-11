@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="back_button_cd">戻る</string>
+
+    <!-- Archive screen -->
+    <string name="report_title">週間レポート</string>
+    <string name="report_archive_subtitle">直近12週間の記録</string>
+    <string name="report_past_title">過去のレポート</string>
+    <string name="report_in_progress">進行中の週</string>
+    <string name="report_completed">完了したレポート</string>
+    <string name="report_locked_message">今週のレポートはまだ準備中です</string>
+    <string name="report_total_steps_label">総歩数</string>
+    <string name="report_achievement_rate_label">達成率</string>
+
+    <!-- Detail screen -->
+    <string name="report_share_preview_title">共有プレビュー</string>
+    <string name="report_share_preview_expanded">共有されるカードが下に表示されます</string>
+    <string name="report_share_preview_collapsed">共有する前にカードの形を確認してください</string>
+    <string name="report_share_expand">開く</string>
+    <string name="report_share_collapse">閉じる</string>
+    <string name="report_weekly_total_steps_label">今週の総歩数</string>
+    <string name="report_goal_label">目標達成</string>
+    <string name="report_days_suffix"> 日</string>
+    <string name="report_highlight_title">週間ハイライト</string>
+    <string name="report_best_day_label">最も多く歩いた曜日</string>
+    <string name="report_best_time_label">最も活発な時間帯</string>
+    <string name="report_best_streak_label">最高ストリーク</string>
+    <string name="report_sharing_preparing">共有画像を作成しています</string>
+    <string name="report_empty_title">今週の歩数記録がありません</string>
+    <string name="report_empty_desc">歩き始めると週間レポートが作成されます</string>
+    <string name="report_share_button_sharing">準備中…</string>
+    <string name="report_share_button">レポートを共有する</string>
+    <string name="report_share_failed">レポートの共有に失敗しました</string>
+
+    <!-- Day labels for chart -->
+    <string name="report_day_mon">月</string>
+    <string name="report_day_tue">火</string>
+    <string name="report_day_wed">水</string>
+    <string name="report_day_thu">木</string>
+    <string name="report_day_fri">金</string>
+    <string name="report_day_sat">土</string>
+    <string name="report_day_sun">日</string>
+
+    <!-- Share card -->
+    <string name="report_share_card_total_steps">今週の総歩数</string>
+    <string name="report_share_card_achievement_rate">達成率 %1$s</string>
+    <string name="report_share_card_walking_note">コツコツ歩いています</string>
+    <string name="report_share_card_best_day">最も多く歩いた曜日</string>
+    <string name="report_share_card_best_time">最も活発な時間帯</string>
+    <string name="report_share_card_best_streak">最高ストリーク</string>
+    <string name="report_share_footer">WalkLogと一緒に作った私の週間ウォーキングレポート</string>
+
+    <!-- Share manager -->
+    <string name="report_share_chooser_title">週間レポートを共有</string>
+    <string name="report_share_text">今週の私のウォーキングレポートを見てください！</string>
+
+    <!-- Mapper / ViewModel strings -->
+    <string name="steps_with_suffix">%1$s歩</string>
+    <string name="report_week_range">%1$s第%2$d週</string>
+    <string name="report_week_range_full">%1$s第%2$d週 · %3$s〜%4$s</string>
+    <string name="report_date_range">%1$s〜%2$s</string>
+    <string name="report_unlock_from">%1$s 00:00から見られます</string>
+    <string name="report_full_date_format_pattern">M月d日</string>
+    <string name="report_best_time_am">午前%1$d時</string>
+    <string name="report_best_time_pm">午後%1$d時</string>
+    <string name="report_summary_all_achieved">今週の目標をすべて達成しました！</string>
+    <string name="report_summary_good_progress">素晴らしい！目標に近づいています</string>
+    <string name="report_summary_keep_going">コツコツ歩いています、頑張りましょう！</string>
+    <string name="report_streak_days">%1$d日</string>
+
+    <!-- Error state -->
+    <string name="report_error_title">データを読み込めませんでした</string>
+    <string name="report_error_desc">しばらくしてからもう一度お試しください</string>
+</resources>

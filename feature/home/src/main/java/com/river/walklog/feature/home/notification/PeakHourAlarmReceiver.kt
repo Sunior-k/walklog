@@ -6,27 +6,32 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import androidx.core.app.NotificationCompat
+import com.river.walklog.feature.home.R
 
 class PeakHourAlarmReceiver : BroadcastReceiver() {
 
     override fun onReceive(context: Context, intent: Intent) {
         val manager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-        ensureChannel(manager)
+        ensureChannel(manager, context)
         val notification = NotificationCompat.Builder(context, CHANNEL_ID)
             .setSmallIcon(com.river.walklog.core.designsystem.R.drawable.ic_footprint)
-            .setContentTitle("걷기 좋은 시간이에요!")
-            .setContentText("평소 이 시간대에 가장 많이 걸으셨어요. 지금 걸어보세요!")
+            .setContentTitle(context.getString(R.string.notification_walking_title))
+            .setContentText(context.getString(R.string.notification_walking_text))
             .setPriority(NotificationCompat.PRIORITY_DEFAULT)
             .setAutoCancel(true)
             .build()
         manager.notify(NOTIFICATION_ID, notification)
     }
 
-    private fun ensureChannel(manager: NotificationManager) {
+    private fun ensureChannel(manager: NotificationManager, context: Context) {
         if (manager.getNotificationChannel(CHANNEL_ID) != null) return
         manager.createNotificationChannel(
-            NotificationChannel(CHANNEL_ID, "걷기 알림", NotificationManager.IMPORTANCE_DEFAULT).apply {
-                description = "평소 걷기 패턴 기반 걷기 권유 알림"
+            NotificationChannel(
+                CHANNEL_ID,
+                context.getString(R.string.notification_channel_name),
+                NotificationManager.IMPORTANCE_DEFAULT,
+            ).apply {
+                description = context.getString(R.string.notification_channel_desc)
             },
         )
     }

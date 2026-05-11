@@ -21,10 +21,13 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.river.walklog.core.designsystem.foundation.WalkLogColor
 import com.river.walklog.core.designsystem.foundation.WalkLogTheme
+import com.river.walklog.core.ui.withComma
+import com.river.walklog.feature.home.R
 import kotlin.math.min
 
 @Composable
@@ -91,7 +94,7 @@ fun WalkProgressRing(
 
         if (showStepText) {
             Text(
-                text = "${currentSteps.coerceAtLeast(0)}보",
+                text = stringResource(R.string.steps_format, currentSteps.coerceAtLeast(0).withComma()),
                 style = WalkLogTheme.typography.typography3B,
                 color = WalkLogTheme.colors.onSurface,
             )

@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="recap_error">Couldn\'t load your recap</string>
+    <string name="action_close">Close</string>
+    <string name="action_play">Play</string>
+    <string name="action_pause">Pause</string>
+    <string name="icon_desc_step">Steps icon</string>
+    <string name="icon_desc_calories">Calories icon</string>
+
+    <!-- Slides -->
+    <string name="recap_title">%1$s Recap</string>
+    <string name="recap_opening_body">Let\'s look back\nat %1$s</string>
+    <string name="recap_opening_subtitle">Your %1$s story, told in steps</string>
+    <string name="recap_total_steps_label">Total steps in %1$s</string>
+    <string name="recap_total_distance">That\'s about %1$d km</string>
+    <string name="recap_avg_steps_label">Daily average steps</string>
+    <string name="recap_avg_steps_desc">Calculated from %1$d days of walking</string>
+    <string name="recap_calories_label">Calories burned in %1$s</string>
+    <string name="recap_calories_burned">You burned %1$s</string>
+    <string name="recap_achievement_label">Goal days</string>
+    <string name="recap_achievement_desc">%2$d of %1$d days (%3$d%%)</string>
+    <string name="recap_best_day_label">Best day</string>
+    <string name="recap_best_day_no_record">No records yet</string>
+    <string name="recap_step_count_label">Steps</string>
+    <string name="recap_calories_unit_label">Calories</string>
+    <string name="recap_distance_unit_label">Distance</string>
+    <string name="recap_streak_label">Longest streak</string>
+    <string name="recap_persona_label">You are</string>
+    <string name="recap_persona_closing">See you next month! 🚶</string>
+
+    <!-- Streak descriptions -->
+    <string name="recap_streak_14_plus">2+ weeks without a break! Incredible 🎉</string>
+    <string name="recap_streak_7_plus">7 days in a row! Awesome!</string>
+    <string name="recap_streak_3_plus">3 or more days in a row</string>
+    <string name="recap_streak_positive">Keep this momentum going</string>
+    <string name="recap_streak_zero">Go for a streak next month!</string>
+
+    <!-- Calories comparison -->
+    <string name="calories_comparison_burger">%1$d burgers\' worth</string>
+    <string name="calories_comparison_icecream">%1$d ice creams\' worth</string>
+
+    <!-- Persona titles -->
+    <string name="persona_perfect_walker">Perfect walker</string>
+    <string name="persona_steady_achiever">Steady achiever</string>
+    <string name="persona_diligent_challenger">Diligent challenger</string>
+    <string name="persona_promising_beginner">Promising beginner</string>
+    <string name="persona_newcomer">Newcomer</string>
+
+    <!-- Persona descriptions -->
+    <string name="persona_desc_perfect_walker">You hit your goal every single day.\nThat\'s amazing!</string>
+    <string name="persona_desc_steady_achiever">You kept moving toward your goal.\nKeep it up!</string>
+    <string name="persona_desc_diligent_challenger">You built up your steps consistently.\nCan you push a little further?</string>
+    <string name="persona_desc_promising_beginner">Starting is half the battle! You\'ll go further next month.</string>
+    <string name="persona_desc_newcomer">You took your first steps.\nLet\'s walk more together!</string>
+
+    <!-- Formats -->
+    <string name="steps_count_format">%1$s steps</string>
+    <string name="recap_best_day_date_format_pattern">MMMM d, EEEE</string>
+    <string name="day_suffix"> days</string>
+</resources>

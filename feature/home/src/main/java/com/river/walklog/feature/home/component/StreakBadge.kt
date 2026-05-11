@@ -8,9 +8,11 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.river.walklog.core.designsystem.foundation.WalkLogTheme
+import com.river.walklog.feature.home.R
 
 @Composable
 fun StreakBadge(
@@ -28,9 +30,9 @@ fun StreakBadge(
         WalkLogTheme.colors.onSurfaceVariant
     }
     val text = when {
-        streakDays == null -> "스트릭 확인 중"
-        streakDays > 0 -> "🔥 ${streakDays}일 연속"
-        else -> "스트릭 없음"
+        streakDays == null -> stringResource(R.string.streak_loading)
+        streakDays > 0 -> stringResource(R.string.streak_consecutive, streakDays)
+        else -> stringResource(R.string.streak_none)
     }
 
     Row(

@@ -1,6 +1,8 @@
 package com.river.walklog.feature.report
 
 import androidx.activity.ComponentActivity
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.runtime.remember
 import androidx.compose.ui.graphics.rememberGraphicsLayer
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsEnabled
@@ -11,11 +13,12 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.river.walklog.core.designsystem.foundation.WalkLogTheme
-import com.river.walklog.feature.report.model.WeeklyReportArchiveItemUiModel
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
+import java.time.LocalDate
+import java.time.format.DateTimeFormatter
 
 @RunWith(AndroidJUnit4::class)
 class WeeklyReportScreenTest {
@@ -23,14 +26,16 @@ class WeeklyReportScreenTest {
     @get:Rule
     val composeTestRule = createAndroidComposeRule<ComponentActivity>()
 
-    // ─── TopBar ────────────────────────────────────────────────────────────
+    private val activity get() = composeTestRule.activity
+
+    // topbar
 
     @Test
     fun topBar_showsWeeklyReportTitle() {
         setContent(state = archiveState())
 
         composeTestRule
-            .onNodeWithText("주간 리포트")
+            .onNodeWithText(activity.getString(R.string.report_title))
             .assertIsDisplayed()
     }
 
@@ -39,19 +44,23 @@ class WeeklyReportScreenTest {
         var backClicked = false
         setArchiveContent(state = WeeklyReportArchiveState(), onClickBack = { backClicked = true })
 
-        composeTestRule.onNodeWithContentDescription("뒤로가기").performClick()
+        composeTestRule
+            .onNodeWithContentDescription(activity.getString(R.string.back_button_cd))
+            .performClick()
 
         assertTrue(backClicked)
     }
 
-    // ─── Header ────────────────────────────────────────────────────────────
+    // header
 
     @Test
     fun weekRangeText_isDisplayed() {
-        setDetailContent(state = detailState(dateRangeSubtitle = "4월 7일 — 4월 13일"))
+        val weekStart = LocalDate.of(2026, 4, 7)
+        val weekEnd = weekStart.plusDays(6)
+        setDetailContent(state = detailState(weekStart = weekStart))
 
         composeTestRule
-            .onNodeWithText("4월 7일 — 4월 13일")
+            .onNodeWithText("${weekStart.format(fullDateFormatter())} — ${weekEnd.format(fullDateFormatter())}")
             .assertIsDisplayed()
     }
 
@@ -60,33 +69,39 @@ class WeeklyReportScreenTest {
         setContent(state = archiveState())
 
         composeTestRule
-            .onNodeWithText("최근 12주 기록을 모아봤어요")
+            .onNodeWithText(activity.getString(R.string.report_archive_subtitle))
             .assertIsDisplayed()
     }
 
     @Test
     fun lockedReport_showsUnlockMessage() {
+        val unlockDate = LocalDate.of(2026, 4, 20)
         setContent(
             state = archiveState(
                 items = listOf(
-                    archiveItem(isLocked = true, unlockMessage = "4월 20일 00:00부터 볼 수 있어요"),
+                    archiveItem(isLocked = true, unlockDate = unlockDate),
                 ),
             ),
         )
 
         composeTestRule
-            .onNodeWithText("4월 20일 00:00부터 볼 수 있어요")
+            .onNodeWithText(
+                activity.getString(
+                    R.string.report_unlock_from,
+                    unlockDate.format(unlockDateFormatter()),
+                ),
+            )
             .assertIsDisplayed()
     }
 
-    // ─── Share button ──────────────────────────────────────────────────────
+    // share button
 
     @Test
     fun shareButton_showsShareLabel_whenNotSharing() {
         setDetailContent(state = detailState(isSharing = false))
 
         composeTestRule
-            .onNodeWithText("리포트 공유하기")
+            .onNodeWithText(activity.getString(R.string.report_share_button))
             .assertIsDisplayed()
     }
 
@@ -95,7 +110,7 @@ class WeeklyReportScreenTest {
         setDetailContent(state = detailState(isSharing = false))
 
         composeTestRule
-            .onNodeWithText("리포트 공유하기")
+            .onNodeWithText(activity.getString(R.string.report_share_button))
             .assertIsEnabled()
     }
 
@@ -104,7 +119,7 @@ class WeeklyReportScreenTest {
         setDetailContent(state = detailState(isSharing = true))
 
         composeTestRule
-            .onNodeWithText("공유 준비 중...")
+            .onNodeWithText(activity.getString(R.string.report_share_button_sharing))
             .assertIsDisplayed()
     }
 
@@ -113,7 +128,7 @@ class WeeklyReportScreenTest {
         setDetailContent(state = detailState(isSharing = true))
 
         composeTestRule
-            .onNodeWithText("공유 준비 중...")
+            .onNodeWithText(activity.getString(R.string.report_share_button_sharing))
             .assertIsNotEnabled()
     }
 
@@ -125,19 +140,21 @@ class WeeklyReportScreenTest {
             onClickShare = { shareClicked = true },
         )
 
-        composeTestRule.onNodeWithText("리포트 공유하기").performClick()
+        composeTestRule
+            .onNodeWithText(activity.getString(R.string.report_share_button))
+            .performClick()
 
         assertTrue(shareClicked)
     }
 
-    // ─── Sharing overlay ───────────────────────────────────────────────────
+    // overlay
 
     @Test
     fun sharingOverlay_isShown_whenIsSharing() {
         setDetailContent(state = detailState(isSharing = true))
 
         composeTestRule
-            .onNodeWithText("공유 이미지를 만드는 중이에요")
+            .onNodeWithText(activity.getString(R.string.report_sharing_preparing))
             .assertIsDisplayed()
     }
 
@@ -146,11 +163,11 @@ class WeeklyReportScreenTest {
         setDetailContent(state = detailState(isSharing = false))
 
         composeTestRule
-            .onNodeWithText("공유 이미지를 만드는 중이에요")
+            .onNodeWithText(activity.getString(R.string.report_sharing_preparing))
             .assertDoesNotExist()
     }
 
-    // ─── Helper ────────────────────────────────────────────────────────────
+    // helpers
 
     private fun setContent(
         state: WeeklyReportArchiveState,
@@ -183,6 +200,7 @@ class WeeklyReportScreenTest {
             WalkLogTheme {
                 WeeklyReportDetailScreen(
                     state = state,
+                    snackbarHostState = remember { SnackbarHostState() },
                     graphicsLayer = rememberGraphicsLayer(),
                     onClickBack = onClickBack,
                     onClickShare = onClickShare,
@@ -192,29 +210,28 @@ class WeeklyReportScreenTest {
     }
 
     private fun archiveState(
-        items: List<WeeklyReportArchiveItemUiModel> = listOf(archiveItem()),
+        items: List<WeeklyReportArchiveItemUiState> = listOf(archiveItem()),
     ) = WeeklyReportArchiveState(
         archiveItems = items,
         isLoading = false,
     )
 
     private fun detailState(
-        dateRangeSubtitle: String = "4월 7일 — 4월 13일",
+        weekStart: LocalDate = LocalDate.of(2026, 4, 7),
         isSharing: Boolean = false,
     ) = WeeklyReportDetailState(
-        dateRangeSubtitle = dateRangeSubtitle,
-        weekRangeText = "4월 2주차 · 4/7~4/13",
-        totalStepsText = "42,000보",
-        achievementRateText = "71%",
+        weekStartEpochDay = weekStart.toEpochDay(),
+        totalSteps = 42_000,
+        achievementPct = 71,
         achievedDays = 5,
         totalDays = 7,
         achievementRate = 5f / 7f,
-        bestDayText = "수요일",
-        bestTimeText = "오후 3시",
-        bestStreakText = "3일",
-        summaryMessage = "훌륭해요! 목표에 가까워지고 있어요",
+        bestDayEpochDay = weekStart.plusDays(2).toEpochDay(),
+        bestHour = 15,
+        longestAchievedStreak = 3,
+        summaryMessageType = WeeklyReportSummaryMessageType.GoodProgress,
         dailyCounts = List(7) { index ->
-            com.river.walklog.core.model.DailyStepCount(19_000L + index, 6_000)
+            com.river.walklog.core.model.DailyStepCount(weekStart.toEpochDay() + index, 6_000)
         },
         isLoading = false,
         isSharing = isSharing,
@@ -222,15 +239,23 @@ class WeeklyReportScreenTest {
 
     private fun archiveItem(
         isLocked: Boolean = false,
-        unlockMessage: String = "",
-    ) = WeeklyReportArchiveItemUiModel(
+        unlockDate: LocalDate = LocalDate.ofEpochDay(19_007L),
+    ) = WeeklyReportArchiveItemUiState(
         weekStartEpochDay = 19_000L,
-        weekRangeText = "4월 2주차",
-        dateRangeText = "4/7~4/13",
-        totalStepsText = "42,000보",
-        achievementRateText = "71%",
+        unlockDate = unlockDate,
+        totalSteps = 42_000,
+        achievementPct = 71,
         achievementRate = 0.71f,
         isLocked = isLocked,
-        unlockMessage = unlockMessage,
     )
+
+    private fun unlockDateFormatter(): DateTimeFormatter {
+        val locale = activity.resources.configuration.locales[0]
+        return DateTimeFormatter.ofPattern(activity.getString(R.string.report_full_date_format_pattern), locale)
+    }
+
+    private fun fullDateFormatter(): DateTimeFormatter {
+        val locale = activity.resources.configuration.locales[0]
+        return DateTimeFormatter.ofPattern(activity.getString(R.string.report_full_date_format_pattern), locale)
+    }
 }

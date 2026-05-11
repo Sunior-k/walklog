@@ -16,6 +16,7 @@ android {
 dependencies {
     implementation(projects.core.domain)
     implementation(projects.core.analytics)
+    implementation(projects.core.ui)
     implementation(libs.androidx.constraintlayout)
     implementation(libs.androidx.recyclerview)
     implementation(libs.androidx.fragment.ktx)

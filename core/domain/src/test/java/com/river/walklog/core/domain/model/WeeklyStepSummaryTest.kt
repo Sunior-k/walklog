@@ -8,8 +8,6 @@ import kotlin.test.assertNull
 
 class WeeklyStepSummaryTest {
 
-    // ─── Fixtures ──────────────────────────────────────────────────────────
-
     private fun stepCount(
         dateOffset: Long = 0L,
         steps: Int = 0,
@@ -20,7 +18,7 @@ class WeeklyStepSummaryTest {
         targetSteps = targetSteps,
     )
 
-    // ─── totalSteps ────────────────────────────────────────────────────────
+    // totalSteps
 
     @Test
     fun `totalSteps is sum of all daily steps`() {
@@ -50,7 +48,7 @@ class WeeklyStepSummaryTest {
         assertEquals(0, summary.totalSteps)
     }
 
-    // ─── averageSteps ──────────────────────────────────────────────────────
+    // averageSteps
 
     @Test
     fun `averageSteps divides totalSteps by number of days`() {
@@ -84,7 +82,7 @@ class WeeklyStepSummaryTest {
         assertEquals(1_001, summary.averageSteps)
     }
 
-    // ─── achievementRate ───────────────────────────────────────────────────
+    // achievementRate
 
     @Test
     fun `achievementRate is ratio of achieved days to total days`() {
@@ -118,7 +116,7 @@ class WeeklyStepSummaryTest {
         assertEquals(0f, summary.achievementRate)
     }
 
-    // ─── bestDay ───────────────────────────────────────────────────────────
+    // bestDay
 
     @Test
     fun `bestDay returns day with most steps`() {
@@ -140,7 +138,7 @@ class WeeklyStepSummaryTest {
         assertNull(summary.bestDay)
     }
 
-    // ─── longestAchievedStreak ─────────────────────────────────────────────
+    // longestAchievedStreak
 
     @Test
     fun `longestAchievedStreak is max consecutive achieved days`() {

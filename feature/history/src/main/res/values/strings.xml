@@ -4,4 +4,51 @@
     <string name="no_data_past_sub_message">다음엔 더 많이 걸어봐요</string>
     <string name="no_data_today_message">아직 오늘의 기록이 없어요</string>
     <string name="no_data_today_sub_message">걷기 시작하면 여기에 표시돼요</string>
+
+    <string name="total_steps_format">%1$s 보</string>
+
+    <string name="target_status_no_data">이날은 걸음 기록이 없어요</string>
+    <string name="target_status_achieved">목표 달성</string>
+    <string name="target_status_remaining">목표까지 %1$s보</string>
+
+    <string name="comparison_no_data">기록이 없어 전날 비교가 없어요</string>
+    <string name="comparison_no_prev_data">전날 기록 없음</string>
+    <string name="comparison_positive">전날보다 +%1$s보</string>
+    <string name="comparison_negative">전날보다 %1$s보 적게 걸었어요</string>
+    <string name="comparison_same">전날과 같아요</string>
+
+    <string name="insight_no_data">이날은 분석할 걸음 기록이 없어요</string>
+    <string name="insight_achieved_with_increase">목표를 달성했고 전날보다 %1$s보 더 걸었어요</string>
+    <string name="insight_achieved">목표를 달성한 날이에요</string>
+    <string name="insight_increase">전날보다 %1$s보 더 걸었어요</string>
+    <string name="insight_decrease">전날보다 %1$s보 적게 걸었어요</string>
+    <string name="insight_remaining">목표까지 %1$s보 남았어요</string>
+
+    <string name="month_rank_none">이번 달 순위 없음</string>
+    <string name="month_rank">이번 달 %1$d위 / %2$d일</string>
+
+    <string name="timeline_morning">오전</string>
+    <string name="timeline_afternoon">오후</string>
+    <string name="timeline_evening">저녁</string>
+    <string name="timeline_steps_format">%1$s보</string>
+
+    <string name="chip_achieved">목표 달성 ✓</string>
+    <string name="chip_no_record">기록 없음</string>
+
+    <string name="history_total_steps_label">이달 총 걸음</string>
+    <string name="history_achievement_rate_label">목표 달성률</string>
+    <string name="history_empty_title">이번 달 걸음 기록이 없어요</string>
+    <string name="history_empty_description">걸음 수를 측정하면 여기에 표시돼요</string>
+    <string name="history_steps_unit">보</string>
+    <string name="history_calories_label">칼로리</string>
+    <string name="history_distance_label">거리</string>
+    <string name="history_steps_label_short">걸음</string>
+    <string name="history_goal_label_short">목표</string>
+    <string name="history_timeline_title">선택일 타임라인</string>
+    <string name="history_timeline_subtitle">시간대별 걸음 분포</string>
+    <string name="history_prev_month_cd">이전 달</string>
+    <string name="history_next_month_cd">다음 달</string>
+    <string name="history_month_format_pattern">yyyy년 M월</string>
+    <string name="history_date_format_pattern">M월 d일 (E)</string>
+    <string name="history_select_date_prompt">날짜를 선택해 주세요</string>
 </resources>

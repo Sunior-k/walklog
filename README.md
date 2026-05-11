@@ -2,6 +2,8 @@
 
 > A Health Connect-powered Android walking companion that turns daily steps into missions, reports, recaps, and widgets.
 
+English | [한국어](README.ko.md)
+
 [![Kotlin](https://img.shields.io/badge/Kotlin-2.1.0-7F52FF?logo=kotlin&logoColor=white)](https://kotlinlang.org)
 [![Android Gradle Plugin](https://img.shields.io/badge/AGP-8.13.1-3DDC84?logo=android&logoColor=white)](https://developer.android.com/build)
 [![Compose BOM](https://img.shields.io/badge/Compose%20BOM-2025.06.00-4285F4?logo=jetpackcompose&logoColor=white)](https://developer.android.com/jetpack/compose/bom)
@@ -13,23 +15,23 @@
 WalkLog App
 ==================
 
-WalkLog는 **Google Health Connect**를 통해 오늘의 걸음 수를 읽고, 미션·주간 리포트·월간 리캡·홈, 위젯으로 사용자의 걷기 흐름을 보여주는 서비스 입니다.
+WalkLog reads today's step count through **Google Health Connect** and turns walking activity into missions, weekly reports, monthly recaps, home insights, and app widgets.
 
 ---
 
 # Deep Dive Docs
 
-기술 결정과 동작 원리는 아래 문서에서 다룹니다.
+Deep Dive Docs are currently maintained in **Korean**. English versions will be added later.
 
-| 문서                                                                 | 내용                                                                                    |
-|--------------------------------------------------------------------|---------------------------------------------------------------------------------------|
-| [Baseline Profile](docs/baseline-profile.md)                       | ART JIT vs AOT, 프로파일 생성 원리, 콜드 스타트 개선 효과, 적용 방법                                       |
-| [R8 난독화](docs/r8-obfuscation.md)                                | Shrinking·Obfuscation·Optimization 3단계, APK 크기 감소, ProGuard 규칙                        |
-| [보안 설계](docs/security.md)                                      | Network Security Config, MitM 방어, 백업 데이터 보호, OWASP 매핑                                 |
-| [아키텍처 결정 기록](docs/architecture-decisions.md)                   | Modularization, Architecture, UDF, Convention Plugin, XML+Compose 등 각 결정의 이유와 트레이드오프 |
-| [NDK/JNI 엔진](docs/ndk-jni-engine.md)                            | C++ Walking Insights Engine 설계, JNI 데이터 흐름, CMake 설정, 알고리즘                            |
-| [LiteRT Activity Classifier](docs/litert-activity-classifier.md) | 온디바이스 HAR 모델, 센서 수집 파이프라인, 텐서 레이아웃, 배터리 최적화                                           |
-| [유저 플로우 & 데이터 흐름](docs/user-flow.md)                            | Health Connect 수집부터 각 화면 표시까지 전체 데이터 흐름                                               |
+| Document | Topic |
+|---|---|
+| [Baseline Profile](docs/baseline-profile.md) | ART JIT vs AOT, profile generation, cold-start improvements, and setup |
+| [R8 Obfuscation](docs/r8-obfuscation.md) | Shrinking, obfuscation, optimization, APK size reduction, and ProGuard rules |
+| [Security Design](docs/security.md) | Network Security Config, MitM defense, backup protection, and OWASP mapping |
+| [Architecture Decision Records](docs/architecture-decisions.md) | Reasons and tradeoffs behind modularization, architecture, UDF, convention plugins, XML+Compose, and more |
+| [NDK/JNI Engine](docs/ndk-jni-engine.md) | C++ Walking Insights Engine design, JNI data flow, CMake setup, and algorithms |
+| [LiteRT Activity Classifier](docs/litert-activity-classifier.md) | On-device HAR model, sensor collection pipeline, tensor layout, and battery optimization |
+| [User Flow & Data Flow](docs/user-flow.md) | End-to-end data flow from Health Connect collection to each screen |
 
 ---
 
@@ -48,54 +50,52 @@ WalkLog는 **Google Health Connect**를 통해 오늘의 걸음 수를 읽고, �
 - [Tech Stack](#tech-stack)
 - [Convention Plugins](#convention-plugins)
 - [Getting Started](#getting-started)
-- [Current Scope](#current-scope)
 
 ---
 
 # Features
 
-| 영역 | 주요 기능 |
+| Area | Key Features |
 |---|---|
-| **Onboarding** | 닉네임 입력, Health Connect 권한, 목표 설정, 알림 권한을 4단계 `HorizontalPager`로 제공 |
-| **Home** | 실시간 걸음 수, 목표 달성률, 스트릭, 날씨 기반 걷기 카드, 주간 리포트 요약 표시 |
-| **Mission** | 오늘 미션과 회복 미션을 제공하고, 피크타임 기반 추천 시간대와 달성 포인트 지급 지원 |
-| **Weekly Report** | 최근 12주 리포트와 상세 차트 제공, `FileProvider` 기반 이미지 공유 지원 |
-| **Monthly Recap** | 월간 걸음 데이터를 8장 스토리형 슬라이드로 제공하고 자동 진행과 일시정지 지원 |
-| **Step History** | 캘린더 기반 일별 걸음 수와 칼로리, 거리 등 상세 활동 정보 제공 |
-| **Settings** | 프로필, 목표 걸음 수, 회복 걸음 수, 알림, 라이트/다크/시스템 테마 설정 지원 |
-| **Reward** | 포인트 사용처 확장을 위한 잠금 상태 티저 화면 제공 |
-| **App Widget** | Jetpack Glance 기반 위젯과 WorkManager 15분 자동 업데이트 지원 |
+| **Onboarding** | Four-step `HorizontalPager` flow for nickname input, Health Connect permissions, goal setup, and notification permissions |
+| **Home** | Real-time step count, goal progress, streak, weather-based walking card, and weekly report summary |
+| **Mission** | Daily and recovery missions, peak-time-based recommended walking windows, and achievement point rewards |
+| **Weekly Report** | Recent 12-week archive, detailed charts, and `FileProvider`-based image sharing |
+| **Monthly Recap** | Eight story-style slides for monthly step data with auto-play and pause support |
+| **Step History** | Calendar-based daily steps plus detailed activity data such as calories and distance |
+| **Settings** | Profile, target steps, recovery steps, notifications, and light/dark/system theme settings |
+| **Reward** | Locked teaser screen for future point redemption features |
+| **App Widget** | Jetpack Glance widget with WorkManager-based automatic updates every 15 minutes |
 
 ## Screenshots
 ![WalkLog Screenshots](docs/screenshots/readme_screenshot.png)
-
 
 ---
 
 # Architecture
 
-본 프로젝트는 **Now in Android(NiA)** 의 구조를 참고했습니다.
+This project follows the structure of **Now in Android (NiA)**.
 
-### 계층 원칙
+### Layer Principles
 <img src="docs/img/architecture_layers.png" alt="Layers" width="400"/>
 
-| 계층 | 역할                              | NiA 대응 |
-|---|---------------------------------|---|
-| `core:model` | data class | `core:model` |
+| Layer | Role | NiA Equivalent |
+|---|---|---|
+| `core:model` | Data classes | `core:model` |
 | `core:data` | Repository | `core:data` |
 | `core:domain` | Use cases | `core:domain` |
 | `core:datastore` | DataSource | `core:datastore` |
-| `core:database` | Room DB · DAO · Entity | `core:database` |
+| `core:database` | Room DB, DAO, Entity | `core:database` |
 
-- **`core:model`** 은 순수 Kotlin 데이터 클래스만 포함. Android 의존성 없음.
-- **`core:database`** · **`core:datastore`** 는 `api(core:model)`로 모델 타입을 위로 노출.
-- **`core:domain`** 은 `api(core:data)` + `api(core:model)` 양쪽을 명시적으로 선언합니다.
-- **ViewModel**은 `StateFlow<UiState>` 하나만 노출하고, UI는 단방향(`Intent → ViewModel → State → UI`)으로 흐릅니다.
+- **`core:model`** contains only pure Kotlin data classes and has no Android dependency.
+- **`core:database`** and **`core:datastore`** expose model types upward through `api(core:model)`.
+- **`core:domain`** explicitly declares both `api(core:data)` and `api(core:model)`.
+- Each **ViewModel** exposes a single `StateFlow<UiState>`, and UI state flows in one direction: `Intent -> ViewModel -> State -> UI`.
 
 # Module Graph
 ![WalkLog Module Graph](docs/img/module_graph.png)
 
-전체 의존성 그래프 시각화:
+Generate the full dependency graph:
 
 ```bash
 ./gradlew projectDependencyGraph
@@ -105,19 +105,19 @@ WalkLog는 **Google Health Connect**를 통해 오늘의 걸음 수를 읽고, �
 
 # Dependency Injection
 
-Hilt를 전 계층에 일관되게 적용합니다.
+Hilt is applied consistently across all layers.
 
-| 위치 | 방식                                                      |
-|---|---------------------------------------------------------|
-| `@HiltAndroidApp` | `WalkLogApplication` — DI 그래프 루트                        |
-| `@AndroidEntryPoint` | 모든 Fragment                                             |
-| `@HiltViewModel` | 모든 ViewModel                                            |
-| `@Singleton` | `StepRepositoryImpl`, `HealthConnectStepDataSource`.... |
-| `@InstallIn(SingletonComponent)` | `DatabaseModule`, `DataModule`, `AnalyticsModule`...    |
-| Hilt WorkManager | `TodayMissionWidgetWorker`          |
+| Location | Approach |
+|---|---|
+| `@HiltAndroidApp` | `WalkLogApplication`, the root of the DI graph |
+| `@AndroidEntryPoint` | All Fragments |
+| `@HiltViewModel` | All ViewModels |
+| `@Singleton` | `StepRepositoryImpl`, `HealthConnectStepDataSource`, and more |
+| `@InstallIn(SingletonComponent)` | `DatabaseModule`, `DataModule`, `AnalyticsModule`, and more |
+| Hilt WorkManager | `TodayMissionWidgetWorker` |
 
 ```kotlin
-// 인터페이스 바인딩 예시 (core:analytics)
+// Interface binding example (core:analytics)
 @Module
 @InstallIn(SingletonComponent::class)
 abstract class AnalyticsModule {
@@ -130,43 +130,42 @@ abstract class AnalyticsModule {
 
 # Step Data Pipeline
 
-WalkLog는 **Google Health Connect**를 데이터 소스로 사용합니다.
+WalkLog uses **Google Health Connect** as its data source.
 
 ![Step Data Pipeline](docs/img/step_data_pipeline.png)
 
-Health Connect에서 집계된 걸음 수를 **datasource**가 읽고, **repository**가 앱 시작 시 최신 값을 **database**에 시드한 뒤 Room Flow로 상태를 관찰합니다. 이후 use case가 화면별 요구에 맞게 데이터를 가공하고, ViewModel은 `StateFlow<UiState>`로 feature 화면에 전달합니다.
+The datasource reads aggregated step counts from Health Connect. On app startup, the repository seeds the latest value into the **database**, then observes state through Room Flow. Use cases transform the data for each screen, and ViewModels expose it to feature screens through `StateFlow<UiState>`.
 
-**설계 결정 포인트:**
+**Design decisions:**
 
-| 결정 | 이유                                            |
-|---|-----------------------------------------------|
-| Health Connect READ-ONLY | HC 플랫폼이 deduplication · 노이즈 필터링 · 다중 앱 집계를 처리 |
-| 10초 폴링(`observeCurrentSteps`) | HC는 실시간 스트림 API 미제공                           |
-| `onStart` HC 시드 + Room Flow | HC에서 최신값을 DB에 쓴 뒤 Room Flow로 반응형 업데이트         |
-| `DailyStepEntity` 로컬 캐시 유지 | HC 오프라인 · 권한 미부여 시에도 마지막 값 표시 가능              |
-| `fallbackToDestructiveMigration()` | HC 마이그레이션(v2)                                 |
-| 누락 날짜 → `DailyStepCount(steps = 0)` | 주간/월간/달력 UI가 완전한 날짜 범위를 렌더링 가능                |
+| Decision | Reason |
+|---|---|
+| Health Connect READ-ONLY | Health Connect handles deduplication, noise filtering, and multi-app aggregation |
+| 10-second polling (`observeCurrentSteps`) | Health Connect does not provide a real-time stream API |
+| `onStart` Health Connect seed + Room Flow | Write the latest Health Connect value to DB, then reactively update through Room Flow |
+| Keep `DailyStepEntity` local cache | Shows the latest cached value even when Health Connect is offline or permission is missing |
+| `fallbackToDestructiveMigration()` | Health Connect migration (v2) |
+| Missing date -> `DailyStepCount(steps = 0)` | Weekly, monthly, and calendar UIs can render complete date ranges |
 
 ---
 
 # Points & Reward System
 
-WalkLog는 **미션 달성 시 포인트를 적립**하고, 날짜 기반 지급 이력으로 중복 지급을 방지합니다.
+WalkLog **grants points when missions are completed** and prevents duplicate rewards through date-based payment history.
 
 ![Points & Reward System](docs/img/points_reward.png)
 
-
-ViewModel이 실시간 걸음 수로 미션 달성을 감지하면 useCase가 오늘 해당 미션 타입의 지급 이력을 확인하고, 아직 지급되지 않은 경우 Repository를 통해 포인트와 마지막 지급 날짜를 DataStore에 저장합니다.
+When the ViewModel detects mission completion from the real-time step count, the use case checks whether points have already been granted for today's mission type. If not, the Repository stores the points and last rewarded date in DataStore.
 
 ---
 
 # Crash Reporting
 
-Firebase Crashlytics를 feature 모듈이 직접 의존하지 않도록 `core:analytics` 추상화 계층을 도입했습니다.
+`core:analytics` abstracts Firebase Crashlytics so feature modules do not depend on Firebase directly.
 
-```
-feature:* → CrashReporter (interface, core:analytics)
-                  ↑
+```text
+feature:* -> CrashReporter (interface, core:analytics)
+                  ^
          CrashlyticsReporter (impl, bound in app via Hilt)
 ```
 
@@ -178,7 +177,7 @@ interface CrashReporter {
 }
 ```
 
-**`CrashKeys` 중앙화:**
+**Centralized `CrashKeys`:**
 
 ```kotlin
 object CrashKeys {
@@ -204,38 +203,36 @@ object CrashKeys {
 
 ---
 
----
-
 # Performance
 
 ### Baseline Profile
 
-`:benchmark` 모듈은 Now in Android 패턴에 따라 Baseline Profile 생성과 성능 측정을 화면 단위 서브 패키지로 분리합니다.
+The `:benchmark` module follows the Now in Android pattern and separates Baseline Profile generation and performance measurement by screen-level subpackages.
 
 ```bash
-# Baseline Profile 생성
+# Generate Baseline Profile
 ./gradlew :app:generateBaselineProfile
 
-# 시작 시간 측정 (None / Partial(Disable) / Partial(Require) / Full — 4가지 CompilationMode)
+# Measure startup time (None / Partial(Disable) / Partial(Require) / Full, 4 CompilationModes)
 ./gradlew :benchmark:connectedBenchmarkAndroidTest \
   -Pandroid.testInstrumentationRunnerArguments.class=com.river.walklog.benchmark.startup.StartupBenchmark
 
-# 홈 스크롤 프레임 성능 측정 (None / Partial(Require) / Full — 3가지 CompilationMode)
+# Measure home scroll frame performance (None / Partial(Require) / Full, 3 CompilationModes)
 ./gradlew :benchmark:connectedBenchmarkAndroidTest \
   -Pandroid.testInstrumentationRunnerArguments.class=com.river.walklog.benchmark.home.ScrollHomeFeedBenchmark
 ```
 
-**커버하는 사용자 흐름:**
-- `StartupBaselineProfile`: 콜드 스타트 → 홈 화면 진입 (`includeInStartupProfile = true`)
-- `HomeBaselineProfile`: 홈 스크롤 · 주간 리포트 진입 · 미션 상세 진입
+**Covered user flows:**
+- `StartupBaselineProfile`: cold start -> enter Home screen (`includeInStartupProfile = true`)
+- `HomeBaselineProfile`: scroll Home, open Weekly Report, open Mission Detail
 
-**측정 항목:**
-- `StartupBenchmark`: `StartupTimingMetric` + JIT / ClassInit `TraceSectionMetric` — 20 이터레이션, COLD 스타트
-- `ScrollHomeFeedBenchmark`: `FrameTimingMetric` — 10 이터레이션, WARM 스타트
+**Measured metrics:**
+- `StartupBenchmark`: `StartupTimingMetric` + JIT / ClassInit `TraceSectionMetric`, 20 iterations, COLD startup
+- `ScrollHomeFeedBenchmark`: `FrameTimingMetric`, 10 iterations, WARM startup
 
 ### R8 Full Mode
 
-`release` 빌드에서 R8 전체 최적화를 활성화합니다.
+R8 full optimization is enabled for `release` builds.
 
 ```kotlin
 getByName("release") {
@@ -275,18 +272,18 @@ getByName("release") {
 </cloud-backup>
 ```
 
-Room DB(걸음 수 이력)와 DataStore(닉네임·포인트·설정)는 클라우드 백업·기기 이전에서 제외합니다.
+Room DB data (step history) and DataStore data (nickname, points, settings) are excluded from cloud backup and device transfer.
 
 ---
 
 # Testing
 
-### 테스트 전략
+### Test Strategy
 
-| 위치 | 러너 | 대상 |
+| Location | Runner | Target |
 |---|---|---|
-| `src/test/` | Robolectric JVM | 컴포넌트 단위 (ViewModel, UseCase, Repository, 단일 Composable) |
-| `src/androidTest/` | 실기기/에뮬레이터 | 화면 전체 (Route 단위 Compose UI 테스트) |
+| `src/test/` | Robolectric JVM | Component units such as ViewModel, UseCase, Repository, and single Composable |
+| `src/androidTest/` | Physical device / emulator | Full screens, tested at Route-level Compose UI |
 
 ```bash
 ./gradlew test
@@ -296,76 +293,75 @@ Room DB(걸음 수 이력)와 DataStore(닉네임·포인트·설정)는 클라�
 ./gradlew connectedAndroidTest
 ```
 
-### 테스트 커버리지
+### Test Coverage
 
-**Model 계층** — `MissionTest` (progressRatio 경계값)
+**Model layer** - `MissionTest` (progressRatio boundaries)
 
-**Common 계층** — `ResultTest` (onSuccess / onError 체이닝)
+**Common layer** - `ResultTest` (onSuccess / onError chaining)
 
-**Domain / Data 계층**
-- `WeeklyStepSummaryTest` · `MonthlyRecapTest` — 도메인 모델 불변식
-- `GetWeeklyStepSummaryUseCaseTest` · `GetWeeklyReportArchiveUseCaseTest` · `GetWeeklyBestHourUseCaseTest` — 집계·아카이브·베스트아워 로직
-- `StepRepositoryImplTest` — HC 위임, Flow 매핑, 누락 날짜 zero-fill
+**Domain / Data layer**
+- `WeeklyStepSummaryTest`, `MonthlyRecapTest` - domain model invariants
+- `GetWeeklyStepSummaryUseCaseTest`, `GetWeeklyReportArchiveUseCaseTest`, `GetWeeklyBestHourUseCaseTest` - aggregation, archive, and best-hour logic
+- `StepRepositoryImplTest` - Health Connect delegation, Flow mapping, zero-fill for missing dates
 
-**Feature ViewModel 계층**
-- `HistoryViewModelTest` — 달력 아이템 구조, 월 이동, 통계 포맷
-- `OnboardingViewModelTest` — 4단계 페이지 전환 상태 머신, 완료 시 repository 호출
-- `SettingsViewModelTest` — 닉네임 관찰, 포인트 관찰, 각 Intent → repository 매핑
+**Feature ViewModel layer**
+- `HistoryViewModelTest` - calendar item structure, month navigation, statistics formatting
+- `OnboardingViewModelTest` - four-step page transition state machine and repository call on completion
+- `SettingsViewModelTest` - nickname observation, point observation, and Intent-to-repository mapping
 
-**Compose UI 테스트 (androidTest)**
-- `HomeScreenTest` — 센서 상태별 UI (로딩/권한 없음/사용 불가/정상)
-- `WeeklyReportScreenTest` — 아카이브·상세 렌더링, 공유 버튼 상태
-- `MissionDetailScreenTest` — 달성 전/후 상태, 뒤로가기 콜백
-- `RecapScreenTest` — 슬라이드 전환, 일시정지/재생
-- `ForecastDetailBottomSheetTest` — BottomSheet 표시/닫기
+**Compose UI tests (androidTest)**
+- `HomeScreenTest` - UI for each sensor status: loading, no permission, unavailable, normal
+- `WeeklyReportScreenTest` - archive/detail rendering and share button state
+- `MissionDetailScreenTest` - before/after achievement states and back callback
+- `RecapScreenTest` - slide transition and pause/play
+- `ForecastDetailBottomSheetTest` - BottomSheet show/dismiss
 
-### 주요 도구
+### Main Tools
 
-- **MockK**: 코루틴 친화적인 Kotlin mock 라이브러리
-- **Turbine**: `Flow` 테스트 전용 라이브러리
-- **Robolectric**: JVM 위에서 Android 환경 에뮬레이션
-- **`createAndroidComposeRule<ComponentActivity>()`**: NiA 기기 테스트 표준
+- **MockK**: Coroutine-friendly Kotlin mock library
+- **Turbine**: Flow testing library
+- **Robolectric**: Android environment emulation on the JVM
+- **`createAndroidComposeRule<ComponentActivity>()`**: NiA-style device test standard
 
 ---
 
 # Tech Stack
 
-| 영역 | 기술                                                                                 |
-|---|------------------------------------------------------------------------------------|
-| Language | Kotlin 2.1.0, C++17                                                                |
-| UI | Jetpack Compose, Material 3, XML Layouts + ViewBinding, XML Navigation host        |
-| Animation | Lottie                                                                             |
-| Architecture | MVVM, Google Recommended Architecture                      |
-| DI | Hilt 2.55, Hilt WorkManager                                                        |
-| Async | Kotlin Coroutines, Flow                                                            |
-| Persistence | Room 2.7.1, DataStore Preferences                                                  |
-| Network | OkHttp (KMA 초단기예보 API), in-memory weather cache                                    |
-| On-device AI | LiteRT 1.0.1 (Activity Classifier), NDK/JNI (Walking Insights Engine)              |
-| Widget | Jetpack Glance 1.1.1, WorkManager                                                  |
-| Analytics | Firebase Crashlytics, Firebase Analytics                                           |
-| Performance | Baseline Profile, R8 Full Mode                       |
-| Security | Network Security Config, ProGuard/R8 obfuscation, Backup protection                |
-| Image | Coil 3                                                                             |
+| Area | Technology |
+|---|---|
+| Language | Kotlin 2.1.0, C++17 |
+| UI | Jetpack Compose, Material 3, XML Layouts + ViewBinding, XML Navigation host |
+| Animation | Lottie |
+| Architecture | MVVM, Google Recommended Architecture |
+| DI | Hilt 2.55, Hilt WorkManager |
+| Async | Kotlin Coroutines, Flow |
+| Persistence | Room 2.7.1, DataStore Preferences |
+| Network | OkHttp (KMA ultra-short-term forecast API), in-memory weather cache |
+| On-device AI | LiteRT 1.0.1 (Activity Classifier), NDK/JNI (Walking Insights Engine) |
+| Widget | Jetpack Glance 1.1.1, WorkManager |
+| Analytics | Firebase Crashlytics, Firebase Analytics |
+| Performance | Baseline Profile, R8 Full Mode |
+| Security | Network Security Config, ProGuard/R8 obfuscation, backup protection |
+| Image | Coil 3 |
 | Build | Gradle Kotlin DSL, Version Catalog, Convention Plugins, CMake 3.22.1 |
-| Testing | JUnit4, MockK, Turbine, Robolectric, Compose UI Test, Espresso                     |
-
+| Testing | JUnit4, MockK, Turbine, Robolectric, Compose UI Test, Espresso |
 
 ---
 
 # Convention Plugins
 
-| Plugin ID | 적용 대상 | 포함 내용 |
+| Plugin ID | Applied To | Includes |
 |---|---|---|
 | `river.android.application` | `:app` | compileSdk 36, minSdk 28, Kotlin Android, Hilt |
-| `river.android.library` | `core:*` 대부분 | compileSdk 36, minSdk 28, Kotlin Android, Hilt 자동 포함 |
-| `river.android.feature` | `feature:*` | library 기반 + Hilt + Compose + HiltNavigation |
-| `river.android.compose` | Compose 사용 모듈 | Compose BOM, tooling, compiler plugin |
-| `river.android.test` | 단위 테스트 모듈 | JUnit4, MockK, Turbine, Coroutines Test |
-| `river.android.uitest` | Compose UI 테스트 | Robolectric, Compose UI Test, Mock |
-| `river.kotlin.library` | `core:domain` 등 순수 Kotlin | JVM 타겟, Kotlin only |
-| `river.kotlin.test` | 순수 Kotlin 테스트 | JUnit, Kotlin Test, Coroutines Test |
+| `river.android.library` | Most `core:*` modules | compileSdk 36, minSdk 28, Kotlin Android, Hilt included automatically |
+| `river.android.feature` | `feature:*` | Library base + Hilt + Compose + HiltNavigation |
+| `river.android.compose` | Compose modules | Compose BOM, tooling, compiler plugin |
+| `river.android.test` | Unit test modules | JUnit4, MockK, Turbine, Coroutines Test |
+| `river.android.uitest` | Compose UI tests | Robolectric, Compose UI Test, Mock |
+| `river.kotlin.library` | Pure Kotlin modules such as `core:domain` | JVM target, Kotlin only |
+| `river.kotlin.test` | Pure Kotlin tests | JUnit, Kotlin Test, Coroutines Test |
 
-신규 feature 모듈 추가 시 `id("river.android.feature")` 한 줄만 선언하면 Hilt·Compose·테스트 설정이 모두 자동 적용됩니다.
+When adding a new feature module, declaring only `id("river.android.feature")` automatically applies Hilt, Compose, and test settings.
 
 ---
 
@@ -373,9 +369,9 @@ Room DB(걸음 수 이력)와 DataStore(닉네임·포인트·설정)는 클라�
 
 ### Requirements
 
-- Android Studio Hedgehog 이상 (JDK 21 포함)
+- Android Studio Hedgehog or later (includes JDK 21)
 - Android SDK 35
-- Firebase 프로젝트 + `google-services.json`
+- Firebase project + `google-services.json`
 
 ### Build
 
@@ -397,15 +393,15 @@ Room DB(걸음 수 이력)와 DataStore(닉네임·포인트·설정)는 클라�
 
 ### Permissions
 
-| 권한 | 필요 버전 | 용도 |
+| Permission | Required Version | Purpose |
 |---|---|---|
-| `android.permission.health.READ_STEPS` | Health Connect 설치 기기 | 걸음 수 읽기 |
-| `PERMISSION_READ_HEALTH_DATA_IN_BACKGROUND` | Health Connect | 백그라운드 위젯 업데이트 |
-| `INTERNET` | 모든 버전 | KMA 날씨 API |
-| `POST_NOTIFICATIONS` | API 33+ | 피크아워 알림 |
-| `RECEIVE_BOOT_COMPLETED` | 모든 버전 | 재부팅 후 AlarmManager 재등록 |
+| `android.permission.health.READ_STEPS` | Devices with Health Connect | Read step count |
+| `PERMISSION_READ_HEALTH_DATA_IN_BACKGROUND` | Health Connect | Background widget updates |
+| `INTERNET` | All versions | KMA weather API |
+| `POST_NOTIFICATIONS` | API 33+ | Peak-hour notifications |
+| `RECEIVE_BOOT_COMPLETED` | All versions | Re-register AlarmManager after reboot |
 
-**HC Android 14+ 매니페스트 요구사항**: HC 권한 다이얼로그를 정상적으로 표시하려면 `AndroidManifest.xml`에 두 가지 `activity-alias`를 모두 선언해야 합니다.
+**Health Connect Android 14+ manifest requirements**: To show the Health Connect permission dialog correctly, both `activity-alias` declarations must be present in `AndroidManifest.xml`.
 
 ```xml
 <activity-alias android:name=".HealthConnectPrivacyRationaleActivity" ...>
@@ -425,32 +421,6 @@ Room DB(걸음 수 이력)와 DataStore(닉네임·포인트·설정)는 클라�
 
 ---
 
-# Current Scope
-
-| 영역                                 | 현재 상태                                                    |
-|------------------------------------|----------------------------------------------------------|
-| 걸음 수 파이프라인                         | 완성 (Health Connect → Room → Domain → UI)                 |
-| 날씨 파이프라인                           | 완성 (KMA → DefaultWeatherRepository → WeatherSummaryCard) |
-| 홈 화면                               | 완성 (닉네임 표시, 미션 달성 포인트 지급 포함)                             |
-| 주간 리포트                             | 완성 (Archive + Detail 2화면, 막대 그래프, 이미지 공유)                |
-| 월간 리캡                              | 완성                                                       |
-| 앱 위젯                               | 완성 (WorkManager + 포그라운드 동기화 + 새로고침 액션)                   |
-| Baseline Profile                   | 완성                                                       |
-| R8 + 보안 설정                         | 완성                                                       |
-| Crashlytics 전면 적용                  | 완성                                                       |
-| SplashScreen                       | 완성                                                       |
-| 온보딩                                | 완성 (4단계 HorizontalPager + 닉네임 입력)                        |
-| 걸음 기록 달력                           | 완성 (날짜 탭 상세 패널)                                          |
-| 설정 화면                              | 완성 (프로필 섹션, 닉네임 수정, 포인트 표시)                              |
-| DataStore                          | 완성 (닉네임·포인트·목표·알림·테마·온보딩 완료)                             |
-| 포인트 적립 시스템                         | 완성 (미션 달성 시 지급, 날짜 중복 방지, 설정 화면 실시간 표시)                  |
-| 리워드 화면                             | 완성 (티져 화면 — 포인트 사용처는 추후 업데이트 예정)                         |
-| 피크타임 알림                            | 완성 (AlarmManager 기반, peakHour 연동)                        |
-| 미션 데이터 연결                          | 완성 (WalkingInsightsEngine + 실시간 걸음 수 + 포인트 지급)           |
-| on-device AI (Walking Insights)    | 완성 (C++ JNI 엔진)                                          |
-| on-device AI (Activity Classifier) | 완성 (LiteRT HAR 모델 — 모델 파일 별도 배치 필요)                      |
-| 닉네임                                | 완성 (온보딩 입력 → DataStore → 홈 인사 + 설정 수정)                   |
-
-다음 단계 확장 포인트:
-- 리워드 스토어 / 뱃지 컬렉션 / 레벨 시스템 (`feature:reward`)
-- `activity_classifier.tflite` 모델 파일 배치 후 실기기 HAR 분류 검증
+## Next expansion points:
+- Reward store / badge collection / level system (`feature:reward`)
+- Place `activity_classifier.tflite`, then validate HAR classification on a physical device

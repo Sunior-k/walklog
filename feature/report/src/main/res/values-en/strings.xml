@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="back_button_cd">Back</string>
+
+    <!-- Archive screen -->
+    <string name="report_title">Weekly report</string>
+    <string name="report_archive_subtitle">Your last 12 weeks of records</string>
+    <string name="report_past_title">Past reports</string>
+    <string name="report_in_progress">In progress</string>
+    <string name="report_completed">Completed</string>
+    <string name="report_locked_message">This week\'s report isn\'t ready yet</string>
+    <string name="report_total_steps_label">Total steps</string>
+    <string name="report_achievement_rate_label">Achievement</string>
+
+    <!-- Detail screen -->
+    <string name="report_share_preview_title">Share preview</string>
+    <string name="report_share_preview_expanded">The card to be shared is shown below</string>
+    <string name="report_share_preview_collapsed">Check the card before sharing</string>
+    <string name="report_share_expand">Expand</string>
+    <string name="report_share_collapse">Collapse</string>
+    <string name="report_weekly_total_steps_label">Total steps this week</string>
+    <string name="report_goal_label">Goal reached</string>
+    <string name="report_days_suffix"> days</string>
+    <string name="report_highlight_title">Weekly highlights</string>
+    <string name="report_best_day_label">Best day</string>
+    <string name="report_best_time_label">Most active time</string>
+    <string name="report_best_streak_label">Best streak</string>
+    <string name="report_sharing_preparing">Preparing share image…</string>
+    <string name="report_empty_title">No step records this week</string>
+    <string name="report_empty_desc">Start walking and your weekly report will appear</string>
+    <string name="report_share_button_sharing">Preparing…</string>
+    <string name="report_share_button">Share report</string>
+    <string name="report_share_failed">Couldn\'t share the report</string>
+
+    <!-- Day labels for chart -->
+    <string name="report_day_mon">Mon</string>
+    <string name="report_day_tue">Tue</string>
+    <string name="report_day_wed">Wed</string>
+    <string name="report_day_thu">Thu</string>
+    <string name="report_day_fri">Fri</string>
+    <string name="report_day_sat">Sat</string>
+    <string name="report_day_sun">Sun</string>
+
+    <!-- Share card -->
+    <string name="report_share_card_total_steps">Total steps this week</string>
+    <string name="report_share_card_achievement_rate">Achievement %1$s</string>
+    <string name="report_share_card_walking_note">Staying consistent</string>
+    <string name="report_share_card_best_day">Best day</string>
+    <string name="report_share_card_best_time">Most active time</string>
+    <string name="report_share_card_best_streak">Best streak</string>
+    <string name="report_share_footer">My weekly walking report with WalkLog</string>
+
+    <!-- Share manager -->
+    <string name="report_share_chooser_title">Share weekly report</string>
+    <string name="report_share_text">Check out my walking report this week!</string>
+
+    <!-- Mapper / ViewModel strings -->
+    <string name="steps_with_suffix">%1$s steps</string>
+    <string name="report_week_range">Week %2$d of %1$s</string>
+    <string name="report_week_range_full">Week %2$d of %1$s · %3$s–%4$s</string>
+    <string name="report_date_range">%1$s–%2$s</string>
+    <string name="report_unlock_from">Available from %1$s at 00:00</string>
+    <string name="report_full_date_format_pattern">MMMM d</string>
+    <string name="report_best_time_am">%1$d AM</string>
+    <string name="report_best_time_pm">%1$d PM</string>
+    <string name="report_summary_all_achieved">You hit your goal every day this week!</string>
+    <string name="report_summary_good_progress">Great work! You\'re getting closer to your goal</string>
+    <string name="report_summary_keep_going">Keep walking — you\'ve got this!</string>
+    <string name="report_streak_days">%1$d days</string>
+
+    <!-- Error state -->
+    <string name="report_error_title">Couldn\'t load data</string>
+    <string name="report_error_desc">Try again in a moment</string>
+</resources>

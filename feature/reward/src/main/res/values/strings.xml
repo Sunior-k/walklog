@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="reward_coming_soon">✦  추후 업데이트 예정  ✦</string>
+    <string name="reward_tagline">걷는 만큼, 쌓이는 보상</string>
+    <string name="reward_preview_section">미리보기</string>
+    <string name="reward_footer">추후 업데이트를 통해 제공됩니다</string>
+    <string name="reward_footer_tagline">꾸준한 걸음이 빛나는 보상으로 돌아와요</string>
+
+    <!-- Feature items -->
+    <string name="reward_feature1_title">포인트 적립</string>
+    <string name="reward_feature1_subtitle">걸음마다 포인트</string>
+    <string name="reward_feature2_title">뱃지 컬렉션</string>
+    <string name="reward_feature2_subtitle">성취 배지 모음</string>
+    <string name="reward_feature3_title">리워드 스토어</string>
+    <string name="reward_feature3_subtitle">포인트로 교환</string>
+    <string name="reward_feature4_title">레벨 보상</string>
+    <string name="reward_feature4_subtitle">레벨업 선물</string>
+</resources>

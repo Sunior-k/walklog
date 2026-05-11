@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="anonymous">匿名</string>
+    <string name="settings_nickname_display">%1$sさん</string>
+    <string name="settings_steps_format">%1$s歩</string>
+
+    <string name="settings_title">設定</string>
+    <string name="settings_edit_nickname">ニックネームを編集</string>
+    <string name="settings_section_step_goal">歩数目標</string>
+    <string name="settings_daily_step_goal_title">1日の目標歩数</string>
+    <string name="settings_section_recovery_mission">リカバリーミッション</string>
+    <string name="settings_recovery_mission_title">リカバリーミッション歩数</string>
+    <string name="settings_section_notifications">通知</string>
+    <string name="settings_notifications_title">ウォーキング予報通知</string>
+    <string name="settings_notifications_description">行動確率が高い時間帯に通知を送ります</string>
+    <string name="settings_section_theme">テーマ</string>
+    <string name="settings_theme_title">アプリのテーマ</string>
+    <string name="settings_theme_description">好みの配色を選んでください</string>
+    <string name="settings_theme_system">システム設定</string>
+    <string name="settings_theme_light">ライト</string>
+    <string name="settings_theme_dark">ダーク</string>
+    <string name="settings_section_app_info">アプリ情報</string>
+    <string name="settings_oss_licenses">オープンソースライセンス</string>
+
+    <string name="nickname_edit_title">ニックネームを編集</string>
+    <string name="nickname_edit_description">英字・韓国語のみ入力できます</string>
+    <string name="nickname_edit_placeholder">ニックネームを入力してください</string>
+    <string name="nickname_edit_save">保存する</string>
+</resources>

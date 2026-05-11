@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="widget_app_name">WalkLog</string>
+    <string name="widget_refresh_cd">更新</string>
+    <string name="widget_loading">歩数を読み込んでいます…</string>
+    <string name="widget_steps_current">%1$s歩</string>
+    <string name="widget_goal_steps">目標%1$s歩</string>
+    <string name="widget_goal_achieved">今日の目標達成！</string>
+    <string name="widget_steps_remaining">あと%1$s歩</string>
+    <string name="widget_reward">+20キャッシュ</string>
+
+    <string name="widget_preview_today_mission">今日のミッション</string>
+    <string name="widget_preview_steps">4,200歩</string>
+    <string name="widget_preview_goal">目標6,000歩</string>
+    <string name="widget_preview_remaining">あと1,800歩</string>
+</resources>

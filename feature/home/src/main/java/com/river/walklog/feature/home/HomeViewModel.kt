@@ -12,7 +12,6 @@ import com.river.walklog.core.domain.usecase.GetMonthlyRecapUseCase
 import com.river.walklog.core.domain.usecase.GetWeeklyStepSummaryUseCase
 import com.river.walklog.core.engine.ActivityClassifier
 import com.river.walklog.core.engine.WalkingInsightsEngine
-import com.river.walklog.core.engine.WalkingInsightsResult
 import com.river.walklog.core.model.DailyStepCount
 import com.river.walklog.core.model.MissionType
 import com.river.walklog.core.model.WeatherSummary
@@ -34,8 +33,6 @@ import kotlinx.coroutines.launch
 import java.time.LocalDate
 import java.time.LocalTime
 import java.time.YearMonth
-import java.time.format.DateTimeFormatter
-import java.util.Locale
 import javax.inject.Inject
 
 @HiltViewModel
@@ -76,19 +73,8 @@ class HomeViewModel @Inject constructor(
         scheduleMidnightRefresh()
     }
 
-    fun handleIntent(intent: HomeIntent) {
-        when (intent) {
-            HomeIntent.OnRefresh -> refresh()
-            HomeIntent.OnRefreshWeather -> loadWeather(forceRefresh = true)
-            is HomeIntent.OnPermissionResult -> handlePermissionResult(intent.granted)
-        }
-    }
-
-    // ─── Private ───────────────────────────────────────────────────────────
-
     private fun initDateText() {
-        val formatter = DateTimeFormatter.ofPattern("M월 d일 EEEE", Locale.KOREAN)
-        _state.update { it.copy(todayDateText = LocalDate.now().format(formatter)) }
+        _state.update { it.copy(todayDate = LocalDate.now()) }
     }
 
     private fun initSensorStatus() {
@@ -110,13 +96,9 @@ class HomeViewModel @Inject constructor(
                 val alreadyCompletedToday = settings.lastDailyMissionAwardedDate == today
                 _state.update { state ->
                     val updatedState = state.copy(
-                        userName = settings.nickname.ifBlank { "익명" },
+                        userName = settings.nickname,
                         targetSteps = settings.dailyStepGoal,
-                        mission = state.mission.copy(
-                            targetSteps = settings.dailyStepGoal,
-                            // 앱 재시작 후에도 당일 달성 상태 유지
-                            isCompleted = alreadyCompletedToday || state.mission.isCompleted,
-                        ),
+                        missionIsCompleted = alreadyCompletedToday || state.missionIsCompleted,
                     )
                     latestWeeklySummary?.let { summary ->
                         updatedState.applyWeeklySummary(summary, settings.dailyStepGoal)
@@ -126,7 +108,7 @@ class HomeViewModel @Inject constructor(
             .launchIn(viewModelScope)
     }
 
-    private fun handlePermissionResult(granted: Boolean) {
+    fun updatePermissionResult(granted: Boolean) {
         if (_state.value.sensorStatus == SensorStatus.Unavailable) return
 
         crashReporter.log("Health Connect READ_STEPS permission result: granted=$granted")
@@ -157,14 +139,11 @@ class HomeViewModel @Inject constructor(
             .onEach { steps ->
                 crashReporter.setKey(CrashKeys.CURRENT_STEPS, steps)
                 val prev = _state.value
-                val justAchieved = steps >= prev.targetSteps && !prev.mission.isCompleted
+                val justAchieved = steps >= prev.targetSteps && !prev.missionIsCompleted
                 _state.update { state ->
                     state.copy(
                         currentSteps = steps,
-                        mission = state.mission.copy(
-                            currentSteps = steps,
-                            isCompleted = steps >= state.targetSteps || state.mission.isCompleted,
-                        ),
+                        missionIsCompleted = steps >= state.targetSteps || state.missionIsCompleted,
                     )
                 }
                 if (justAchieved) awardDailyMission()
@@ -222,15 +201,10 @@ class HomeViewModel @Inject constructor(
                     )
                     _state.update { state ->
                         state.copy(
-                            forecastDescription = if (result.peakHour in 6..22) {
-                                buildForecastDescription(result)
-                            } else {
-                                state.forecastDescription
-                            },
                             streakRiskLevel = StreakRiskLevel.from(result.streakRisk),
-                            forecastRecommendedTimeText = "오늘 ${peakHourToText(result.peakHour)}",
-                            forecastAverageStepsText = avgStepsAtPeakHour(hourlySteps, result.peakHour),
-                            forecastActiveDaysText = activeDaysText(hourlySteps),
+                            forecastAverageStepsAtPeakHour = avgStepsAtPeakHour(hourlySteps, result.peakHour),
+                            forecastTotalDays = hourlySteps.size / HOURS_PER_DAY,
+                            forecastActiveDays = activeDays(hourlySteps),
                             forecastHourlyAverages = computeHourlyAverages(hourlySteps),
                             forecastPeakHour = result.peakHour,
                         )
@@ -246,48 +220,28 @@ class HomeViewModel @Inject constructor(
         }
     }
 
-    private fun buildForecastDescription(result: WalkingInsightsResult): String {
-        val period = if (result.peakHour < 12) "오전" else "오후"
-        val displayHour = when {
-            result.peakHour == 0 -> 12
-            result.peakHour <= 12 -> result.peakHour
-            else -> result.peakHour - 12
-        }
-        return "오늘 $period ${displayHour}시는 평소 가장 많이 걷는 시간이에요"
-    }
-
-    private fun peakHourToText(hour: Int): String {
-        val period = if (hour < 12) "오전" else "오후"
-        val displayHour = when {
-            hour == 0 -> 12
-            hour <= 12 -> hour
-            else -> hour - 12
-        }
-        return "$period ${displayHour}시"
-    }
-
-    private fun avgStepsAtPeakHour(hourlySteps: FloatArray, peakHour: Int): String {
-        val days = hourlySteps.size / 24
+    private fun avgStepsAtPeakHour(hourlySteps: FloatArray, peakHour: Int): Int? {
+        val days = hourlySteps.size / HOURS_PER_DAY
+        if (days <= 0 || peakHour !in 0 until HOURS_PER_DAY) return null
         var total = 0f
-        for (d in 0 until days) total += hourlySteps[d * 24 + peakHour]
-        return "평균 %,d보".format((total / days).toInt())
+        for (d in 0 until days) total += hourlySteps[d * HOURS_PER_DAY + peakHour]
+        return (total / days).toInt()
     }
 
     private fun computeHourlyAverages(hourlySteps: FloatArray): List<Float> {
-        val days = hourlySteps.size / 24
-        return (0 until 24).map { hour ->
+        val days = hourlySteps.size / HOURS_PER_DAY
+        return (0 until HOURS_PER_DAY).map { hour ->
             var total = 0f
-            for (d in 0 until days) total += hourlySteps[d * 24 + hour]
+            for (d in 0 until days) total += hourlySteps[d * HOURS_PER_DAY + hour]
             total / days
         }
     }
 
-    private fun activeDaysText(hourlySteps: FloatArray): String {
-        val days = hourlySteps.size / 24
-        val activeDays = (0 until days).count { d ->
-            (0 until 24).any { h -> hourlySteps[d * 24 + h] > 0f }
+    private fun activeDays(hourlySteps: FloatArray): Int {
+        val days = hourlySteps.size / HOURS_PER_DAY
+        return (0 until days).count { d ->
+            (0 until HOURS_PER_DAY).any { h -> hourlySteps[d * HOURS_PER_DAY + h] > 0f }
         }
-        return "최근 ${days}일 중 ${activeDays}일"
     }
 
     private fun collectWeeklySummary() {
@@ -310,7 +264,7 @@ class HomeViewModel @Inject constructor(
         _state.update {
             it.copy(
                 isRecapPreviewLoading = true,
-                recapMonthLabel = recapMonth.monthLabel(),
+                recapYearMonth = recapMonth,
             )
         }
         recapPreviewJob = getMonthlyRecap(recapMonth.year, recapMonth.monthValue)
@@ -323,15 +277,13 @@ class HomeViewModel @Inject constructor(
                 _state.update { state ->
                     state.copy(
                         isRecapPreviewLoading = false,
-                        recapMonthLabel = recap.monthLabel,
-                        recapTotalStepsText = "%,d보".format(recap.totalSteps),
+                        recapYearMonth = YearMonth.of(recap.year, recap.month),
+                        recapTotalSteps = recap.totalSteps,
                     )
                 }
             }
             .launchIn(viewModelScope)
     }
-
-    private fun YearMonth.monthLabel(): String = "${monthValue}월"
 
     private fun loadCurrentStreak() {
         val today = LocalDate.now()
@@ -372,7 +324,7 @@ class HomeViewModel @Inject constructor(
         }
     }
 
-    private fun refresh() {
+    fun refresh() {
         viewModelScope.launch {
             crashReporter.log("Manual refresh triggered")
             _state.update { it.copy(isLoading = true) }
@@ -383,6 +335,10 @@ class HomeViewModel @Inject constructor(
             loadWeather(forceRefresh = true)
             _state.update { it.copy(isLoading = false) }
         }
+    }
+
+    fun refreshWeather() {
+        loadWeather(forceRefresh = true)
     }
 
     private fun loadWeather(forceRefresh: Boolean = false) {
@@ -413,16 +369,11 @@ class HomeViewModel @Inject constructor(
         return fallback
     }
 
-    // ─── Mapper ────────────────────────────────────────────────────────────
-
+    // Mapping
     private fun HomeState.applyWeeklySummary(
         summary: WeeklyStepSummary,
         targetSteps: Int,
     ): HomeState {
-        val bestDayName = summary.bestDay?.let { best ->
-            LocalDate.ofEpochDay(best.dateEpochDay)
-                .format(DateTimeFormatter.ofPattern("EEEE", Locale.KOREAN))
-        } ?: "-"
         val achievementPct = if (summary.dailyCounts.isEmpty() || targetSteps <= 0) {
             0
         } else {
@@ -430,25 +381,13 @@ class HomeViewModel @Inject constructor(
         }
 
         return copy(
-            weeklyTotalStepsText = "%,d보".format(summary.totalSteps),
+            weeklyTotalSteps = summary.totalSteps,
             weeklyAchievementRateText = "$achievementPct%",
-            bestDayText = bestDayName,
+            bestDayEpochDay = summary.bestDay?.dateEpochDay,
         )
     }
 
-    private fun HomeState.applyWeather(weather: WeatherSummary): HomeState = copy(
-        weatherLocationText = "${weather.locationName} 기준",
-        weatherTemperatureText = weather.temperatureText,
-        weatherConditionText = weather.conditionText,
-        weatherAdviceText = weather.walkingAdvice,
-        weatherSupportingText = buildWeatherSupportingText(weather),
-    )
-
-    private fun buildWeatherSupportingText(weather: WeatherSummary): String = listOfNotNull(
-        weather.precipitationProbability?.let { "강수 $it%" },
-        weather.humidity?.let { "습도 $it%" },
-        weather.windSpeedMetersPerSecond?.let { "풍속 ${String.format(Locale.KOREAN, "%.1f", it)}m/s" },
-    ).joinToString(" · ")
+    private fun HomeState.applyWeather(weather: WeatherSummary): HomeState = copy(weather = weather)
 
     private fun computeCurrentStreak(
         dailyCounts: List<DailyStepCount>,
@@ -486,5 +425,6 @@ class HomeViewModel @Inject constructor(
         private const val WEATHER_LOAD_MAX_ATTEMPTS = 3
         private const val WEATHER_RETRY_DELAY_MS = 1_500L
         private const val DAILY_MISSION_POINTS = 20
+        private const val HOURS_PER_DAY = 24
     }
 }

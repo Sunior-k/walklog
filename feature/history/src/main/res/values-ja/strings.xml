@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="no_data_past_message">この日は記録がありませんでした</string>
+    <string name="no_data_past_sub_message">次回はもっと歩いてみましょう</string>
+    <string name="no_data_today_message">まだ今日の記録がありません</string>
+    <string name="no_data_today_sub_message">歩き始めるとここに表示されます</string>
+
+    <string name="total_steps_format">%1$s歩</string>
+
+    <string name="target_status_no_data">この日の歩数記録がありません</string>
+    <string name="target_status_achieved">目標達成</string>
+    <string name="target_status_remaining">目標まで%1$s歩</string>
+
+    <string name="comparison_no_data">記録がないため前日との比較ができません</string>
+    <string name="comparison_no_prev_data">前日の記録なし</string>
+    <string name="comparison_positive">前日より+%1$s歩</string>
+    <string name="comparison_negative">前日より%1$s歩少なく歩きました</string>
+    <string name="comparison_same">前日と同じです</string>
+
+    <string name="insight_no_data">この日は分析する歩数記録がありません</string>
+    <string name="insight_achieved_with_increase">目標を達成し、前日より%1$s歩多く歩きました</string>
+    <string name="insight_achieved">目標を達成した日です</string>
+    <string name="insight_increase">前日より%1$s歩多く歩きました</string>
+    <string name="insight_decrease">前日より%1$s歩少なく歩きました</string>
+    <string name="insight_remaining">目標まで%1$s歩残っています</string>
+
+    <string name="month_rank_none">今月のランキングなし</string>
+    <string name="month_rank">今月%2$d日中%1$d位</string>
+
+    <string name="timeline_morning">午前</string>
+    <string name="timeline_afternoon">午後</string>
+    <string name="timeline_evening">夕方</string>
+    <string name="timeline_steps_format">%1$s歩</string>
+
+    <string name="chip_achieved">目標達成 ✓</string>
+    <string name="chip_no_record">記録なし</string>
+
+    <string name="history_total_steps_label">今月の総歩数</string>
+    <string name="history_achievement_rate_label">目標達成率</string>
+    <string name="history_empty_title">今月の歩数記録がありません</string>
+    <string name="history_empty_description">歩き始めるとここに表示されます</string>
+    <string name="history_steps_unit">歩</string>
+    <string name="history_calories_label">カロリー</string>
+    <string name="history_distance_label">距離</string>
+    <string name="history_steps_label_short">歩数</string>
+    <string name="history_goal_label_short">目標</string>
+    <string name="history_timeline_title">その日のタイムライン</string>
+    <string name="history_timeline_subtitle">時間帯別の歩数分布</string>
+    <string name="history_prev_month_cd">前の月</string>
+    <string name="history_next_month_cd">次の月</string>
+    <string name="history_month_format_pattern">yyyy年M月</string>
+    <string name="history_date_format_pattern">M月d日(E)</string>
+    <string name="history_select_date_prompt">日付を選択してください</string>
+</resources>

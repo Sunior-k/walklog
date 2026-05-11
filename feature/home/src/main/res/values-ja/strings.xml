@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="anonymous">匿名</string>
+
+    <!-- Weather conditions -->
+    <string name="weather_condition_clear">晴れ</string>
+    <string name="weather_condition_partly_cloudy">曇り時々晴れ</string>
+    <string name="weather_condition_cloudy">曇り</string>
+    <string name="weather_condition_rain">雨</string>
+    <string name="weather_condition_rain_snow">雨/雪</string>
+    <string name="weather_condition_snow">雪</string>
+    <string name="weather_condition_shower">にわか雨</string>
+    <string name="weather_condition_unknown">情報なし</string>
+
+    <!-- Weather advice -->
+    <string name="weather_advice_unavailable">天気情報を読み込めませんでした</string>
+    <string name="weather_advice_snow">雪の予報があります。足元にご注意ください</string>
+    <string name="weather_advice_rain">雨の予報があります。傘を持参しましょう</string>
+    <string name="weather_advice_shower">にわか雨の可能性があります。短めに歩きましょう</string>
+    <string name="weather_advice_wind">風が強いです。屋内ウォーキングもおすすめです</string>
+    <string name="weather_advice_cold">寒い天気です。暖かくして歩きましょう</string>
+    <string name="weather_advice_hot">暑い天気です。水を持って無理しないようにしましょう</string>
+    <string name="weather_advice_clear">晴れています。気軽に歩くのに最適です</string>
+    <string name="weather_advice_default">今日の天気を確認して、ウォーキング計画を立てましょう</string>
+    <string name="weather_loading">天気情報を読み込んでいます</string>
+    <string name="weather_default_location">ソウル基準</string>
+
+    <!-- Weather supporting text -->
+    <string name="weather_precipitation">降水 %1$d%%</string>
+    <string name="weather_humidity">湿度 %1$d%%</string>
+    <string name="weather_wind_speed">風速 %1$sm/s</string>
+    <string name="weather_location">%1$s基準</string>
+
+    <!-- Forecast -->
+    <string name="forecast_title">ウォーキング予報</string>
+    <string name="forecast_am">午前</string>
+    <string name="forecast_pm">午後</string>
+    <string name="forecast_description">今日の%1$s%2$d時はいつも最も多く歩く時間帯です</string>
+    <string name="forecast_description_am">今日の午前%1$d時はいつも最も多く歩く時間帯です</string>
+    <string name="forecast_description_pm">今日の午後%1$d時はいつも最も多く歩く時間帯です</string>
+    <string name="forecast_recommended_time">今日%1$s%2$d時</string>
+    <string name="forecast_recommended_time_am">今日午前%1$d時</string>
+    <string name="forecast_recommended_time_pm">今日午後%1$d時</string>
+    <string name="forecast_avg_steps">平均%1$s歩</string>
+    <string name="forecast_active_days">直近%1$d日中%2$d日</string>
+    <string name="forecast_default_recommended">今日は午後3時が最適です</string>
+
+    <!-- Steps -->
+    <string name="steps_format">%1$s歩</string>
+
+    <!-- Home UI -->
+    <string name="home_greeting">%1$sさん、今日も一緒に歩きましょう！</string>
+    <string name="home_goal_achieved">今日の目標を達成しました</string>
+    <string name="home_steps_remaining">あと%1$d歩</string>
+    <string name="home_progress_detail">%1$d%%完了 · 目標%2$d歩</string>
+    <string name="home_goal_steps">目標：%1$d歩</string>
+    <string name="home_current_label">現在</string>
+    <string name="home_remaining_label">残り歩数</string>
+    <string name="home_steps_value">%1$d歩</string>
+    <string name="home_weekly_report_title">週間レポートを見る</string>
+    <string name="home_weekly_report_subtitle">完了した週間記録を見て共有しましょう</string>
+    <string name="home_recap_label">%1$sレキャップ</string>
+    <string name="home_recap_steps_walked">%1$s歩きました</string>
+    <string name="home_recap_view">レキャップを見る</string>
+    <string name="home_recap_error_title">レキャップを読み込めません</string>
+    <string name="home_recap_error_desc">しばらくしてから確認してください</string>
+
+    <!-- Forecast bottom sheet -->
+    <string name="forecast_sheet_today_recommended">今日のおすすめ時間</string>
+    <string name="forecast_sheet_why_title">なぜこの時間帯を勧めるの？</string>
+    <string name="forecast_sheet_pattern_title">直近7日間のパターン</string>
+    <string name="forecast_sheet_avg_steps_label">この時間の平均歩数</string>
+    <string name="forecast_sheet_active_days_label">活動があった日</string>
+    <string name="forecast_sheet_start_walking">今すぐ歩きに行く</string>
+    <string name="forecast_sheet_weekly_chart">週間時間帯別活動</string>
+    <string name="forecast_sheet_peak_hour">最高%1$d時</string>
+
+    <!-- Sensor status -->
+    <string name="sensor_unavailable_title">このデバイスはHealth Connectに対応していません</string>
+    <string name="sensor_unavailable_desc">このデバイスではHealth Connectが利用できないため\n歩数を計測できません。</string>
+    <string name="sensor_permission_title">Health Connectの権限が必要です</string>
+    <string name="sensor_permission_desc">歩数データを読み取るには\nHealth Connectの読み取り権限を許可してください。</string>
+    <string name="sensor_permission_button">権限を許可する</string>
+    <string name="sensor_no_data_title">まだ歩数データがありません</string>
+    <string name="sensor_no_data_desc">少し動くと歩数が計測されます</string>
+
+    <!-- Mission card -->
+    <string name="mission_completed">達成完了</string>
+    <string name="mission_recovery">リカバリーミッション</string>
+    <string name="mission_today">今日のミッション</string>
+    <string name="mission_default_title">今日の目標達成まで、もう少し歩いてみましょう</string>
+    <string name="mission_steps_format">%1$d歩</string>
+    <string name="mission_target_steps_format">/ %1$d歩</string>
+    <string name="mission_reward_default">+%1$dキャッシュ</string>
+
+    <!-- Streak badge -->
+    <string name="streak_loading">ストリーク確認中</string>
+    <string name="streak_consecutive">🔥 %1$d日連続</string>
+    <string name="streak_none">ストリークなし</string>
+
+    <!-- Notification -->
+    <string name="notification_walking_title">歩くのにいい時間です！</string>
+    <string name="notification_walking_text">いつもこの時間帯に最も多く歩いています。今すぐ行きましょう！</string>
+    <string name="notification_channel_name">ウォーキング通知</string>
+    <string name="notification_channel_desc">ウォーキングパターンに基づくリマインダー通知</string>
+</resources>

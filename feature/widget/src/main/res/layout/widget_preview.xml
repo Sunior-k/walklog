@@ -21,7 +21,7 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:text="워크로그"
+            android:text="@string/widget_app_name"
             android:textColor="@color/walklog_primary"
             android:textSize="13sp"
             android:textStyle="bold" />
@@ -29,7 +29,7 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="오늘 미션"
+            android:text="@string/widget_preview_today_mission"
             android:textColor="@color/walklog_gray_400"
             android:textSize="11sp" />
 
@@ -45,7 +45,7 @@
         android:id="@+id/tv_preview_steps"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="4,200보"
+        android:text="@string/widget_preview_steps"
         android:textColor="@color/walklog_text_primary"
         android:textSize="26sp"
         android:textStyle="bold" />
@@ -53,7 +53,7 @@
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="목표 6,000보"
+        android:text="@string/widget_preview_goal"
         android:textColor="@color/walklog_gray_400"
         android:textSize="11sp" />
 
@@ -104,14 +104,14 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:text="1,800보 남았어요"
+            android:text="@string/widget_preview_remaining"
             android:textColor="@color/walklog_gray_400"
             android:textSize="12sp" />
 
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="+20 캐시"
+            android:text="@string/widget_reward"
             android:textColor="@color/walklog_success"
             android:textSize="12sp"
             android:textStyle="bold" />

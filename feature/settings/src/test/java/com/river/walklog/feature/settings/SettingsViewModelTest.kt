@@ -75,7 +75,7 @@ class SettingsViewModelTest {
         every { repository.settings } returns flowOf(defaultSettings())
         val viewModel = SettingsViewModel(repository, crashReporter)
 
-        viewModel.handleIntent(SettingsIntent.OnStepGoalChanged(12_000))
+        viewModel.updateStepGoal(12_000)
         advanceUntilIdle()
 
         coVerify { repository.setDailyStepGoal(12_000) }
@@ -88,7 +88,7 @@ class SettingsViewModelTest {
         every { repository.settings } returns flowOf(defaultSettings())
         val viewModel = SettingsViewModel(repository, crashReporter)
 
-        viewModel.handleIntent(SettingsIntent.OnNotificationsToggled(false))
+        viewModel.updateNotifications(false)
         advanceUntilIdle()
 
         coVerify { repository.setNotificationsEnabled(false) }
@@ -99,7 +99,7 @@ class SettingsViewModelTest {
         every { repository.settings } returns flowOf(defaultSettings())
         val viewModel = SettingsViewModel(repository, crashReporter)
 
-        viewModel.handleIntent(SettingsIntent.OnNotificationsToggled(true))
+        viewModel.updateNotifications(true)
         advanceUntilIdle()
 
         coVerify { repository.setNotificationsEnabled(true) }
@@ -112,7 +112,7 @@ class SettingsViewModelTest {
         every { repository.settings } returns flowOf(defaultSettings())
         val viewModel = SettingsViewModel(repository, crashReporter)
 
-        viewModel.handleIntent(SettingsIntent.OnRecoveryStepsChanged(4_000))
+        viewModel.updateRecoverySteps(4_000)
         advanceUntilIdle()
 
         coVerify { repository.setRecoveryMissionSteps(4_000) }
@@ -125,7 +125,7 @@ class SettingsViewModelTest {
         every { repository.settings } returns flowOf(defaultSettings())
         val viewModel = SettingsViewModel(repository, crashReporter)
 
-        viewModel.handleIntent(SettingsIntent.OnThemeModeChanged(ThemeMode.LIGHT))
+        viewModel.updateThemeMode(ThemeMode.LIGHT)
         advanceUntilIdle()
 
         coVerify { repository.setThemeMode(ThemeMode.LIGHT) }
@@ -136,7 +136,7 @@ class SettingsViewModelTest {
         every { repository.settings } returns flowOf(defaultSettings())
         val viewModel = SettingsViewModel(repository, crashReporter)
 
-        viewModel.handleIntent(SettingsIntent.OnThemeModeChanged(ThemeMode.DARK))
+        viewModel.updateThemeMode(ThemeMode.DARK)
         advanceUntilIdle()
 
         coVerify { repository.setThemeMode(ThemeMode.DARK) }
@@ -147,7 +147,7 @@ class SettingsViewModelTest {
         every { repository.settings } returns flowOf(defaultSettings())
         val viewModel = SettingsViewModel(repository, crashReporter)
 
-        viewModel.handleIntent(SettingsIntent.OnThemeModeChanged(ThemeMode.SYSTEM))
+        viewModel.updateThemeMode(ThemeMode.SYSTEM)
         advanceUntilIdle()
 
         coVerify { repository.setThemeMode(ThemeMode.SYSTEM) }

@@ -20,7 +20,6 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import java.time.LocalDate
 import java.time.LocalTime
-import java.util.Locale
 import javax.inject.Inject
 
 @HiltViewModel
@@ -43,13 +42,9 @@ class MissionDetailViewModel @Inject constructor(
         loadWeather()
     }
 
-    fun handleIntent(intent: MissionDetailIntent) {
-        when (intent) {
-            MissionDetailIntent.OnRefreshWeather -> loadWeather(forceRefresh = true)
-        }
+    fun refreshWeather() {
+        loadWeather(forceRefresh = true)
     }
-
-    // ─── Private ───────────────────────────────────────────────────────────
 
     private fun loadMissionData() {
         viewModelScope.launch {
@@ -62,22 +57,22 @@ class MissionDetailViewModel @Inject constructor(
                 val currentSteps = stepRepository.getStepsForDay(toEpochDay).first().steps
                 val hourlySteps = stepRepository.getHourlyStepsForRange(fromEpochDay, toEpochDay)
 
-                val recommendedTimeText = if (hourlySteps.any { it > 0f }) {
+                val recommendedPeakHour = if (hourlySteps.any { it > 0f }) {
                     val result = walkingInsightsEngine.analyze(
                         hourlySteps = hourlySteps,
                         targetStepsPerDay = targetSteps,
                         currentHour = LocalTime.now().hour,
                     )
-                    peakHourToText(result.peakHour)
+                    result.peakHour
                 } else {
-                    _state.value.recommendedTimeText
+                    _state.value.recommendedPeakHour
                 }
 
                 _state.update { state ->
                     state.copy(
                         currentSteps = currentSteps,
                         targetSteps = targetSteps,
-                        recommendedTimeText = recommendedTimeText,
+                        recommendedPeakHour = recommendedPeakHour,
                     )
                 }
             }.onFailure { e ->
@@ -87,21 +82,11 @@ class MissionDetailViewModel @Inject constructor(
         }
     }
 
-    private fun peakHourToText(hour: Int): String {
-        val period = if (hour < 12) "오전" else "오후"
-        val displayHour = when {
-            hour == 0 -> 12
-            hour <= 12 -> hour
-            else -> hour - 12
-        }
-        return "$period ${displayHour}시"
-    }
-
     private fun loadWeather(forceRefresh: Boolean = false) {
         weatherJob?.cancel()
         weatherJob = viewModelScope.launch {
             val weather = loadWeatherWithRetry(forceRefresh = forceRefresh)
-            _state.update { state -> state.applyWeather(weather) }
+            _state.update { state -> state.copy(weather = weather) }
         }
     }
 
@@ -124,20 +109,6 @@ class MissionDetailViewModel @Inject constructor(
         }
         return fallback
     }
-
-    private fun MissionDetailState.applyWeather(weather: WeatherSummary): MissionDetailState = copy(
-        weatherLocationText = "${weather.locationName} 기준",
-        weatherTemperatureText = weather.temperatureText,
-        weatherConditionText = weather.conditionText,
-        weatherAdviceText = weather.walkingAdvice,
-        weatherSupportingText = buildWeatherSupportingText(weather),
-    )
-
-    private fun buildWeatherSupportingText(weather: WeatherSummary): String = listOfNotNull(
-        weather.precipitationProbability?.let { "강수 $it%" },
-        weather.humidity?.let { "습도 $it%" },
-        weather.windSpeedMetersPerSecond?.let { "풍속 ${String.format(Locale.KOREAN, "%.1f", it)}m/s" },
-    ).joinToString(" · ")
 
     companion object {
         private const val WEATHER_LOAD_MAX_ATTEMPTS = 3

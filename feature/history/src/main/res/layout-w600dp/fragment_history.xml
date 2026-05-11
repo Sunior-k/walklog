@@ -28,7 +28,7 @@
                 android:layout_width="40dp"
                 android:layout_height="40dp"
                 android:background="?attr/selectableItemBackgroundBorderless"
-                android:contentDescription="이전 달"
+                android:contentDescription="@string/history_prev_month_cd"
                 android:src="@drawable/ic_chevron_left"
                 android:tint="@color/walklog_gray_400"
                 app:layout_constraintBottom_toBottomOf="parent"
@@ -53,7 +53,7 @@
                 android:layout_width="40dp"
                 android:layout_height="40dp"
                 android:background="?attr/selectableItemBackgroundBorderless"
-                android:contentDescription="다음 달"
+                android:contentDescription="@string/history_next_month_cd"
                 android:src="@drawable/ic_chevron_right"
                 android:tint="@color/walklog_gray_400"
                 app:layout_constraintBottom_toBottomOf="parent"
@@ -88,7 +88,7 @@
                 android:id="@+id/tv_total_steps_label"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="이달 총 걸음"
+                android:text="@string/history_total_steps_label"
                 android:textAppearance="@style/WalkLog.TextAppearance.SubTypography12R"
                 android:textColor="@color/walklog_text_secondary"
                 app:layout_constraintEnd_toStartOf="@id/stats_center_guideline"
@@ -122,7 +122,7 @@
                 android:id="@+id/tv_achievement_rate_label"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="목표 달성률"
+                android:text="@string/history_achievement_rate_label"
                 android:textAppearance="@style/WalkLog.TextAppearance.SubTypography12R"
                 android:textColor="@color/walklog_text_secondary"
                 app:layout_constraintEnd_toEndOf="parent"
@@ -198,7 +198,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="16dp"
-                android:text="이번 달 걸음 기록이 없어요"
+                android:text="@string/history_empty_title"
                 android:textAppearance="@style/WalkLog.TextAppearance.Typography6R"
                 android:textColor="@color/walklog_text_secondary"
                 app:layout_constraintBottom_toTopOf="@id/tv_empty_description"
@@ -211,7 +211,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="4dp"
-                android:text="걸음 수를 측정하면 여기에 표시돼요"
+                android:text="@string/history_empty_description"
                 android:textAppearance="@style/WalkLog.TextAppearance.Typography7R"
                 android:textColor="@color/walklog_gray_400"
                 app:layout_constraintBottom_toBottomOf="parent"
@@ -296,7 +296,7 @@
                     android:layout_height="wrap_content"
                     android:layout_marginStart="5dp"
                     android:layout_marginBottom="8dp"
-                    android:text="보"
+                    android:text="@string/history_steps_unit"
                     android:textAppearance="@style/WalkLog.TextAppearance.SubTypography10R"
                     android:textColor="@color/walklog_text_secondary" />
 
@@ -356,7 +356,7 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_marginStart="5dp"
-                            android:text="칼로리"
+                            android:text="@string/history_calories_label"
                             android:textAppearance="@style/WalkLog.TextAppearance.SubTypography13R"
                             android:textColor="@color/walklog_primary_dark" />
 
@@ -403,7 +403,7 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_marginStart="5dp"
-                            android:text="거리"
+                            android:text="@string/history_distance_label"
                             android:textAppearance="@style/WalkLog.TextAppearance.SubTypography13R"
                             android:textColor="@color/walklog_secondary" />
 
@@ -490,7 +490,7 @@
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="걸음"
+                            android:text="@string/history_steps_label_short"
                             android:textAppearance="@style/WalkLog.TextAppearance.SubTypography13R"
                             android:textColor="@color/walklog_text_secondary" />
 
@@ -521,7 +521,7 @@
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="목표"
+                            android:text="@string/history_goal_label_short"
                             android:textAppearance="@style/WalkLog.TextAppearance.SubTypography13R"
                             android:textColor="@color/walklog_text_secondary" />
 
@@ -555,7 +555,7 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="선택일 타임라인"
+                    android:text="@string/history_timeline_title"
                     android:textAppearance="@style/WalkLog.TextAppearance.Typography6B"
                     android:textColor="@color/walklog_text_primary" />
 
@@ -563,7 +563,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="4dp"
-                    android:text="시간대별 걸음 분포"
+                    android:text="@string/history_timeline_subtitle"
                     android:textAppearance="@style/WalkLog.TextAppearance.SubTypography12R"
                     android:textColor="@color/walklog_text_secondary" />
 
@@ -583,7 +583,7 @@
                             android:id="@+id/tv_timeline_morning_label"
                             android:layout_width="40dp"
                             android:layout_height="wrap_content"
-                            android:text="오전"
+                            android:text="@string/timeline_morning"
                             android:textAppearance="@style/WalkLog.TextAppearance.SubTypography12B"
                             android:textColor="@color/walklog_text_primary" />
 
@@ -619,7 +619,7 @@
                             android:id="@+id/tv_timeline_afternoon_label"
                             android:layout_width="40dp"
                             android:layout_height="wrap_content"
-                            android:text="오후"
+                            android:text="@string/timeline_afternoon"
                             android:textAppearance="@style/WalkLog.TextAppearance.SubTypography12B"
                             android:textColor="@color/walklog_text_primary" />
 
@@ -655,7 +655,7 @@
                             android:id="@+id/tv_timeline_evening_label"
                             android:layout_width="40dp"
                             android:layout_height="wrap_content"
-                            android:text="저녁"
+                            android:text="@string/timeline_evening"
                             android:textAppearance="@style/WalkLog.TextAppearance.SubTypography12B"
                             android:textColor="@color/walklog_text_primary" />
 
@@ -753,7 +753,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="16dp"
-                android:text="날짜를 선택해 주세요"
+                android:text="@string/history_select_date_prompt"
                 android:textAppearance="@style/WalkLog.TextAppearance.Typography6R"
                 android:textColor="@color/walklog_text_secondary" />
 

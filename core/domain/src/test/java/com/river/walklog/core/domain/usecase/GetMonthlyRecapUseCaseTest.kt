@@ -23,7 +23,7 @@ class GetMonthlyRecapUseCaseTest {
         useCase = GetMonthlyRecapUseCase(repository)
     }
 
-    // ─── 기본 집계 ─────────────────────────────────────────────────────────
+    // 기본 집계
 
     @Test
     fun `totalSteps is sum of all daily steps`() = runTest {
@@ -82,7 +82,7 @@ class GetMonthlyRecapUseCaseTest {
         }
     }
 
-    // ─── bestDay ───────────────────────────────────────────────────────────
+    // bestDay
 
     @Test
     fun `bestDay is the day with most steps`() = runTest {
@@ -110,7 +110,7 @@ class GetMonthlyRecapUseCaseTest {
         }
     }
 
-    // ─── longestStreak ─────────────────────────────────────────────────────
+    // longestStreak
 
     @Test
     fun `longestStreak counts consecutive achieved days`() = runTest {
@@ -151,7 +151,7 @@ class GetMonthlyRecapUseCaseTest {
         }
     }
 
-    // ─── estimatedCalories ─────────────────────────────────────────────────
+    // estimatedCalories
 
     @Test
     fun `estimatedCalories uses 0_04 kcal per step`() = runTest {
@@ -164,7 +164,7 @@ class GetMonthlyRecapUseCaseTest {
         }
     }
 
-    // ─── Helpers ───────────────────────────────────────────────────────────
+    // helper
 
     private fun stubRepository(days: List<DailyStepCount>) {
         every {

@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="reward_coming_soon">✦  Coming soon  ✦</string>
+    <string name="reward_tagline">Walk more, earn more</string>
+    <string name="reward_preview_section">Preview</string>
+    <string name="reward_footer">Coming in a future update</string>
+    <string name="reward_footer_tagline">Your consistent steps turn into shining rewards</string>
+
+    <!-- Feature items -->
+    <string name="reward_feature1_title">Earn points</string>
+    <string name="reward_feature1_subtitle">Points per step</string>
+    <string name="reward_feature2_title">Badge collection</string>
+    <string name="reward_feature2_subtitle">Achievement badges</string>
+    <string name="reward_feature3_title">Reward store</string>
+    <string name="reward_feature3_subtitle">Redeem with points</string>
+    <string name="reward_feature4_title">Level rewards</string>
+    <string name="reward_feature4_subtitle">Level-up gifts</string>
+</resources>

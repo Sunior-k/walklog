@@ -48,8 +48,6 @@ class TodayMissionWidgetReceiver : GlanceAppWidgetReceiver() {
             .cancelUniqueWork(TodayMissionWidgetWorker.WORK_NAME)
     }
 
-    // ─── Private ─────────────────────────────────────────────────────────────
-
     /**
      * WorkManager 15분 주기 작업 등록.
      * [ExistingPeriodicWorkPolicy.KEEP]: 이미 등록된 작업이 있으면 유지 (중복 방지).

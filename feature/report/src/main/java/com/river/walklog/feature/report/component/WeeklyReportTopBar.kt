@@ -7,10 +7,12 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.tooling.preview.Preview
-import com.river.walklog.core.designsystem.R
 import com.river.walklog.core.designsystem.foundation.WalkLogTheme
+import com.river.walklog.feature.report.R
+import com.river.walklog.core.designsystem.R as DesignR
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -20,8 +22,8 @@ internal fun WeeklyReportTopBar(onClickBack: () -> Unit) {
         navigationIcon = {
             IconButton(onClick = onClickBack) {
                 Icon(
-                    imageVector = ImageVector.vectorResource(R.drawable.ic_arrow_back),
-                    contentDescription = "뒤로가기",
+                    imageVector = ImageVector.vectorResource(DesignR.drawable.ic_arrow_back),
+                    contentDescription = stringResource(R.string.back_button_cd),
                     tint = WalkLogTheme.colors.onSurface,
                 )
             }

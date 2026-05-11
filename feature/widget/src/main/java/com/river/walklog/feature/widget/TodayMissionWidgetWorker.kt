@@ -21,6 +21,7 @@ import com.river.walklog.core.model.DailyStepCount
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
 import kotlinx.coroutines.flow.first
+import java.text.NumberFormat
 import java.time.LocalDate
 
 /**
@@ -131,15 +132,16 @@ class TodayMissionWidgetWorker @AssistedInject constructor(
      */
     @RequiresApi(Build.VERSION_CODES.VANILLA_ICE_CREAM)
     private fun updatePickerPreview(stepCount: DailyStepCount) {
+        val numberFormat = NumberFormat.getNumberInstance(context.resources.configuration.locales[0])
         val remaining = (stepCount.targetSteps - stepCount.steps).coerceAtLeast(0)
         val remainingText = if (stepCount.isAchieved) {
-            "오늘 목표 달성!"
+            context.getString(R.string.widget_goal_achieved)
         } else {
-            "%,d보 남았어요".format(remaining)
+            context.getString(R.string.widget_steps_remaining, numberFormat.format(remaining))
         }
 
         val views = RemoteViews(context.packageName, R.layout.widget_preview).apply {
-            setTextViewText(R.id.tv_preview_steps, "%,d보".format(stepCount.steps))
+            setTextViewText(R.id.tv_preview_steps, context.getString(R.string.widget_steps_current, numberFormat.format(stepCount.steps)))
             setTextViewText(R.id.tv_preview_remaining, remainingText)
         }
 

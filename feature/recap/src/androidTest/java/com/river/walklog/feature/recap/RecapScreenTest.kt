@@ -8,6 +8,7 @@ import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import androidx.test.platform.app.InstrumentationRegistry
 import com.river.walklog.core.designsystem.foundation.WalkLogTheme
 import com.river.walklog.core.model.DailyStepCount
 import com.river.walklog.core.model.MonthlyRecap
@@ -16,6 +17,7 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import java.time.LocalDate
+import java.time.format.DateTimeFormatter
 
 @RunWith(AndroidJUnit4::class)
 class RecapScreenTest {
@@ -23,7 +25,19 @@ class RecapScreenTest {
     @get:Rule
     val composeTestRule = createAndroidComposeRule<ComponentActivity>()
 
-    // ─── Loading state ─────────────────────────────────────────────────────
+    private val activity get() = composeTestRule.activity
+
+    private fun monthLabel(year: Int, month: Int): String {
+        val locale = InstrumentationRegistry.getInstrumentation()
+            .targetContext
+            .resources
+            .configuration
+            .locales[0]
+        return LocalDate.of(year, month, 1)
+            .format(DateTimeFormatter.ofPattern("MMMM", locale))
+    }
+
+    // 로딩
 
     @Test
     fun loadingState_showsLoadingIndicator() {
@@ -39,7 +53,7 @@ class RecapScreenTest {
         setContent(state = RecapState(isLoading = true, recap = null))
 
         composeTestRule
-            .onNodeWithText("3월을\n돌아볼게요")
+            .onNodeWithText(activity.getString(R.string.recap_opening_body, monthLabel(2025, 3)))
             .assertDoesNotExist()
     }
 
@@ -52,7 +66,7 @@ class RecapScreenTest {
             .assertIsDisplayed()
     }
 
-    // ─── Loaded state — Opening slide ──────────────────────────────────────
+    // 로딩 완료
 
     @Test
     fun loadedState_showsMonthLabelOnOpeningSlide() {
@@ -64,7 +78,7 @@ class RecapScreenTest {
         )
 
         composeTestRule
-            .onNodeWithText("3월 리캡")
+            .onNodeWithText(activity.getString(R.string.recap_title, monthLabel(2025, 3)))
             .assertIsDisplayed()
     }
 
@@ -78,7 +92,7 @@ class RecapScreenTest {
         )
 
         composeTestRule
-            .onNodeWithText("3월을\n돌아볼게요")
+            .onNodeWithText(activity.getString(R.string.recap_opening_body, monthLabel(2025, 3)))
             .assertIsDisplayed()
     }
 
@@ -92,11 +106,11 @@ class RecapScreenTest {
         )
 
         composeTestRule
-            .onNodeWithText("걸음으로 만든 4월 이야기")
+            .onNodeWithText(activity.getString(R.string.recap_opening_subtitle, monthLabel(2025, 4)))
             .assertIsDisplayed()
     }
 
-    // ─── Close button ──────────────────────────────────────────────────────
+    // 닫기 버튼 이벤트
 
     @Test
     fun closeButton_clicked_invokesOnCloseCallback() {
@@ -110,13 +124,13 @@ class RecapScreenTest {
         )
 
         composeTestRule
-            .onNodeWithContentDescription("닫기")
+            .onNodeWithContentDescription(activity.getString(R.string.action_close))
             .performClick()
 
         assertTrue(closed)
     }
 
-    // ─── Helper ────────────────────────────────────────────────────────────
+    // helper
 
     private fun setContent(
         state: RecapState,

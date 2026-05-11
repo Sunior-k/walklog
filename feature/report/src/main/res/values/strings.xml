@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="back_button_cd">뒤로가기</string>
+
+    <!-- Archive screen -->
+    <string name="report_title">주간 리포트</string>
+    <string name="report_archive_subtitle">최근 12주 기록을 모아봤어요</string>
+    <string name="report_past_title">지난 리포트</string>
+    <string name="report_in_progress">진행 중인 주</string>
+    <string name="report_completed">완료된 리포트</string>
+    <string name="report_locked_message">이번 주 리포트는 아직 준비 중이에요</string>
+    <string name="report_total_steps_label">총 걸음</string>
+    <string name="report_achievement_rate_label">달성률</string>
+
+    <!-- Detail screen -->
+    <string name="report_share_preview_title">공유 미리보기</string>
+    <string name="report_share_preview_expanded">공유될 카드가 아래에 표시돼요</string>
+    <string name="report_share_preview_collapsed">공유하기 전에 카드 형태를 확인해 보세요</string>
+    <string name="report_share_expand">열기</string>
+    <string name="report_share_collapse">접기</string>
+    <string name="report_weekly_total_steps_label">이번 주 총 걸음</string>
+    <string name="report_goal_label">목표 달성</string>
+    <string name="report_days_suffix"> 일</string>
+    <string name="report_highlight_title">주간 하이라이트</string>
+    <string name="report_best_day_label">가장 많이 걸은 요일</string>
+    <string name="report_best_time_label">가장 활발한 시간대</string>
+    <string name="report_best_streak_label">최고 스트릭</string>
+    <string name="report_sharing_preparing">공유 이미지를 만드는 중이에요</string>
+    <string name="report_empty_title">이번 주 걸음 기록이 없어요</string>
+    <string name="report_empty_desc">걷기 시작하면 주간 리포트가 만들어져요</string>
+    <string name="report_share_button_sharing">공유 준비 중...</string>
+    <string name="report_share_button">리포트 공유하기</string>
+    <string name="report_share_failed">리포트 공유에 실패했어요.</string>
+
+    <!-- Day labels for chart -->
+    <string name="report_day_mon">월</string>
+    <string name="report_day_tue">화</string>
+    <string name="report_day_wed">수</string>
+    <string name="report_day_thu">목</string>
+    <string name="report_day_fri">금</string>
+    <string name="report_day_sat">토</string>
+    <string name="report_day_sun">일</string>
+
+    <!-- Share card -->
+    <string name="report_share_card_total_steps">이번 주 총 걸음 수</string>
+    <string name="report_share_card_achievement_rate">달성률 %1$s</string>
+    <string name="report_share_card_walking_note">꾸준히 걷고 있어요</string>
+    <string name="report_share_card_best_day">가장 많이 걸은 요일</string>
+    <string name="report_share_card_best_time">가장 활발한 시간대</string>
+    <string name="report_share_card_best_streak">최고 스트릭</string>
+    <string name="report_share_footer">WalkLog와 함께 만든 나의 주간 걷기 리포트</string>
+
+    <!-- Share manager -->
+    <string name="report_share_chooser_title">주간 리포트 공유</string>
+    <string name="report_share_text">이번 주 나의 걷기 리포트를 확인해보세요!</string>
+
+    <!-- Mapper / ViewModel strings -->
+    <string name="steps_with_suffix">%1$s보</string>
+    <string name="report_week_range">%1$s %2$d주차</string>
+    <string name="report_week_range_full">%1$s %2$d주차 · %3$s~%4$s</string>
+    <string name="report_date_range">%1$s~%2$s</string>
+    <string name="report_unlock_from">%1$s 00:00부터 볼 수 있어요</string>
+    <string name="report_full_date_format_pattern">M월 d일</string>
+    <string name="report_best_time_am">오전 %1$d시</string>
+    <string name="report_best_time_pm">오후 %1$d시</string>
+    <string name="report_summary_all_achieved">이번 주 목표를 모두 달성했어요!</string>
+    <string name="report_summary_good_progress">훌륭해요! 목표에 가까워지고 있어요</string>
+    <string name="report_summary_keep_going">꾸준히 걷고 있어요, 파이팅!</string>
+    <string name="report_streak_days">%1$d일</string>
+
+    <!-- Error state -->
+    <string name="report_error_title">데이터를 불러오지 못했어요</string>
+    <string name="report_error_desc">잠시 후 다시 시도해 주세요</string>
+</resources>
