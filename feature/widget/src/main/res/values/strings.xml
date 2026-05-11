@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="widget_app_name">워크로그</string>
+    <string name="widget_refresh_cd">새로고침</string>
+    <string name="widget_loading">걸음 수 불러오는 중...</string>
+    <string name="widget_steps_current">%1$s보</string>
+    <string name="widget_goal_steps">목표 %1$s보</string>
+    <string name="widget_goal_achieved">오늘 목표 달성!</string>
+    <string name="widget_steps_remaining">%1$s보 남았어요</string>
+    <string name="widget_reward">+20 캐시</string>
+
+    <string name="widget_preview_today_mission">오늘 미션</string>
+    <string name="widget_preview_steps">4,200보</string>
+    <string name="widget_preview_goal">목표 6,000보</string>
+    <string name="widget_preview_remaining">1,800보 남았어요</string>
+</resources>

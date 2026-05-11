@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="widget_app_name">WalkLog</string>
+    <string name="widget_refresh_cd">Refresh</string>
+    <string name="widget_loading">Loading steps…</string>
+    <string name="widget_steps_current">%1$s steps</string>
+    <string name="widget_goal_steps">Goal %1$s steps</string>
+    <string name="widget_goal_achieved">Goal reached today!</string>
+    <string name="widget_steps_remaining">%1$s steps left</string>
+    <string name="widget_reward">+20 cash</string>
+
+    <string name="widget_preview_today_mission">Today\'s Mission</string>
+    <string name="widget_preview_steps">4,200 steps</string>
+    <string name="widget_preview_goal">Goal: 6,000 steps</string>
+    <string name="widget_preview_remaining">1,800 steps left</string>
+</resources>

@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Weather conditions -->
+    <string name="weather_condition_clear">맑음</string>
+    <string name="weather_condition_partly_cloudy">구름많음</string>
+    <string name="weather_condition_cloudy">흐림</string>
+    <string name="weather_condition_rain">비</string>
+    <string name="weather_condition_rain_snow">비/눈</string>
+    <string name="weather_condition_snow">눈</string>
+    <string name="weather_condition_shower">소나기</string>
+    <string name="weather_condition_unknown">정보 없음</string>
+
+    <!-- Weather advice -->
+    <string name="weather_advice_unavailable">날씨 정보를 불러오지 못했어요</string>
+    <string name="weather_advice_snow">눈 예보가 있어 미끄럼에 주의하세요</string>
+    <string name="weather_advice_rain">비 예보가 있어 우산을 챙기세요</string>
+    <string name="weather_advice_shower">소나기 가능성이 있어 짧게 걸어보세요</string>
+    <string name="weather_advice_wind">바람이 강해 실내 걷기도 좋아요</string>
+    <string name="weather_advice_cold">추운 날씨예요. 따뜻하게 입고 걸어보세요</string>
+    <string name="weather_advice_hot">더운 날씨예요. 물을 챙기고 무리하지 마세요</string>
+    <string name="weather_advice_clear">맑은 날씨예요. 가볍게 걷기 좋아요</string>
+    <string name="weather_advice_default">오늘 날씨를 확인하고 걷기 계획을 세워보세요</string>
+    <string name="weather_loading">날씨 정보를 불러오는 중이에요</string>
+    <string name="weather_default_location">서울 기준</string>
+
+    <!-- Weather supporting text -->
+    <string name="weather_precipitation">강수 %1$d%%</string>
+    <string name="weather_humidity">습도 %1$d%%</string>
+    <string name="weather_wind_speed">풍속 %1$sm/s</string>
+    <string name="weather_location">%1$s 기준</string>
+
+    <!-- Recommended time -->
+    <string name="recommended_time_am">오전 %1$d시</string>
+    <string name="recommended_time_pm">오후 %1$d시</string>
+
+    <!-- Mission detail top bar -->
+    <string name="mission_detail_title">미션 상세</string>
+    <string name="back_button_cd">뒤로가기</string>
+
+    <!-- Mission type badge -->
+    <string name="mission_type_completed">달성 완료</string>
+    <string name="mission_type_recovery">회복 미션</string>
+    <string name="mission_type_today">오늘 미션</string>
+
+    <!-- Mission default content -->
+    <string name="mission_default_title">오늘 목표 달성까지 조금만 더 걸어보세요</string>
+    <string name="mission_default_description">매일 꾸준히 걷는 습관을 만들 수 있도록 오늘의 미션을 준비했어요.</string>
+    <string name="mission_reward_default">+%1$d 캐시</string>
+
+    <!-- Mission progress card -->
+    <string name="mission_reward_label">보상</string>
+    <string name="mission_goal_achieved">목표를 달성했어요 🎉</string>
+    <string name="mission_steps_remaining">%1$d보 남았어요</string>
+    <string name="mission_steps_current">%1$d보</string>
+    <string name="mission_steps_target">/ %1$d보</string>
+    <string name="mission_progress_rate">진행률</string>
+    <string name="mission_remaining_steps">남은 걸음</string>
+    <string name="mission_ring_goal">목표 %1$d보</string>
+
+    <!-- Mission guide card -->
+    <string name="guide_title_completed">오늘도 꾸준히 걸어주셨네요</string>
+    <string name="guide_title_recovery">어제 놓친 목표를 다시 이어가보세요</string>
+    <string name="guide_title_default">지금이 걷기 좋은 타이밍이에요</string>
+    <string name="guide_desc_completed">좋은 흐름을 유지하고 있어요. 내일도 가볍게 이어가보세요.</string>
+    <string name="guide_desc_recovery">회복 미션을 달성하면 스트릭을 유지할 수 있어요.</string>
+    <string name="guide_desc_default">%1$s 전후가 평소 가장 많이 걷는 시간대예요.</string>
+
+    <!-- Mission timeline card -->
+    <string name="timeline_title">미션 타임라인</string>
+    <string name="timeline_status_completed">오늘 미션 완료</string>
+    <string name="timeline_next_checkpoint">다음 체크포인트</string>
+    <string name="timeline_start_completed">시작 완료</string>
+    <string name="timeline_start_recovery">놓친 걸음부터 천천히 회복</string>
+    <string name="timeline_start_default">추천 시간 전후로 짧게 시작</string>
+    <string name="timeline_reward_available">보상 수령 가능</string>
+    <string name="timeline_remaining">완료까지 %1$d보</string>
+    <string name="timeline_midpoint_remaining">중간 목표까지 %1$d보</string>
+    <string name="timeline_start_recommend">%1$s 시작 추천</string>
+    <string name="timeline_item1_started">오늘 미션을 이미 시작했어요.</string>
+    <string name="timeline_item1_notstarted">가장 부담 없는 첫 구간이에요.</string>
+    <string name="timeline_midpoint_title">중간 목표</string>
+    <string name="timeline_item2_half_done">절반 이상을 채웠어요.</string>
+    <string name="timeline_item2_half_notdone">여기까지 오면 완료가 훨씬 쉬워져요.</string>
+    <string name="timeline_reward_earned">보상 획득</string>
+    <string name="timeline_reward_pending">완료 보상</string>
+    <string name="timeline_reward_available_desc">오늘 보상을 받을 수 있어요.</string>
+    <string name="timeline_reward_steps_more">%1$d보를 더 걸으면 열려요.</string>
+
+    <!-- Mission bottom bar -->
+    <string name="mission_action_completed">이미 달성했어요</string>
+    <string name="mission_action_start">지금 걸으러 가기</string>
+</resources>

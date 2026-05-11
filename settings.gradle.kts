@@ -46,6 +46,7 @@ include(":core:network")
 include(":core:data")
 include(":core:designsystem")
 include(":core:analytics")
+include(":core:ui")
 
 // Feature modules
 include(":feature:recap")

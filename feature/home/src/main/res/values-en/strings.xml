@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="anonymous">Anonymous</string>
+
+    <!-- Weather conditions -->
+    <string name="weather_condition_clear">Clear</string>
+    <string name="weather_condition_partly_cloudy">Partly cloudy</string>
+    <string name="weather_condition_cloudy">Cloudy</string>
+    <string name="weather_condition_rain">Rain</string>
+    <string name="weather_condition_rain_snow">Rain/Snow</string>
+    <string name="weather_condition_snow">Snow</string>
+    <string name="weather_condition_shower">Shower</string>
+    <string name="weather_condition_unknown">Unavailable</string>
+
+    <!-- Weather advice -->
+    <string name="weather_advice_unavailable">Couldn\'t load weather data</string>
+    <string name="weather_advice_snow">Snow expected — watch your step</string>
+    <string name="weather_advice_rain">Rain expected — grab an umbrella</string>
+    <string name="weather_advice_shower">Showers possible — keep your walk short</string>
+    <string name="weather_advice_wind">Strong winds — indoor walking works too</string>
+    <string name="weather_advice_cold">It\'s cold out. Bundle up before you walk</string>
+    <string name="weather_advice_hot">It\'s hot out. Bring water and take it easy</string>
+    <string name="weather_advice_clear">Clear skies — a great day for a walk</string>
+    <string name="weather_advice_default">Check the forecast and plan your walk</string>
+    <string name="weather_loading">Loading weather…</string>
+    <string name="weather_default_location">Based on Seoul</string>
+
+    <!-- Weather supporting text -->
+    <string name="weather_precipitation">Precipitation %1$d%%</string>
+    <string name="weather_humidity">Humidity %1$d%%</string>
+    <string name="weather_wind_speed">Wind %1$sm/s</string>
+    <string name="weather_location">Based on %1$s</string>
+
+    <!-- Forecast -->
+    <string name="forecast_title">Walking forecast</string>
+    <string name="forecast_am">AM</string>
+    <string name="forecast_pm">PM</string>
+    <string name="forecast_description">Today at %2$d:00 %1$s is usually your most active time</string>
+    <string name="forecast_description_am">Today at %1$d AM is usually your most active time</string>
+    <string name="forecast_description_pm">Today at %1$d PM is usually your most active time</string>
+    <string name="forecast_recommended_time">Today at %2$d:00 %1$s</string>
+    <string name="forecast_recommended_time_am">Today at %1$d AM</string>
+    <string name="forecast_recommended_time_pm">Today at %1$d PM</string>
+    <string name="forecast_avg_steps">Avg %1$s steps</string>
+    <string name="forecast_active_days">%2$d of %1$d days</string>
+    <string name="forecast_default_recommended">3 PM is your best time today</string>
+
+    <!-- Steps -->
+    <string name="steps_format">%1$s steps</string>
+
+    <!-- Home UI -->
+    <string name="home_greeting">Ready to walk today, %1$s?</string>
+    <string name="home_goal_achieved">You hit your goal today</string>
+    <string name="home_steps_remaining">%1$d steps left</string>
+    <string name="home_progress_detail">%1$d%% done · Goal %2$d steps</string>
+    <string name="home_goal_steps">Goal: %1$d steps</string>
+    <string name="home_current_label">Current</string>
+    <string name="home_remaining_label">Remaining</string>
+    <string name="home_steps_value">%1$d steps</string>
+    <string name="home_weekly_report_title">Weekly reports</string>
+    <string name="home_weekly_report_subtitle">View and share your completed weekly records</string>
+    <string name="home_recap_label">%1$s Recap</string>
+    <string name="home_recap_steps_walked">Walked %1$s</string>
+    <string name="home_recap_view">View recap</string>
+    <string name="home_recap_error_title">Couldn\'t load recap</string>
+    <string name="home_recap_error_desc">Try again in a moment</string>
+
+    <!-- Forecast bottom sheet -->
+    <string name="forecast_sheet_today_recommended">Best time today</string>
+    <string name="forecast_sheet_why_title">Why this time?</string>
+    <string name="forecast_sheet_pattern_title">Last 7 days</string>
+    <string name="forecast_sheet_avg_steps_label">Avg steps at this hour</string>
+    <string name="forecast_sheet_active_days_label">Active days</string>
+    <string name="forecast_sheet_start_walking">Start walking</string>
+    <string name="forecast_sheet_weekly_chart">Hourly activity this week</string>
+    <string name="forecast_sheet_peak_hour">Peak at %1$d:00</string>
+
+    <!-- Sensor status -->
+    <string name="sensor_unavailable_title">This device doesn\'t support Health Connect</string>
+    <string name="sensor_unavailable_desc">Health Connect isn\'t available on this device,\nso steps can\'t be tracked.</string>
+    <string name="sensor_permission_title">Health Connect permission required</string>
+    <string name="sensor_permission_desc">Allow Health Connect read access\nto track your steps.</string>
+    <string name="sensor_permission_button">Allow permission</string>
+    <string name="sensor_no_data_title">No step data yet</string>
+    <string name="sensor_no_data_desc">Take a few steps and they\'ll start counting</string>
+
+    <!-- Mission card -->
+    <string name="mission_completed">Completed</string>
+    <string name="mission_recovery">Recovery</string>
+    <string name="mission_today">Today\'s mission</string>
+    <string name="mission_default_title">Just a little more to reach today\'s goal</string>
+    <string name="mission_steps_format">%1$d steps</string>
+    <string name="mission_target_steps_format">/ %1$d steps</string>
+    <string name="mission_reward_default">+%1$d cash</string>
+
+    <!-- Streak badge -->
+    <string name="streak_loading">Checking streak…</string>
+    <string name="streak_consecutive">🔥 %1$d-day streak</string>
+    <string name="streak_none">No streak</string>
+
+    <!-- Notification -->
+    <string name="notification_walking_title">Time to walk!</string>
+    <string name="notification_walking_text">This is usually when you walk the most. Head out now!</string>
+    <string name="notification_channel_name">Walking reminders</string>
+    <string name="notification_channel_desc">Reminders based on your walking patterns</string>
+</resources>

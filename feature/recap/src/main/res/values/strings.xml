@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="recap_error">리캡을 불러올 수 없어요</string>
+    <string name="action_close">닫기</string>
+    <string name="action_play">재생</string>
+    <string name="action_pause">일시정지</string>
+    <string name="icon_desc_step">걸음 아이콘</string>
+    <string name="icon_desc_calories">칼로리 아이콘</string>
+
+    <!-- Slides -->
+    <string name="recap_title">%1$s 리캡</string>
+    <string name="recap_opening_body">%1$s을\n돌아볼게요</string>
+    <string name="recap_opening_subtitle">걸음으로 만든 %1$s 이야기</string>
+    <string name="recap_total_steps_label">%1$s 총 걸음 수</string>
+    <string name="recap_total_distance">약 %1$dkm를 이동한 거리예요</string>
+    <string name="recap_avg_steps_label">하루 평균 걸음 수</string>
+    <string name="recap_avg_steps_desc">%1$d일 동안 걸은 기록으로 계산했어요</string>
+    <string name="recap_calories_label">%1$s 소모한 칼로리</string>
+    <string name="recap_calories_burned">%1$s을 태웠어요</string>
+    <string name="recap_achievement_label">목표를 달성한 날</string>
+    <string name="recap_achievement_desc">%1$d일 중 %2$d일 달성 (%3$d%%)</string>
+    <string name="recap_best_day_label">가장 많이 걸은 날</string>
+    <string name="recap_best_day_no_record">아직 기록이 없어요</string>
+    <string name="recap_step_count_label">걸음 수</string>
+    <string name="recap_calories_unit_label">칼로리</string>
+    <string name="recap_distance_unit_label">거리</string>
+    <string name="recap_streak_label">최장 연속 목표 달성</string>
+    <string name="recap_persona_label">%1$s 당신은</string>
+    <string name="recap_persona_closing">다음 달도 함께해요! 🚶</string>
+
+    <!-- Streak descriptions -->
+    <string name="recap_streak_14_plus">2주 이상 쉬지 않았어요! 놀라워요 🎉</string>
+    <string name="recap_streak_7_plus">일주일 연속 달성! 대단해요!</string>
+    <string name="recap_streak_3_plus">3일 이상 연속 달성했어요</string>
+    <string name="recap_streak_positive">이 기세로 계속 이어가요</string>
+    <string name="recap_streak_zero">내달엔 연속 달성에 도전해봐요!</string>
+
+    <!-- Calories comparison -->
+    <string name="calories_comparison_burger">햄버거 %1$d개 분량</string>
+    <string name="calories_comparison_icecream">아이스크림 %1$d개 분량</string>
+
+    <!-- Persona titles -->
+    <string name="persona_perfect_walker">완벽한 워커</string>
+    <string name="persona_steady_achiever">꾸준한 달성자</string>
+    <string name="persona_diligent_challenger">성실한 도전자</string>
+    <string name="persona_promising_beginner">가능성 있는 시작자</string>
+    <string name="persona_newcomer">걷기 입문자</string>
+
+    <!-- Persona descriptions -->
+    <string name="persona_desc_perfect_walker">매일 완벽한 목표를 달성했어요.\n정말 대단해요!</string>
+    <string name="persona_desc_steady_achiever">꾸준히 목표를 향해 나아갔어요.\n이 기세 유지해요!</string>
+    <string name="persona_desc_diligent_challenger">성실하게 걸음을 쌓아갔어요.\n조금만 더 올려볼까요?</string>
+    <string name="persona_desc_promising_beginner">시작이 반! 내달엔 더 나아갈 수 있어요.</string>
+    <string name="persona_desc_newcomer">첫 걸음을 내딛었어요.\n함께 더 걸어봐요!</string>
+
+    <!-- Formats -->
+    <string name="steps_count_format">%1$s보</string>
+    <string name="recap_best_day_date_format_pattern">M월 d일 EEEE</string>
+    <string name="day_suffix">일</string>
+</resources>

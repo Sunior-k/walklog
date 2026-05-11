@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Weather conditions -->
+    <string name="weather_condition_clear">晴れ</string>
+    <string name="weather_condition_partly_cloudy">曇り時々晴れ</string>
+    <string name="weather_condition_cloudy">曇り</string>
+    <string name="weather_condition_rain">雨</string>
+    <string name="weather_condition_rain_snow">雨/雪</string>
+    <string name="weather_condition_snow">雪</string>
+    <string name="weather_condition_shower">にわか雨</string>
+    <string name="weather_condition_unknown">情報なし</string>
+
+    <!-- Weather advice -->
+    <string name="weather_advice_unavailable">天気情報を読み込めませんでした</string>
+    <string name="weather_advice_snow">雪の予報があります。足元にご注意ください</string>
+    <string name="weather_advice_rain">雨の予報があります。傘を持参しましょう</string>
+    <string name="weather_advice_shower">にわか雨の可能性があります。短めに歩きましょう</string>
+    <string name="weather_advice_wind">風が強いです。屋内ウォーキングもおすすめです</string>
+    <string name="weather_advice_cold">寒い天気です。暖かくして歩きましょう</string>
+    <string name="weather_advice_hot">暑い天気です。水を持って無理しないようにしましょう</string>
+    <string name="weather_advice_clear">晴れています。気軽に歩くのに最適です</string>
+    <string name="weather_advice_default">今日の天気を確認して、ウォーキング計画を立てましょう</string>
+    <string name="weather_loading">天気情報を読み込んでいます</string>
+    <string name="weather_default_location">ソウル基準</string>
+
+    <!-- Weather supporting text -->
+    <string name="weather_precipitation">降水 %1$d%%</string>
+    <string name="weather_humidity">湿度 %1$d%%</string>
+    <string name="weather_wind_speed">風速 %1$sm/s</string>
+    <string name="weather_location">%1$s基準</string>
+
+    <!-- Recommended time -->
+    <string name="recommended_time_am">午前%1$d時</string>
+    <string name="recommended_time_pm">午後%1$d時</string>
+
+    <!-- Mission detail top bar -->
+    <string name="mission_detail_title">ミッション詳細</string>
+    <string name="back_button_cd">戻る</string>
+
+    <!-- Mission type badge -->
+    <string name="mission_type_completed">達成完了</string>
+    <string name="mission_type_recovery">リカバリーミッション</string>
+    <string name="mission_type_today">今日のミッション</string>
+
+    <!-- Mission default content -->
+    <string name="mission_default_title">今日の目標達成まで、もう少し歩いてみましょう</string>
+    <string name="mission_default_description">毎日コツコツ歩く習慣が作れるよう、今日のミッションを用意しました。</string>
+    <string name="mission_reward_default">+%1$dキャッシュ</string>
+
+    <!-- Mission progress card -->
+    <string name="mission_reward_label">報酬</string>
+    <string name="mission_goal_achieved">目標を達成しました 🎉</string>
+    <string name="mission_steps_remaining">あと%1$d歩</string>
+    <string name="mission_steps_current">%1$d歩</string>
+    <string name="mission_steps_target">/ %1$d歩</string>
+    <string name="mission_progress_rate">進捗率</string>
+    <string name="mission_remaining_steps">残り歩数</string>
+    <string name="mission_ring_goal">目標%1$d歩</string>
+
+    <!-- Mission guide card -->
+    <string name="guide_title_completed">今日もコツコツ歩いてくれましたね</string>
+    <string name="guide_title_recovery">昨日の目標を取り戻しましょう</string>
+    <string name="guide_title_default">今が歩くのにいいタイミングです</string>
+    <string name="guide_desc_completed">いい調子を保っています。明日も気軽に続けましょう。</string>
+    <string name="guide_desc_recovery">リカバリーミッションを達成するとストリークを維持できます。</string>
+    <string name="guide_desc_default">%1$s前後がいつも最も多く歩く時間帯です。</string>
+
+    <!-- Mission timeline card -->
+    <string name="timeline_title">ミッションタイムライン</string>
+    <string name="timeline_status_completed">今日のミッション完了</string>
+    <string name="timeline_next_checkpoint">次のチェックポイント</string>
+    <string name="timeline_start_completed">開始済み</string>
+    <string name="timeline_start_recovery">歩き忘れた分からゆっくり回復</string>
+    <string name="timeline_start_default">おすすめ時間前後に短く始めましょう</string>
+    <string name="timeline_reward_available">報酬受け取り可能</string>
+    <string name="timeline_remaining">完了まで%1$d歩</string>
+    <string name="timeline_midpoint_remaining">中間目標まで%1$d歩</string>
+    <string name="timeline_start_recommend">%1$s開始おすすめ</string>
+    <string name="timeline_item1_started">今日のミッションをすでに始めました。</string>
+    <string name="timeline_item1_notstarted">最も気軽な最初の区間です。</string>
+    <string name="timeline_midpoint_title">中間目標</string>
+    <string name="timeline_item2_half_done">半分以上を達成しました。</string>
+    <string name="timeline_item2_half_notdone">ここまで来れば完了がずっと楽になります。</string>
+    <string name="timeline_reward_earned">報酬獲得</string>
+    <string name="timeline_reward_pending">完了報酬</string>
+    <string name="timeline_reward_available_desc">今日の報酬を受け取れます。</string>
+    <string name="timeline_reward_steps_more">あと%1$d歩で解放されます。</string>
+
+    <!-- Mission bottom bar -->
+    <string name="mission_action_completed">すでに達成しました</string>
+    <string name="mission_action_start">今すぐ歩きに行く</string>
+</resources>

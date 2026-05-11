@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Page 0: Nickname -->
+    <string name="onboarding_page0_headline">なんとお呼びしましょうか？</string>
+    <string name="onboarding_page0_subtitle">ニックネームを入力すると\nより親しくご挨拶できます</string>
+
+    <!-- Page 1: Health Connect -->
+    <string name="onboarding_page1_headline">歩数を連携する</string>
+    <string name="onboarding_page1_subtitle">Health Connectから歩数を\n読み取れるよう権限を許可してください</string>
+
+    <!-- Page 2: Goal -->
+    <string name="onboarding_page2_headline">目標を設定しましょう</string>
+    <string name="onboarding_page2_subtitle">1日の目標歩数を設定すると\nより良いウォーキング習慣をサポートします</string>
+
+    <!-- Page 3: Notifications -->
+    <string name="onboarding_page3_headline">ぴったりの時間に通知を</string>
+    <string name="onboarding_page3_subtitle">歩くのにいい時間帯に\nパーソナルな通知をお送りします</string>
+
+    <!-- CTA buttons -->
+    <string name="onboarding_cta_next">次へ</string>
+    <string name="onboarding_cta_permission">権限を許可する</string>
+    <string name="onboarding_cta_start">始める</string>
+
+    <!-- Back exit warning -->
+    <string name="onboarding_back_exit_warning">もう一度押すとアプリが終了します</string>
+
+    <!-- Step goal page -->
+    <string name="onboarding_steps_suffix">歩</string>
+    <string name="onboarding_step_min">5,000</string>
+    <string name="onboarding_step_max">20,000</string>
+
+    <!-- Notification toggle -->
+    <string name="onboarding_notifications_on_title">通知をオンにする</string>
+    <string name="onboarding_notifications_off_title">通知をオフにする</string>
+    <string name="onboarding_notifications_on_desc">パーソナライズされたウォーキング通知を受け取る</string>
+    <string name="onboarding_notifications_off_desc">設定からいつでも変更できます</string>
+</resources>
