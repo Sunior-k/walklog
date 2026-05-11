@@ -16,6 +16,7 @@ android {
         versionCode = 1
         versionName = "1.0"
         targetSdk = 35
+        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
     buildTypes {
@@ -97,4 +98,6 @@ dependencies {
     implementation(libs.androidx.profileinstaller)
 
     baselineProfile(projects.benchmark)
+
+    androidTestImplementation(libs.androidx.runner)
 }

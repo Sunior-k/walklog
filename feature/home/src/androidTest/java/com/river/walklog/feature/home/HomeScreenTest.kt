@@ -15,6 +15,7 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import java.time.LocalDate
 import java.time.YearMonth
+import java.time.format.DateTimeFormatter
 
 @RunWith(AndroidJUnit4::class)
 class HomeScreenTest {
@@ -192,10 +193,11 @@ class HomeScreenTest {
 
     @Test
     fun header_showsTodayDateText() {
-        setContent(state = HomeState(todayDate = LocalDate.of(2025, 4, 16)))
+        val today = LocalDate.of(2025, 4, 16)
+        setContent(state = HomeState(todayDate = today))
 
         composeTestRule
-            .onNodeWithText("4월 16일 수요일")
+            .onNodeWithText(today.formatAsHomeDate())
             .assertIsDisplayed()
     }
 
@@ -212,15 +214,16 @@ class HomeScreenTest {
 
     @Test
     fun recapCard_isVisible_whenMonthLabelIsSet() {
+        val recapMonth = YearMonth.of(2025, 3)
         setContent(
             state = HomeState(
-                recapYearMonth = YearMonth.of(2025, 3),
+                recapYearMonth = recapMonth,
                 recapTotalSteps = 120_000,
             ),
         )
 
         composeTestRule
-            .onNodeWithText(activity.getString(R.string.home_recap_label, "3월"))
+            .onNodeWithText(activity.getString(R.string.home_recap_label, recapMonth.formatAsMonthLabel()))
             .performScrollTo()
             .assertIsDisplayed()
     }
@@ -251,5 +254,20 @@ class HomeScreenTest {
                 )
             }
         }
+    }
+
+    private fun LocalDate.formatAsHomeDate(): String {
+        val locale = activity.resources.configuration.locales[0]
+        val pattern = when (locale.language) {
+            "ja" -> "M月d日 EEEE"
+            "ko" -> "M월 d일 EEEE"
+            else -> "MMMM d, EEEE"
+        }
+        return format(DateTimeFormatter.ofPattern(pattern, locale))
+    }
+
+    private fun YearMonth.formatAsMonthLabel(): String {
+        val locale = activity.resources.configuration.locales[0]
+        return atDay(1).format(DateTimeFormatter.ofPattern("MMMM", locale))
     }
 }
