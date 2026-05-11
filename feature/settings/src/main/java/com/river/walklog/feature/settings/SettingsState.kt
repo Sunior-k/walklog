@@ -13,11 +13,3 @@ data class SettingsState(
     val themeMode: ThemeMode = ThemeMode.SYSTEM,
     val isLoading: Boolean = true,
 )
-
-sealed interface SettingsIntent {
-    data class OnNicknameChanged(val nickname: String) : SettingsIntent
-    data class OnStepGoalChanged(val steps: Int) : SettingsIntent
-    data class OnNotificationsToggled(val enabled: Boolean) : SettingsIntent
-    data class OnRecoveryStepsChanged(val steps: Int) : SettingsIntent
-    data class OnThemeModeChanged(val themeMode: ThemeMode) : SettingsIntent
-}

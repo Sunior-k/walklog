@@ -22,7 +22,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -38,17 +37,27 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.river.walklog.core.designsystem.R
+import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.river.walklog.core.designsystem.foundation.WalkLogColor
 import com.river.walklog.core.designsystem.foundation.WalkLogTheme
 import kotlin.math.cos
 import kotlin.math.sin
+
+@Composable
+fun RewardRoute(
+    viewModel: RewardViewModel = hiltViewModel(),
+) {
+    val state by viewModel.state.collectAsStateWithLifecycle()
+    RewardScreen(state = state)
+}
 
 @Composable
 internal fun RewardScreen(state: RewardState) {
@@ -216,7 +225,7 @@ internal fun RewardScreen(state: RewardState) {
             Spacer(Modifier.height(10.dp))
 
             Text(
-                text = "걷는 만큼, 쌓이는 보상",
+                text = stringResource(R.string.reward_tagline),
                 style = WalkLogTheme.typography.typography5M,
                 color = WalkLogColor.StaticWhite.copy(alpha = 0.6f),
             )
@@ -244,7 +253,7 @@ internal fun RewardScreen(state: RewardState) {
                     .padding(horizontal = 22.dp, vertical = 9.dp),
             ) {
                 Text(
-                    text = "✦  추후 업데이트 예정  ✦",
+                    text = stringResource(R.string.reward_coming_soon),
                     style = WalkLogTheme.typography.typography7SB,
                     color = WalkLogColor.Primary,
                     letterSpacing = 1.sp,
@@ -274,7 +283,7 @@ internal fun RewardScreen(state: RewardState) {
                         ),
                 )
                 Text(
-                    text = "  미리보기  ",
+                    text = "  ${stringResource(R.string.reward_preview_section)}  ",
                     style = WalkLogTheme.typography.typography7M,
                     color = WalkLogColor.StaticWhite.copy(alpha = 0.3f),
                     letterSpacing = 2.sp,
@@ -298,10 +307,26 @@ internal fun RewardScreen(state: RewardState) {
 
             // 기능 미리보기 카드
             val features = listOf(
-                RewardFeatureItem(emoji = "🏅", title = "포인트 적립", subtitle = "걸음마다 포인트"),
-                RewardFeatureItem(emoji = "🎖", title = "뱃지 컬렉션", subtitle = "성취 배지 모음"),
-                RewardFeatureItem(emoji = "🏪", title = "리워드 스토어", subtitle = "포인트로 교환"),
-                RewardFeatureItem(emoji = "🎁", title = "레벨 보상", subtitle = "레벨업 선물"),
+                RewardFeatureItem(
+                    emoji = "🏅",
+                    title = stringResource(R.string.reward_feature1_title),
+                    subtitle = stringResource(R.string.reward_feature1_subtitle),
+                ),
+                RewardFeatureItem(
+                    emoji = "🎖",
+                    title = stringResource(R.string.reward_feature2_title),
+                    subtitle = stringResource(R.string.reward_feature2_subtitle),
+                ),
+                RewardFeatureItem(
+                    emoji = "🏪",
+                    title = stringResource(R.string.reward_feature3_title),
+                    subtitle = stringResource(R.string.reward_feature3_subtitle),
+                ),
+                RewardFeatureItem(
+                    emoji = "🎁",
+                    title = stringResource(R.string.reward_feature4_title),
+                    subtitle = stringResource(R.string.reward_feature4_subtitle),
+                ),
             )
 
             Column(
@@ -330,7 +355,7 @@ internal fun RewardScreen(state: RewardState) {
 
             // Footer
             Text(
-                text = "추후 업데이트를 통해 제공됩니다",
+                text = stringResource(R.string.reward_footer),
                 style = WalkLogTheme.typography.typography7R,
                 color = WalkLogColor.StaticWhite.copy(alpha = 0.28f),
                 textAlign = TextAlign.Center,
@@ -339,7 +364,7 @@ internal fun RewardScreen(state: RewardState) {
             Spacer(Modifier.height(8.dp))
 
             Text(
-                text = "꾸준한 걸음이 빛나는 보상으로 돌아와요",
+                text = stringResource(R.string.reward_footer_tagline),
                 style = WalkLogTheme.typography.subTypography12R,
                 color = WalkLogColor.StaticWhite.copy(alpha = 0.16f),
                 textAlign = TextAlign.Center,

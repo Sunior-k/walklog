@@ -31,16 +31,6 @@ class SettingsViewModel @Inject constructor(
         observeSettings()
     }
 
-    fun handleIntent(intent: SettingsIntent) {
-        when (intent) {
-            is SettingsIntent.OnNicknameChanged -> updateNickname(intent.nickname)
-            is SettingsIntent.OnStepGoalChanged -> updateStepGoal(intent.steps)
-            is SettingsIntent.OnNotificationsToggled -> updateNotifications(intent.enabled)
-            is SettingsIntent.OnRecoveryStepsChanged -> updateRecoverySteps(intent.steps)
-            is SettingsIntent.OnThemeModeChanged -> updateThemeMode(intent.themeMode)
-        }
-    }
-
     private fun observeSettings() {
         userSettingsRepository.settings
             .onEach { settings ->
@@ -63,7 +53,7 @@ class SettingsViewModel @Inject constructor(
             .launchIn(viewModelScope)
     }
 
-    private fun updateNickname(nickname: String) {
+    fun updateNickname(nickname: String) {
         viewModelScope.launch {
             runCatching { userSettingsRepository.setNickname(nickname.trim()) }
                 .onFailure { e ->
@@ -73,7 +63,7 @@ class SettingsViewModel @Inject constructor(
         }
     }
 
-    private fun updateStepGoal(steps: Int) {
+    fun updateStepGoal(steps: Int) {
         viewModelScope.launch {
             runCatching { userSettingsRepository.setDailyStepGoal(steps) }
                 .onFailure { e ->
@@ -83,7 +73,7 @@ class SettingsViewModel @Inject constructor(
         }
     }
 
-    private fun updateNotifications(enabled: Boolean) {
+    fun updateNotifications(enabled: Boolean) {
         viewModelScope.launch {
             runCatching { userSettingsRepository.setNotificationsEnabled(enabled) }
                 .onFailure { e ->
@@ -93,7 +83,7 @@ class SettingsViewModel @Inject constructor(
         }
     }
 
-    private fun updateRecoverySteps(steps: Int) {
+    fun updateRecoverySteps(steps: Int) {
         viewModelScope.launch {
             runCatching { userSettingsRepository.setRecoveryMissionSteps(steps) }
                 .onFailure { e ->
@@ -103,7 +93,7 @@ class SettingsViewModel @Inject constructor(
         }
     }
 
-    private fun updateThemeMode(themeMode: ThemeMode) {
+    fun updateThemeMode(themeMode: ThemeMode) {
         viewModelScope.launch {
             runCatching { userSettingsRepository.setThemeMode(themeMode) }
                 .onFailure { e ->

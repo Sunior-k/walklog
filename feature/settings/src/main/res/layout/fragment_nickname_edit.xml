@@ -24,7 +24,7 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="닉네임 수정"
+            android:text="@string/nickname_edit_title"
             android:textColor="@color/walklog_text_primary"
             android:textSize="20sp"
             android:textStyle="bold"
@@ -34,7 +34,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="6dp"
-            android:text="영어, 한국어만 입력할 수 있어요"
+            android:text="@string/nickname_edit_description"
             android:textColor="@color/walklog_gray_400"
             android:textSize="13sp" />
 
@@ -53,7 +53,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginEnd="48dp"
                 android:background="@null"
-                android:hint="닉네임을 입력해주세요"
+                android:hint="@string/nickname_edit_placeholder"
                 android:maxLines="1"
                 android:textColor="@color/walklog_text_primary"
                 android:textColorHint="@color/walklog_gray_300"
@@ -81,7 +81,7 @@
             android:background="@drawable/bg_save_button"
             android:enabled="false"
             android:stateListAnimator="@null"
-            android:text="저장하기"
+            android:text="@string/nickname_edit_save"
             android:textColor="@color/walklog_gray_900"
             android:textSize="16sp"
             android:textStyle="bold" />

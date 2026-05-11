@@ -21,7 +21,6 @@ import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import java.text.NumberFormat
-import java.util.Locale
 
 @AndroidEntryPoint
 class SettingsFragment : Fragment() {
@@ -30,7 +29,6 @@ class SettingsFragment : Fragment() {
     private val binding get() = _binding!!
 
     private val viewModel: SettingsViewModel by viewModels()
-    private val numberFormat = NumberFormat.getNumberInstance(Locale.KOREA)
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -64,27 +62,19 @@ class SettingsFragment : Fragment() {
         seekDailyStepGoal.setOnSeekBarChangeListener(
             onProgressChanged = { progress, fromUser ->
                 if (fromUser) {
-                    viewModel.handleIntent(
-                        SettingsIntent.OnStepGoalChanged(
-                            steps = progress.toSteps(min = DAILY_STEP_MIN),
-                        ),
-                    )
+                    viewModel.updateStepGoal(progress.toSteps(min = DAILY_STEP_MIN))
                 }
             },
         )
         seekRecoveryMissionSteps.setOnSeekBarChangeListener(
             onProgressChanged = { progress, fromUser ->
                 if (fromUser) {
-                    viewModel.handleIntent(
-                        SettingsIntent.OnRecoveryStepsChanged(
-                            steps = progress.toSteps(min = RECOVERY_STEP_MIN),
-                        ),
-                    )
+                    viewModel.updateRecoverySteps(progress.toSteps(min = RECOVERY_STEP_MIN))
                 }
             },
         )
         switchNotifications.setOnCheckedChangeListener { _, isChecked ->
-            viewModel.handleIntent(SettingsIntent.OnNotificationsToggled(isChecked))
+            viewModel.updateNotifications(isChecked)
         }
         radioThemeSystem.setOnClickListener { updateThemeMode(ThemeMode.SYSTEM) }
         radioThemeLight.setOnClickListener { updateThemeMode(ThemeMode.LIGHT) }
@@ -105,13 +95,14 @@ class SettingsFragment : Fragment() {
     }
 
     private fun renderState(state: SettingsState) = with(binding) {
-        val displayName = state.nickname.ifBlank { "익명" }
-        tvNickname.text = "${displayName}님"
+        val displayName = state.nickname.ifBlank { getString(R.string.anonymous) }
+        val numberFormat = NumberFormat.getNumberInstance(resources.configuration.locales[0])
+        tvNickname.text = getString(R.string.settings_nickname_display, displayName)
         tvAvatar.text = displayName.take(1).uppercase()
         tvPointsBadge.text = numberFormat.format(state.totalPoints) + " P"
 
-        tvDailyStepGoal.text = state.dailyStepGoal.toStepText()
-        tvRecoveryMissionSteps.text = state.recoveryMissionSteps.toStepText()
+        tvDailyStepGoal.text = state.dailyStepGoal.toStepText(numberFormat)
+        tvRecoveryMissionSteps.text = state.recoveryMissionSteps.toStepText(numberFormat)
 
         seekDailyStepGoal.progress = state.dailyStepGoal.toProgress(min = DAILY_STEP_MIN)
         seekRecoveryMissionSteps.progress = state.recoveryMissionSteps.toProgress(min = RECOVERY_STEP_MIN)
@@ -133,18 +124,19 @@ class SettingsFragment : Fragment() {
     }
 
     private fun updateThemeMode(themeMode: ThemeMode) {
-        viewModel.handleIntent(SettingsIntent.OnThemeModeChanged(themeMode))
+        viewModel.updateThemeMode(themeMode)
     }
 
     private fun showNicknameEditDialog() {
         val sheet = NicknameEditBottomSheet.newInstance(viewModel.state.value.nickname)
         sheet.onSave = { newNickname ->
-            viewModel.handleIntent(SettingsIntent.OnNicknameChanged(newNickname))
+            viewModel.updateNickname(newNickname)
         }
         sheet.show(childFragmentManager, NicknameEditBottomSheet.TAG)
     }
 
-    private fun Int.toStepText(): String = "${numberFormat.format(this)} 보"
+    private fun Int.toStepText(numberFormat: NumberFormat): String =
+        getString(R.string.settings_steps_format, numberFormat.format(this))
 
     private fun Int.toProgress(min: Int): Int = ((this - min) / STEP_INTERVAL).coerceAtLeast(0)
 
