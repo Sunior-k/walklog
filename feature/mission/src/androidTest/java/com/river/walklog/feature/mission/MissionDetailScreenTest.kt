@@ -25,14 +25,16 @@ class MissionDetailScreenTest {
     @get:Rule
     val composeTestRule = createAndroidComposeRule<ComponentActivity>()
 
-    // ─── TopBar ────────────────────────────────────────────────────────────
+    private val activity get() = composeTestRule.activity
+
+    // topbar
 
     @Test
     fun topBar_showsMissionDetailTitle() {
         setContent(state = MissionDetailState())
 
         composeTestRule
-            .onNodeWithText("미션 상세")
+            .onNodeWithText(activity.getString(R.string.mission_detail_title))
             .assertIsDisplayed()
     }
 
@@ -41,19 +43,21 @@ class MissionDetailScreenTest {
         var backClicked = false
         setContent(state = MissionDetailState(), onClickBack = { backClicked = true })
 
-        composeTestRule.onNodeWithContentDescription("뒤로가기").performClick()
+        composeTestRule
+            .onNodeWithContentDescription(activity.getString(R.string.back_button_cd))
+            .performClick()
 
         assertTrue(backClicked)
     }
 
-    // ─── Mission type badge ────────────────────────────────────────────────
+    // mission type badge
 
     @Test
     fun dailyMission_showsTodayMissionBadge() {
         setContent(state = MissionDetailState(missionType = MissionType.DAILY, isCompleted = false))
 
         composeTestRule
-            .onNodeWithText("오늘 미션")
+            .onNodeWithText(activity.getString(R.string.mission_type_today))
             .assertIsDisplayed()
     }
 
@@ -62,7 +66,7 @@ class MissionDetailScreenTest {
         setContent(state = MissionDetailState(missionType = MissionType.RECOVERY, isCompleted = false))
 
         composeTestRule
-            .onNodeWithText("회복 미션")
+            .onNodeWithText(activity.getString(R.string.mission_type_recovery))
             .assertIsDisplayed()
     }
 
@@ -71,38 +75,38 @@ class MissionDetailScreenTest {
         setContent(state = MissionDetailState(isCompleted = true))
 
         composeTestRule
-            .onNodeWithText("달성 완료")
+            .onNodeWithText(activity.getString(R.string.mission_type_completed))
             .assertIsDisplayed()
     }
 
-    // ─── Title & description ───────────────────────────────────────────────
+    // title and description
 
     @Test
     fun missionTitle_isDisplayed() {
-        setContent(state = MissionDetailState(title = "오늘 만보 걷기 도전"))
+        setContent(state = MissionDetailState())
 
         composeTestRule
-            .onNodeWithText("오늘 만보 걷기 도전")
+            .onNodeWithText(activity.getString(R.string.mission_default_title))
             .assertIsDisplayed()
     }
 
     @Test
     fun missionDescription_isDisplayed() {
-        setContent(state = MissionDetailState(description = "매일 꾸준히 걷는 습관을 만들어봐요."))
+        setContent(state = MissionDetailState())
 
         composeTestRule
-            .onNodeWithText("매일 꾸준히 걷는 습관을 만들어봐요.")
+            .onNodeWithText(activity.getString(R.string.mission_default_description))
             .assertIsDisplayed()
     }
 
-    // ─── Progress card ─────────────────────────────────────────────────────
+    // progress card
 
     @Test
     fun progressCard_showsCurrentStepCount() {
         setContent(state = MissionDetailState(currentSteps = 3_500, targetSteps = 6_000))
 
         composeTestRule
-            .onNodeWithText("3500보")
+            .onNodeWithText(activity.getString(R.string.mission_steps_current, 3_500))
             .assertIsDisplayed()
     }
 
@@ -111,7 +115,7 @@ class MissionDetailScreenTest {
         setContent(state = MissionDetailState(currentSteps = 3_500, targetSteps = 6_000))
 
         composeTestRule
-            .onNodeWithText("/ 6000보")
+            .onNodeWithText(activity.getString(R.string.mission_steps_target, 6_000))
             .assertIsDisplayed()
     }
 
@@ -120,7 +124,7 @@ class MissionDetailScreenTest {
         setContent(state = MissionDetailState(currentSteps = 3_500, targetSteps = 6_000, isCompleted = false))
 
         composeTestRule
-            .onNodeWithText("2500보 남았어요")
+            .onNodeWithText(activity.getString(R.string.mission_steps_remaining, 2_500))
             .assertIsDisplayed()
     }
 
@@ -129,28 +133,28 @@ class MissionDetailScreenTest {
         setContent(state = MissionDetailState(isCompleted = true))
 
         composeTestRule
-            .onNodeWithText("목표를 달성했어요 🎉")
+            .onNodeWithText(activity.getString(R.string.mission_goal_achieved))
             .assertIsDisplayed()
     }
 
     @Test
     fun rewardText_isDisplayed() {
-        setContent(state = MissionDetailState(rewardText = "+50 캐시"))
+        setContent(state = MissionDetailState(rewardPoints = 50))
 
         composeTestRule
-            .onAllNodesWithText("+50 캐시")
+            .onAllNodesWithText(activity.getString(R.string.mission_reward_default, 50))
             .onFirst()
             .assertIsDisplayed()
     }
 
-    // ─── Bottom bar ────────────────────────────────────────────────────────
+    // bottom bar
 
     @Test
     fun bottomBar_showsStartWalkingLabel_whenNotCompleted() {
         setContent(state = MissionDetailState(isCompleted = false))
 
         composeTestRule
-            .onNodeWithText("지금 걸으러 가기")
+            .onNodeWithText(activity.getString(R.string.mission_action_start))
             .assertIsDisplayed()
     }
 
@@ -159,7 +163,7 @@ class MissionDetailScreenTest {
         setContent(state = MissionDetailState(isCompleted = false))
 
         composeTestRule
-            .onNodeWithText("지금 걸으러 가기")
+            .onNodeWithText(activity.getString(R.string.mission_action_start))
             .assertIsEnabled()
     }
 
@@ -168,7 +172,7 @@ class MissionDetailScreenTest {
         setContent(state = MissionDetailState(isCompleted = true))
 
         composeTestRule
-            .onNodeWithText("이미 달성했어요")
+            .onNodeWithText(activity.getString(R.string.mission_action_completed))
             .assertIsDisplayed()
     }
 
@@ -177,7 +181,7 @@ class MissionDetailScreenTest {
         setContent(state = MissionDetailState(isCompleted = true))
 
         composeTestRule
-            .onNodeWithText("이미 달성했어요")
+            .onNodeWithText(activity.getString(R.string.mission_action_completed))
             .assertIsNotEnabled()
     }
 
@@ -189,12 +193,14 @@ class MissionDetailScreenTest {
             onClickAction = { actionClicked = true },
         )
 
-        composeTestRule.onNodeWithText("지금 걸으러 가기").performClick()
+        composeTestRule
+            .onNodeWithText(activity.getString(R.string.mission_action_start))
+            .performClick()
 
         assertTrue(actionClicked)
     }
 
-    // ─── Guide card ────────────────────────────────────────────────────────
+    // guide card
 
     @Test
     fun guideCard_showsRecoveryMessage_forRecoveryMissionType() {
@@ -206,7 +212,7 @@ class MissionDetailScreenTest {
         )
 
         composeTestRule
-            .onNodeWithText("어제 놓친 목표를 다시 이어가보세요")
+            .onNodeWithText(activity.getString(R.string.guide_title_recovery))
             .performScrollTo()
             .assertIsDisplayed()
     }
@@ -216,12 +222,12 @@ class MissionDetailScreenTest {
         setContent(state = MissionDetailState(isCompleted = true))
 
         composeTestRule
-            .onNodeWithText("오늘도 꾸준히 걸어주셨네요")
+            .onNodeWithText(activity.getString(R.string.guide_title_completed))
             .performScrollTo()
             .assertIsDisplayed()
     }
 
-    // ─── Helper ────────────────────────────────────────────────────────────
+    // helper
 
     private fun setContent(
         state: MissionDetailState,

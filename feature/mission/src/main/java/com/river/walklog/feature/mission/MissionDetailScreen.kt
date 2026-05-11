@@ -44,19 +44,22 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.window.core.layout.WindowSizeClass
-import com.river.walklog.core.designsystem.R
 import com.river.walklog.core.designsystem.component.WalkLogLinearProgressBar
 import com.river.walklog.core.designsystem.component.WeatherSummaryCard
 import com.river.walklog.core.designsystem.foundation.WalkLogColor
 import com.river.walklog.core.designsystem.foundation.WalkLogTheme
 import com.river.walklog.core.model.MissionType
+import java.text.NumberFormat
 import kotlin.math.min
+import com.river.walklog.core.designsystem.R as DesignR
 
 @Composable
 fun MissionDetailRoute(
@@ -67,9 +70,9 @@ fun MissionDetailRoute(
 
     MissionDetailScreen(
         state = state,
-        onClickBack = { onBack() },
-        onClickAction = { onBack() },
-        onRefreshWeather = { viewModel.handleIntent(MissionDetailIntent.OnRefreshWeather) },
+        onClickBack = onBack,
+        onClickAction = onBack,
+        onRefreshWeather = viewModel::refreshWeather,
     )
 }
 
@@ -126,16 +129,19 @@ private fun MissionDetailCompactContent(
         verticalArrangement = Arrangement.spacedBy(20.dp),
     ) {
         MissionTypeBadge(missionType = state.missionType, isCompleted = state.isCompleted)
-        MissionHeadlineSection(title = state.title, description = state.description)
+        MissionHeadlineSection(
+            title = stringResource(R.string.mission_default_title),
+            description = stringResource(R.string.mission_default_description),
+        )
         MissionProgressCard(
             currentSteps = state.currentSteps,
             targetSteps = state.targetSteps,
-            rewardText = state.rewardText,
+            rewardText = stringResource(R.string.mission_reward_default, state.rewardPoints),
             isCompleted = state.isCompleted,
         )
         MissionGuideCard(
             missionType = state.missionType,
-            recommendedTimeText = state.recommendedTimeText,
+            recommendedTimeText = state.recommendedTimeText(),
             isCompleted = state.isCompleted,
         )
         MissionWeatherCard(state = state, onRefreshWeather = onRefreshWeather)
@@ -144,8 +150,8 @@ private fun MissionDetailCompactContent(
             isCompleted = state.isCompleted,
             targetSteps = state.targetSteps,
             currentSteps = state.currentSteps,
-            rewardText = state.rewardText,
-            recommendedTimeText = state.recommendedTimeText,
+            rewardText = stringResource(R.string.mission_reward_default, state.rewardPoints),
+            recommendedTimeText = state.recommendedTimeText(),
         )
         Spacer(modifier = Modifier.height(12.dp))
     }
@@ -170,11 +176,14 @@ private fun MissionDetailExpandedContent(
             verticalArrangement = Arrangement.spacedBy(20.dp),
         ) {
             MissionTypeBadge(missionType = state.missionType, isCompleted = state.isCompleted)
-            MissionHeadlineSection(title = state.title, description = state.description)
+            MissionHeadlineSection(
+                title = stringResource(R.string.mission_default_title),
+                description = stringResource(R.string.mission_default_description),
+            )
             MissionProgressCard(
                 currentSteps = state.currentSteps,
                 targetSteps = state.targetSteps,
-                rewardText = state.rewardText,
+                rewardText = stringResource(R.string.mission_reward_default, state.rewardPoints),
                 isCompleted = state.isCompleted,
                 stretchContent = true,
                 modifier = Modifier.weight(1f),
@@ -189,7 +198,7 @@ private fun MissionDetailExpandedContent(
         ) {
             MissionGuideCard(
                 missionType = state.missionType,
-                recommendedTimeText = state.recommendedTimeText,
+                recommendedTimeText = state.recommendedTimeText(),
                 isCompleted = state.isCompleted,
             )
             MissionWeatherCard(state = state, onRefreshWeather = onRefreshWeather)
@@ -198,8 +207,8 @@ private fun MissionDetailExpandedContent(
                 isCompleted = state.isCompleted,
                 targetSteps = state.targetSteps,
                 currentSteps = state.currentSteps,
-                rewardText = state.rewardText,
-                recommendedTimeText = state.recommendedTimeText,
+                rewardText = stringResource(R.string.mission_reward_default, state.rewardPoints),
+                recommendedTimeText = state.recommendedTimeText(),
                 stretchContent = true,
                 modifier = Modifier.weight(1f),
             )
@@ -213,11 +222,11 @@ private fun MissionWeatherCard(
     onRefreshWeather: () -> Unit,
 ) {
     WeatherSummaryCard(
-        locationText = state.weatherLocationText,
-        temperatureText = state.weatherTemperatureText,
-        conditionText = state.weatherConditionText,
-        adviceText = state.weatherAdviceText,
-        supportingText = state.weatherSupportingText.ifBlank { null },
+        locationText = stringResource(R.string.weather_location, state.weather.locationName),
+        temperatureText = state.weather.temperatureText,
+        conditionText = stringResource(state.weather.condition.conditionRes()),
+        adviceText = stringResource(state.weather.walkingAdviceRes()),
+        supportingText = state.weatherSupportingText(),
         onRefreshClick = onRefreshWeather,
     )
 }
@@ -228,7 +237,7 @@ private fun MissionDetailTopBar(onClickBack: () -> Unit) {
     TopAppBar(
         title = {
             Text(
-                text = "미션 상세",
+                text = stringResource(R.string.mission_detail_title),
                 style = WalkLogTheme.typography.typography5SB,
                 color = WalkLogTheme.colors.onSurface,
             )
@@ -236,8 +245,8 @@ private fun MissionDetailTopBar(onClickBack: () -> Unit) {
         navigationIcon = {
             IconButton(onClick = onClickBack) {
                 Icon(
-                    imageVector = ImageVector.vectorResource(R.drawable.ic_arrow_back),
-                    contentDescription = "뒤로가기",
+                    imageVector = ImageVector.vectorResource(DesignR.drawable.ic_arrow_back),
+                    contentDescription = stringResource(R.string.back_button_cd),
                     tint = WalkLogTheme.colors.onSurface,
                 )
             }
@@ -249,9 +258,9 @@ private fun MissionDetailTopBar(onClickBack: () -> Unit) {
 @Composable
 private fun MissionTypeBadge(missionType: MissionType, isCompleted: Boolean) {
     val text = when {
-        isCompleted -> "달성 완료"
-        missionType == MissionType.RECOVERY -> "회복 미션"
-        else -> "오늘 미션"
+        isCompleted -> stringResource(R.string.mission_type_completed)
+        missionType == MissionType.RECOVERY -> stringResource(R.string.mission_type_recovery)
+        else -> stringResource(R.string.mission_type_today)
     }
     val bg = when {
         isCompleted -> WalkLogTheme.colors.tertiaryContainer
@@ -306,7 +315,7 @@ private fun MissionProgressCard(
         },
     ) {
         Row(Modifier.fillMaxWidth(), Arrangement.SpaceBetween, Alignment.CenterVertically) {
-            Text("보상", style = WalkLogTheme.typography.typography6M, color = WalkLogTheme.colors.onSurfaceVariant)
+            Text(stringResource(R.string.mission_reward_label), style = WalkLogTheme.typography.typography6M, color = WalkLogTheme.colors.onSurfaceVariant)
             Text(rewardText, style = WalkLogTheme.typography.typography6B, color = if (isCompleted) WalkLogTheme.colors.onTertiaryContainer else WalkLogTheme.colors.primary)
         }
         if (stretchContent) {
@@ -328,14 +337,14 @@ private fun MissionProgressCard(
         } else {
             Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
                 Text(
-                    text = if (isCompleted) "목표를 달성했어요 🎉" else "${remaining}보 남았어요",
+                    text = if (isCompleted) stringResource(R.string.mission_goal_achieved) else stringResource(R.string.mission_steps_remaining, remaining),
                     style = WalkLogTheme.typography.typography5SB,
                     color = WalkLogTheme.colors.onSurface,
                 )
                 Row(verticalAlignment = Alignment.Bottom) {
-                    Text("${currentSteps}보", style = WalkLogTheme.typography.typography3B, color = WalkLogTheme.colors.onSurface)
+                    Text(stringResource(R.string.mission_steps_current, currentSteps), style = WalkLogTheme.typography.typography3B, color = WalkLogTheme.colors.onSurface)
                     Spacer(Modifier.width(6.dp))
-                    Text("/ ${targetSteps}보", style = WalkLogTheme.typography.typography6M, color = WalkLogTheme.colors.onSurfaceVariant)
+                    Text(stringResource(R.string.mission_steps_target, targetSteps), style = WalkLogTheme.typography.typography6M, color = WalkLogTheme.colors.onSurfaceVariant)
                 }
             }
             WalkLogLinearProgressBar(
@@ -348,7 +357,7 @@ private fun MissionProgressCard(
         Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
             if (stretchContent) {
                 Text(
-                    text = if (isCompleted) "목표를 달성했어요 🎉" else "${remaining}보 남았어요",
+                    text = if (isCompleted) stringResource(R.string.mission_goal_achieved) else stringResource(R.string.mission_steps_remaining, remaining),
                     style = WalkLogTheme.typography.typography5SB,
                     color = WalkLogTheme.colors.onSurface,
                 )
@@ -356,8 +365,8 @@ private fun MissionProgressCard(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(12.dp),
                 ) {
-                    MissionFoldMetric(label = "진행률", value = "${(progress * 100).toInt()}%", modifier = Modifier.weight(1f))
-                    MissionFoldMetric(label = "남은 걸음", value = "${remaining}보", modifier = Modifier.weight(1f))
+                    MissionFoldMetric(label = stringResource(R.string.mission_progress_rate), value = "${(progress * 100).toInt()}%", modifier = Modifier.weight(1f))
+                    MissionFoldMetric(label = stringResource(R.string.mission_remaining_steps), value = stringResource(R.string.mission_steps_current, remaining), modifier = Modifier.weight(1f))
                 }
             }
         }
@@ -372,14 +381,14 @@ private fun MissionGuideCard(
     modifier: Modifier = Modifier,
 ) {
     val title = when {
-        isCompleted -> "오늘도 꾸준히 걸어주셨네요"
-        missionType == MissionType.RECOVERY -> "어제 놓친 목표를 다시 이어가보세요"
-        else -> "지금이 걷기 좋은 타이밍이에요"
+        isCompleted -> stringResource(R.string.guide_title_completed)
+        missionType == MissionType.RECOVERY -> stringResource(R.string.guide_title_recovery)
+        else -> stringResource(R.string.guide_title_default)
     }
     val desc = when {
-        isCompleted -> "좋은 흐름을 유지하고 있어요. 내일도 가볍게 이어가보세요."
-        missionType == MissionType.RECOVERY -> "회복 미션을 달성하면 스트릭을 유지할 수 있어요."
-        else -> "$recommendedTimeText 전후가 평소 가장 많이 걷는 시간대예요."
+        isCompleted -> stringResource(R.string.guide_desc_completed)
+        missionType == MissionType.RECOVERY -> stringResource(R.string.guide_desc_recovery)
+        else -> stringResource(R.string.guide_desc_default, recommendedTimeText)
     }
     Column(
         modifier = modifier
@@ -397,7 +406,7 @@ private fun MissionGuideCard(
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Icon(
-                imageVector = ImageVector.vectorResource(com.river.walklog.feature.mission.R.drawable.ic_bulb),
+                imageVector = ImageVector.vectorResource(R.drawable.ic_bulb),
                 contentDescription = null,
                 tint = WalkLogTheme.colors.secondaryContainer,
             )
@@ -450,12 +459,12 @@ private fun MissionProgressRing(
         }
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
             Text(
-                text = "${currentSteps.coerceAtLeast(0)}보",
+                text = stringResource(R.string.mission_steps_current, currentSteps.coerceAtLeast(0)),
                 style = WalkLogTheme.typography.typography3B,
                 color = WalkLogTheme.colors.onSurface,
             )
             Text(
-                text = "목표 ${targetSteps}보",
+                text = stringResource(R.string.mission_ring_goal, targetSteps),
                 style = WalkLogTheme.typography.typography7M,
                 color = WalkLogTheme.colors.onSurfaceVariant,
             )
@@ -478,29 +487,37 @@ private fun MissionTimelineCard(
     val remaining = (targetSteps - currentSteps).coerceAtLeast(0)
     val midpointSteps = (targetSteps / 2).coerceAtLeast(1)
     val startTitle = when {
-        isCompleted -> "시작 완료"
-        missionType == MissionType.RECOVERY -> "놓친 걸음부터 천천히 회복"
-        else -> "추천 시간 전후로 짧게 시작"
+        isCompleted -> stringResource(R.string.timeline_start_completed)
+        missionType == MissionType.RECOVERY -> stringResource(R.string.timeline_start_recovery)
+        else -> stringResource(R.string.timeline_start_default)
     }
     val currentStage = when {
-        isCompleted || progress >= 1f -> "보상 수령 가능"
-        progress >= 0.5f -> "완료까지 ${remaining}보"
-        progress > 0f -> "중간 목표까지 ${(midpointSteps - currentSteps).coerceAtLeast(0)}보"
-        else -> "$recommendedTimeText 시작 추천"
+        isCompleted || progress >= 1f -> stringResource(R.string.timeline_reward_available)
+        progress >= 0.5f -> stringResource(R.string.timeline_remaining, remaining)
+        progress > 0f -> stringResource(R.string.timeline_midpoint_remaining, (midpointSteps - currentSteps).coerceAtLeast(0))
+        else -> stringResource(R.string.timeline_start_recommend, recommendedTimeText)
     }
     val timelineItems = listOf(
         MissionTimelineItem(
             number = "1",
             title = startTitle,
             label = recommendedTimeText,
-            description = if (progress > 0f || isCompleted) "오늘 미션을 이미 시작했어요." else "가장 부담 없는 첫 구간이에요.",
+            description = if (progress > 0f || isCompleted) {
+                stringResource(R.string.timeline_item1_started)
+            } else {
+                stringResource(R.string.timeline_item1_notstarted)
+            },
             state = if (progress > 0f || isCompleted) MissionTimelineState.Done else MissionTimelineState.Active,
         ),
         MissionTimelineItem(
             number = "2",
-            title = "중간 목표",
-            label = "${midpointSteps}보",
-            description = if (progress >= 0.5f || isCompleted) "절반 이상을 채웠어요." else "여기까지 오면 완료가 훨씬 쉬워져요.",
+            title = stringResource(R.string.timeline_midpoint_title),
+            label = stringResource(R.string.mission_steps_current, midpointSteps),
+            description = if (progress >= 0.5f || isCompleted) {
+                stringResource(R.string.timeline_item2_half_done)
+            } else {
+                stringResource(R.string.timeline_item2_half_notdone)
+            },
             state = when {
                 isCompleted || progress >= 0.5f -> MissionTimelineState.Done
                 progress > 0f -> MissionTimelineState.Active
@@ -509,9 +526,13 @@ private fun MissionTimelineCard(
         ),
         MissionTimelineItem(
             number = "3",
-            title = if (isCompleted) "보상 획득" else "완료 보상",
+            title = if (isCompleted) stringResource(R.string.timeline_reward_earned) else stringResource(R.string.timeline_reward_pending),
             label = rewardText,
-            description = if (isCompleted) "오늘 보상을 받을 수 있어요." else "${remaining}보를 더 걸으면 열려요.",
+            description = if (isCompleted) {
+                stringResource(R.string.timeline_reward_available_desc)
+            } else {
+                stringResource(R.string.timeline_reward_steps_more, remaining)
+            },
             state = if (isCompleted) MissionTimelineState.Done else MissionTimelineState.Upcoming,
         ),
     )
@@ -527,7 +548,7 @@ private fun MissionTimelineCard(
     ) {
         Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
             Text(
-                text = "미션 타임라인",
+                text = stringResource(R.string.timeline_title),
                 style = WalkLogTheme.typography.typography6SB,
                 color = WalkLogTheme.colors.onSurface,
             )
@@ -563,7 +584,7 @@ private fun MissionTimelineCard(
         ) {
             Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
                 Text(
-                    text = if (isCompleted) "오늘 미션 완료" else "다음 체크포인트",
+                    text = if (isCompleted) stringResource(R.string.timeline_status_completed) else stringResource(R.string.timeline_next_checkpoint),
                     style = WalkLogTheme.typography.subTypography12M,
                     color = WalkLogTheme.colors.onSurfaceVariant,
                 )
@@ -735,13 +756,46 @@ private fun MissionDetailBottomBar(
                 contentPadding = PaddingValues(vertical = 16.dp),
             ) {
                 Text(
-                    text = if (isCompleted) "이미 달성했어요" else "지금 걸으러 가기",
+                    text = if (isCompleted) stringResource(R.string.mission_action_completed) else stringResource(R.string.mission_action_start),
                     style = WalkLogTheme.typography.typography6SB,
                 )
             }
         }
     }
 }
+
+@Composable
+private fun MissionDetailState.recommendedTimeText(): String {
+    val hour = recommendedPeakHour ?: DEFAULT_RECOMMENDED_HOUR
+    val displayHour = when {
+        hour == 0 -> 12
+        hour <= 12 -> hour
+        else -> hour - 12
+    }
+    return if (hour < 12) {
+        stringResource(R.string.recommended_time_am, displayHour)
+    } else {
+        stringResource(R.string.recommended_time_pm, displayHour)
+    }
+}
+
+@Composable
+private fun MissionDetailState.weatherSupportingText(): String? {
+    val locale = LocalConfiguration.current.locales[0]
+    val windFormat = NumberFormat.getNumberInstance(locale).apply {
+        minimumFractionDigits = 1
+        maximumFractionDigits = 1
+    }
+    return listOfNotNull(
+        weather.precipitationProbability?.let { stringResource(R.string.weather_precipitation, it) },
+        weather.humidity?.let { stringResource(R.string.weather_humidity, it) },
+        weather.windSpeedMetersPerSecond?.let {
+            stringResource(R.string.weather_wind_speed, windFormat.format(it))
+        },
+    ).joinToString(" · ").ifBlank { null }
+}
+
+private const val DEFAULT_RECOMMENDED_HOUR = 15
 
 @Preview(showBackground = true, backgroundColor = 0xFFFFFFFF, widthDp = 390, heightDp = 844)
 @Composable
