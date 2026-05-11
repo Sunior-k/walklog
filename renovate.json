@@ -6,6 +6,7 @@
     ":semanticCommits"
   ],
   "timezone": "Asia/Seoul",
+  "mode": "full",
   "labels": [
     "dependencies"
   ],
@@ -37,13 +38,6 @@
         "patch"
       ],
       "groupName": "GitHub Actions"
-    },
-    {
-      "description": "Keep major updates separate for easier review.",
-      "matchUpdateTypes": [
-        "major"
-      ],
-      "dependencyDashboardApproval": true
     }
   ]
 }
