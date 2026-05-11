@@ -39,7 +39,7 @@ class OnboardingViewModelTest {
         Dispatchers.resetMain()
     }
 
-    // ─── 초기 상태 ─────────────────────────────────────────────────────────
+    // 초기 상태
 
     @Test
     fun `initial page is 0`() {
@@ -47,71 +47,71 @@ class OnboardingViewModelTest {
     }
 
     @Test
-    fun `initial navigateToHome is false`() {
-        assertFalse(viewModel.navigateToHome.value)
+    fun `initial navigation destination is null`() {
+        assertEquals(null, viewModel.state.value.navigationDestination)
     }
 
-    // ─── 페이지 이동 ───────────────────────────────────────────────────────
+    // 페이지 이동
 
     @Test
     fun `OnClickNext advances to page 1`() {
-        viewModel.handleIntent(OnboardingIntent.OnClickNext)
+        viewModel.advancePage()
         assertEquals(1, viewModel.state.value.currentPage)
     }
 
     @Test
     fun `OnClickNext on page 1 advances to page 2`() {
-        viewModel.handleIntent(OnboardingIntent.OnClickNext)
-        viewModel.handleIntent(OnboardingIntent.OnClickNext)
+        viewModel.advancePage()
+        viewModel.advancePage()
         assertEquals(2, viewModel.state.value.currentPage)
     }
 
     @Test
     fun `OnClickBack on page 1 returns to page 0`() {
-        viewModel.handleIntent(OnboardingIntent.OnClickNext)
-        viewModel.handleIntent(OnboardingIntent.OnClickBack)
+        viewModel.advancePage()
+        viewModel.retreatPage()
         assertEquals(0, viewModel.state.value.currentPage)
     }
 
     @Test
     fun `OnClickBack on page 0 stays at page 0`() {
-        viewModel.handleIntent(OnboardingIntent.OnClickBack)
+        viewModel.retreatPage()
         assertEquals(0, viewModel.state.value.currentPage)
     }
 
     @Test
     fun `OnPermissionResult advances page same as OnClickNext`() {
-        viewModel.handleIntent(OnboardingIntent.OnPermissionResult(granted = true))
+        viewModel.advancePage()
         assertEquals(1, viewModel.state.value.currentPage)
     }
 
-    // ─── 상태 업데이트 ─────────────────────────────────────────────────────
+    // 상태 업데이트
 
     @Test
     fun `OnStepGoalChanged updates dailyStepGoal`() {
-        viewModel.handleIntent(OnboardingIntent.OnStepGoalChanged(8_000))
+        viewModel.updateStepGoal(8_000)
         assertEquals(8_000, viewModel.state.value.dailyStepGoal)
     }
 
     @Test
     fun `OnNotificationsToggled updates notificationsEnabled to false`() {
-        viewModel.handleIntent(OnboardingIntent.OnNotificationsToggled(false))
+        viewModel.updateNotifications(false)
         assertFalse(viewModel.state.value.notificationsEnabled)
     }
 
     @Test
     fun `OnNotificationsToggled updates notificationsEnabled to true`() {
-        viewModel.handleIntent(OnboardingIntent.OnNotificationsToggled(false))
-        viewModel.handleIntent(OnboardingIntent.OnNotificationsToggled(true))
+        viewModel.updateNotifications(false)
+        viewModel.updateNotifications(true)
         assertTrue(viewModel.state.value.notificationsEnabled)
     }
 
-    // ─── 완료 처리 ─────────────────────────────────────────────────────────
+    // 완료
 
     @Test
     fun `OnClickComplete saves dailyStepGoal to repository`() = runTest {
-        viewModel.handleIntent(OnboardingIntent.OnStepGoalChanged(9_000))
-        viewModel.handleIntent(OnboardingIntent.OnClickComplete)
+        viewModel.updateStepGoal(9_000)
+        viewModel.complete()
         advanceUntilIdle()
 
         coVerify { userSettingsRepository.setDailyStepGoal(9_000) }
@@ -119,8 +119,8 @@ class OnboardingViewModelTest {
 
     @Test
     fun `OnClickComplete saves notificationsEnabled to repository`() = runTest {
-        viewModel.handleIntent(OnboardingIntent.OnNotificationsToggled(false))
-        viewModel.handleIntent(OnboardingIntent.OnClickComplete)
+        viewModel.updateNotifications(false)
+        viewModel.complete()
         advanceUntilIdle()
 
         coVerify { userSettingsRepository.setNotificationsEnabled(false) }
@@ -128,33 +128,43 @@ class OnboardingViewModelTest {
 
     @Test
     fun `OnClickComplete completes onboarding in repository`() = runTest {
-        viewModel.handleIntent(OnboardingIntent.OnClickComplete)
+        viewModel.complete()
         advanceUntilIdle()
 
         coVerify { userSettingsRepository.setOnboardingCompleted() }
     }
 
     @Test
-    fun `OnClickComplete sets navigateToHome to true`() = runTest {
-        viewModel.handleIntent(OnboardingIntent.OnClickComplete)
+    fun `OnClickComplete sets navigation destination to Home`() = runTest {
+        viewModel.complete()
         advanceUntilIdle()
 
-        assertTrue(viewModel.navigateToHome.value)
+        assertEquals(OnboardingNavigationDestination.Home, viewModel.state.value.navigationDestination)
+    }
+
+    @Test
+    fun `OnNavigationHandled clears navigation destination`() = runTest {
+        viewModel.complete()
+        advanceUntilIdle()
+
+        viewModel.clearNavigationDestination()
+
+        assertEquals(null, viewModel.state.value.navigationDestination)
     }
 
     @Test
     fun `OnClickNext on last page triggers complete`() = runTest {
         // 페이지 0 → 1 → 2 → 3 → complete (TOTAL_PAGES = 4)
-        repeat(4) { viewModel.handleIntent(OnboardingIntent.OnClickNext) }
+        repeat(4) { viewModel.advancePage() }
         advanceUntilIdle()
 
         coVerify { userSettingsRepository.setOnboardingCompleted() }
-        assertTrue(viewModel.navigateToHome.value)
+        assertEquals(OnboardingNavigationDestination.Home, viewModel.state.value.navigationDestination)
     }
 
     @Test
     fun `isCompleting is true after OnClickComplete`() = runTest {
-        viewModel.handleIntent(OnboardingIntent.OnClickComplete)
+        viewModel.complete()
         assertTrue(viewModel.state.value.isCompleting)
     }
 }
