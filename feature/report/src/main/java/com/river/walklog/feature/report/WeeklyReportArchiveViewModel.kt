@@ -5,7 +5,6 @@ import androidx.lifecycle.viewModelScope
 import com.river.walklog.core.analytics.CrashKeys
 import com.river.walklog.core.analytics.CrashReporter
 import com.river.walklog.core.domain.usecase.GetWeeklyReportArchiveUseCase
-import com.river.walklog.feature.report.model.toUiModel
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -37,7 +36,23 @@ class WeeklyReportArchiveViewModel @Inject constructor(
                     it.copy(
                         archiveItems = entries
                             .filter { entry -> entry.isLocked || entry.summary.totalSteps > 0 }
-                            .map { entry -> entry.toUiModel() },
+                            .map { entry ->
+                                val achievedDays = entry.summary.dailyCounts.count { it.isAchieved }
+                                val totalDays = entry.summary.dailyCounts.size.coerceAtLeast(7)
+                                val achievementPct = if (entry.summary.dailyCounts.isEmpty()) {
+                                    0
+                                } else {
+                                    achievedDays * 100 / totalDays
+                                }
+                                WeeklyReportArchiveItemUiState(
+                                    weekStartEpochDay = entry.weekStartEpochDay,
+                                    unlockDate = entry.unlockDate,
+                                    totalSteps = entry.summary.totalSteps,
+                                    achievementPct = achievementPct,
+                                    achievementRate = achievementPct / 100f,
+                                    isLocked = entry.isLocked,
+                                )
+                            },
                         isLoading = false,
                         isError = false,
                     )

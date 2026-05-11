@@ -6,7 +6,8 @@ import com.river.walklog.core.analytics.CrashKeys
 import com.river.walklog.core.analytics.CrashReporter
 import com.river.walklog.core.domain.usecase.GetWeeklyBestHourUseCase
 import com.river.walklog.core.domain.usecase.GetWeeklyStepSummaryUseCase
-import com.river.walklog.feature.report.model.applyWeeklySummary
+import com.river.walklog.core.model.DailyStepCount
+import com.river.walklog.core.model.WeeklyStepSummary
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -33,11 +34,25 @@ class WeeklyReportDetailViewModel @Inject constructor(
         crashReporter.setKey(CrashKeys.SCREEN, CrashKeys.Screens.WEEKLY_REPORT)
     }
 
-    fun handleIntent(intent: WeeklyReportDetailIntent) {
-        when (intent) {
-            WeeklyReportDetailIntent.OnClickShare -> _state.update { it.copy(isSharing = true) }
-            WeeklyReportDetailIntent.OnShareComplete -> _state.update { it.copy(isSharing = false) }
+    fun startSharing() {
+        _state.update { it.copy(isSharing = true) }
+    }
+
+    fun completeSharing() {
+        _state.update { it.copy(isSharing = false) }
+    }
+
+    fun failSharing() {
+        _state.update {
+            it.copy(
+                isSharing = false,
+                userMessage = WeeklyReportUserMessage.ShareFailed,
+            )
         }
+    }
+
+    fun clearUserMessage() {
+        _state.update { it.copy(userMessage = null) }
     }
 
     fun loadReport(weekStartEpochDay: Long) {
@@ -64,4 +79,47 @@ class WeeklyReportDetailViewModel @Inject constructor(
                 .collect {}
         }
     }
+}
+
+private fun WeeklyReportDetailState.applyWeeklySummary(
+    summary: WeeklyStepSummary,
+    bestHour: Int?,
+): WeeklyReportDetailState {
+    val stepMap = summary.dailyCounts.associateBy { it.dateEpochDay }
+    val weekCounts = (0L..6L).map { offset ->
+        val epochDay = summary.weekStartEpochDay + offset
+        stepMap[epochDay] ?: DailyStepCount(dateEpochDay = epochDay, steps = 0)
+    }
+
+    val baseState = copy(
+        weekStartEpochDay = summary.weekStartEpochDay,
+        isLoading = false,
+        isError = false,
+    )
+
+    if (weekCounts.none { it.steps > 0 }) {
+        return baseState.copy(isEmpty = true)
+    }
+
+    val achievedDays = weekCounts.count { it.isAchieved }
+    val achievementRate = achievedDays / 7f
+    val achievementPct = (achievementRate * 100).toInt()
+
+    return baseState.copy(
+        totalSteps = summary.totalSteps,
+        achievementPct = achievementPct,
+        achievedDays = achievedDays,
+        totalDays = 7,
+        achievementRate = achievementRate,
+        bestDayEpochDay = summary.bestDay?.dateEpochDay,
+        bestHour = bestHour,
+        longestAchievedStreak = summary.longestAchievedStreak,
+        dailyCounts = weekCounts,
+        summaryMessageType = when {
+            achievementPct >= 100 -> WeeklyReportSummaryMessageType.AllAchieved
+            achievementPct >= 70 -> WeeklyReportSummaryMessageType.GoodProgress
+            else -> WeeklyReportSummaryMessageType.KeepGoing
+        },
+        isEmpty = false,
+    )
 }

@@ -18,13 +18,20 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.river.walklog.core.designsystem.foundation.WalkLogTheme
-import com.river.walklog.feature.report.model.WeeklyReportShareCardUiModel
+import com.river.walklog.feature.report.R
 
 @Composable
 fun WeeklyReportShareCard(
-    model: WeeklyReportShareCardUiModel,
+    weekRangeText: String,
+    headline: String,
+    totalStepsText: String,
+    achievementRateText: String,
+    bestDayText: String,
+    bestTimeText: String,
+    streakText: String,
     modifier: Modifier = Modifier,
 ) {
     Column(
@@ -35,17 +42,17 @@ fun WeeklyReportShareCard(
             .padding(horizontal = 24.dp, vertical = 28.dp),
         verticalArrangement = Arrangement.spacedBy(20.dp),
     ) {
-        ShareCardHeader(weekRangeText = model.weekRangeText)
-        ShareCardHeadline(headline = model.headline)
-        ShareCardHeroMetric(totalStepsText = model.totalStepsText, achievementRateText = model.achievementRateText)
+        ShareCardHeader(weekRangeText = weekRangeText)
+        ShareCardHeadline(headline = headline)
+        ShareCardHeroMetric(totalStepsText = totalStepsText, achievementRateText = achievementRateText)
         HorizontalDivider(color = WalkLogTheme.colors.outlineVariant)
         Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-            ShareCardInfoRow("📅", "가장 많이 걸은 요일", model.bestDayText)
-            ShareCardInfoRow("⏰", "가장 활발한 시간대", model.bestTimeText)
-            ShareCardInfoRow("🔥", "최고 스트릭", model.streakText)
+            ShareCardInfoRow("📅", stringResource(R.string.report_share_card_best_day), bestDayText)
+            ShareCardInfoRow("⏰", stringResource(R.string.report_share_card_best_time), bestTimeText)
+            ShareCardInfoRow("🔥", stringResource(R.string.report_share_card_best_streak), streakText)
         }
         Spacer(modifier = Modifier.weight(1f))
-        ShareCardFooter(footerText = model.footerText)
+        ShareCardFooter(footerText = stringResource(R.string.report_share_footer))
     }
 }
 
@@ -73,17 +80,17 @@ private fun ShareCardHeroMetric(totalStepsText: String, achievementRateText: Str
         modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(28.dp)).background(WalkLogTheme.colors.primaryContainer).padding(horizontal = 20.dp, vertical = 24.dp),
         verticalArrangement = Arrangement.spacedBy(14.dp),
     ) {
-        Text("이번 주 총 걸음 수", style = WalkLogTheme.typography.typography6M, color = WalkLogTheme.colors.onPrimaryContainer)
+        Text(stringResource(R.string.report_share_card_total_steps), style = WalkLogTheme.typography.typography6M, color = WalkLogTheme.colors.onPrimaryContainer)
         Text(totalStepsText, style = WalkLogTheme.typography.typography2B, color = WalkLogTheme.colors.onPrimaryContainer)
         Row(verticalAlignment = Alignment.CenterVertically) {
             Box(
                 modifier = Modifier.clip(CircleShape).background(WalkLogTheme.colors.primary).padding(horizontal = 10.dp, vertical = 5.dp),
                 contentAlignment = Alignment.Center,
             ) {
-                Text("달성률 $achievementRateText", style = WalkLogTheme.typography.subTypography12B, color = WalkLogTheme.colors.onPrimary)
+                Text(stringResource(R.string.report_share_card_achievement_rate, achievementRateText), style = WalkLogTheme.typography.subTypography12B, color = WalkLogTheme.colors.onPrimary)
             }
             Spacer(Modifier.width(8.dp))
-            Text("꾸준히 걷고 있어요", style = WalkLogTheme.typography.typography7M, color = WalkLogTheme.colors.onSurfaceVariant)
+            Text(stringResource(R.string.report_share_card_walking_note), style = WalkLogTheme.typography.typography7M, color = WalkLogTheme.colors.onSurfaceVariant)
         }
     }
 }

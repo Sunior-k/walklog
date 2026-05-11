@@ -1,7 +1,7 @@
 package com.river.walklog.feature.report
 
-import android.widget.Toast
 import androidx.activity.compose.BackHandler
+import androidx.annotation.StringRes
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -29,6 +29,8 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -46,7 +48,9 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.layer.GraphicsLayer
 import androidx.compose.ui.graphics.rememberGraphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -56,14 +60,16 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.river.walklog.core.designsystem.component.WalkLogLinearProgressBar
 import com.river.walklog.core.designsystem.foundation.WalkLogTheme
 import com.river.walklog.core.model.DailyStepCount
+import com.river.walklog.core.ui.withComma
 import com.river.walklog.feature.report.component.ShareableWeeklyReportCard
 import com.river.walklog.feature.report.component.WeeklyReportError
 import com.river.walklog.feature.report.component.WeeklyReportShareCard
 import com.river.walklog.feature.report.component.WeeklyReportTopBar
 import com.river.walklog.feature.report.extension.ReportShareManager
 import com.river.walklog.feature.report.extension.toAndroidBitmapSafely
-import com.river.walklog.feature.report.model.WeeklyReportShareCardUiModel
 import kotlinx.coroutines.launch
+import java.time.LocalDate
+import java.time.format.DateTimeFormatter
 
 @Composable
 fun WeeklyReportDetailRoute(
@@ -76,9 +82,21 @@ fun WeeklyReportDetailRoute(
     val shareManager = remember(context) { ReportShareManager(context) }
     val graphicsLayer = rememberGraphicsLayer()
     val scope = rememberCoroutineScope()
+    val snackbarHostState = remember { SnackbarHostState() }
+    val shareChooserTitle = stringResource(R.string.report_share_chooser_title)
+    val shareText = stringResource(R.string.report_share_text)
 
     LaunchedEffect(weekStartEpochDay) {
         viewModel.loadReport(weekStartEpochDay)
+    }
+
+    val userMessage = state.userMessage
+    val userMessageText = userMessage?.let { stringResource(it.stringRes) }
+    LaunchedEffect(userMessageText) {
+        userMessageText?.let {
+            snackbarHostState.showSnackbar(it)
+            viewModel.clearUserMessage()
+        }
     }
 
     BackHandler {
@@ -87,22 +105,28 @@ fun WeeklyReportDetailRoute(
 
     WeeklyReportDetailScreen(
         state = state,
+        snackbarHostState = snackbarHostState,
         graphicsLayer = graphicsLayer,
-        onClickBack = { onBack() },
+        onClickBack = onBack,
         onClickShare = {
             scope.launch {
-                viewModel.handleIntent(WeeklyReportDetailIntent.OnClickShare)
+                viewModel.startSharing()
                 runCatching {
                     val bitmap = graphicsLayer.toAndroidBitmapSafely()
                     val uri = shareManager.saveBitmapToCache(
                         bitmap = bitmap,
                         fileName = "weekly_report_${System.currentTimeMillis()}.png",
                     )
-                    shareManager.shareImage(uri)
+                    shareManager.shareImage(
+                        imageUri = uri,
+                        chooserTitle = shareChooserTitle,
+                        shareText = shareText,
+                    )
+                }.onSuccess {
+                    viewModel.completeSharing()
                 }.onFailure {
-                    Toast.makeText(context, "리포트 공유에 실패했어요.", Toast.LENGTH_SHORT).show()
+                    viewModel.failSharing()
                 }
-                viewModel.handleIntent(WeeklyReportDetailIntent.OnShareComplete)
             }
         },
     )
@@ -114,35 +138,47 @@ internal fun WeeklyReportDetailScreen(
     graphicsLayer: GraphicsLayer,
     onClickBack: () -> Unit,
     onClickShare: () -> Unit,
+    snackbarHostState: SnackbarHostState = remember { SnackbarHostState() },
     modifier: Modifier = Modifier,
 ) {
     Scaffold(
         modifier = modifier,
         topBar = { WeeklyReportTopBar(onClickBack = onClickBack) },
         containerColor = WalkLogTheme.colors.background,
+        snackbarHost = { SnackbarHost(snackbarHostState) },
     ) { padding ->
         Box(
             modifier = Modifier
                 .fillMaxSize()
                 .background(WalkLogTheme.colors.background),
         ) {
-            val shareCardModel = if (!state.isEmpty && !state.isError && !state.isLoading) {
-                WeeklyReportShareCardUiModel(
-                    weekRangeText = state.weekRangeText,
-                    headline = state.summaryMessage,
-                    totalStepsText = state.totalStepsText,
-                    achievementRateText = state.achievementRateText,
-                    bestDayText = state.bestDayText,
-                    bestTimeText = state.bestTimeText,
-                    streakText = state.bestStreakText,
-                )
-            } else {
-                null
+            val hasContent = !state.isEmpty && !state.isError && !state.isLoading
+            val locale = LocalConfiguration.current.locales[0]
+            val rangeFormatter = remember(locale) { DateTimeFormatter.ofPattern("M/d", locale) }
+            val monthFormatter = remember(locale) { DateTimeFormatter.ofPattern("MMMM", locale) }
+            val fullDateFormatPattern = stringResource(R.string.report_full_date_format_pattern)
+            val fullDateFormatter = remember(locale, fullDateFormatPattern) {
+                DateTimeFormatter.ofPattern(fullDateFormatPattern, locale)
             }
+            val dayOfWeekFormatter = remember(locale) { DateTimeFormatter.ofPattern("EEEE", locale) }
+            val weekStart = state.weekStart
+            val weekEnd = state.weekEnd
+            val shareWeekRangeText = state.weekRangeText(monthFormatter, rangeFormatter)
+            val shareHeadline = state.summaryMessageText()
+            val shareTotalStepsText = stringResource(R.string.steps_with_suffix, state.totalSteps.withComma())
+            val bestDayText = state.bestDayText(dayOfWeekFormatter)
+            val shareBestTimeText = state.bestTimeText()
+            val shareStreakText = state.bestStreakText()
 
-            shareCardModel?.let { model ->
+            if (hasContent) {
                 ShareableWeeklyReportCard(
-                    model = model,
+                    weekRangeText = shareWeekRangeText,
+                    headline = shareHeadline,
+                    totalStepsText = shareTotalStepsText,
+                    achievementRateText = state.achievementRateText,
+                    bestDayText = bestDayText,
+                    bestTimeText = shareBestTimeText,
+                    streakText = shareStreakText,
                     graphicsLayer = graphicsLayer,
                     modifier = Modifier
                         .align(Alignment.TopCenter)
@@ -186,12 +222,16 @@ internal fun WeeklyReportDetailScreen(
                         verticalArrangement = Arrangement.spacedBy(12.dp),
                     ) {
                         WeeklyReportHeader(
-                            dateRangeSubtitle = state.dateRangeSubtitle,
+                            dateRangeSubtitle = if (weekStart != null && weekEnd != null) {
+                                "${weekStart.format(fullDateFormatter)} — ${weekEnd.format(fullDateFormatter)}"
+                            } else {
+                                ""
+                            },
                         )
 
                         WeeklyBarChartCard(dailyCounts = state.dailyCounts)
 
-                        WeeklyTotalStepsCard(totalStepsText = state.totalStepsText)
+                        WeeklyTotalStepsCard(totalStepsText = shareTotalStepsText)
 
                         WeeklyGoalCard(
                             achievedDays = state.achievedDays,
@@ -200,13 +240,21 @@ internal fun WeeklyReportDetailScreen(
                         )
 
                         WeeklyInsightCard(
-                            bestDayText = state.bestDayText,
-                            bestTimeText = state.bestTimeText,
-                            bestStreakText = state.bestStreakText,
+                            bestDayText = bestDayText,
+                            bestTimeText = shareBestTimeText,
+                            bestStreakText = shareStreakText,
                         )
 
-                        shareCardModel?.let { model ->
-                            WeeklyReportSharePreview(model = model)
+                        if (hasContent) {
+                            WeeklyReportSharePreview(
+                                weekRangeText = shareWeekRangeText,
+                                headline = shareHeadline,
+                                totalStepsText = shareTotalStepsText,
+                                achievementRateText = state.achievementRateText,
+                                bestDayText = bestDayText,
+                                bestTimeText = shareBestTimeText,
+                                streakText = shareStreakText,
+                            )
                         }
 
                         Spacer(modifier = Modifier.height(96.dp))
@@ -260,7 +308,7 @@ private fun WeeklyReportBottomBar(
                 Spacer(Modifier.size(8.dp))
             }
             Text(
-                text = if (isSharing) "공유 준비 중..." else "리포트 공유하기",
+                text = if (isSharing) stringResource(R.string.report_share_button_sharing) else stringResource(R.string.report_share_button),
                 style = WalkLogTheme.typography.typography6SB,
             )
         }
@@ -271,7 +319,7 @@ private fun WeeklyReportBottomBar(
 private fun WeeklyReportHeader(dateRangeSubtitle: String) {
     Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
         Text(
-            text = "주간 리포트",
+            text = stringResource(R.string.report_title),
             style = WalkLogTheme.typography.subTypography2B,
             color = WalkLogTheme.colors.onSurface,
         )
@@ -284,8 +332,66 @@ private fun WeeklyReportHeader(dateRangeSubtitle: String) {
 }
 
 @Composable
+private fun WeeklyReportDetailState.weekRangeText(
+    monthFormatter: DateTimeFormatter,
+    rangeFormatter: DateTimeFormatter,
+): String {
+    val start = weekStart ?: return ""
+    val end = weekEnd ?: return ""
+    val weekOfMonth = weekOfMonth ?: return ""
+    return stringResource(
+        R.string.report_week_range_full,
+        start.format(monthFormatter),
+        weekOfMonth,
+        start.format(rangeFormatter),
+        end.format(rangeFormatter),
+    )
+}
+
+@Composable
+private fun WeeklyReportDetailState.summaryMessageText(): String = stringResource(
+    when (summaryMessageType) {
+        WeeklyReportSummaryMessageType.AllAchieved -> R.string.report_summary_all_achieved
+        WeeklyReportSummaryMessageType.GoodProgress -> R.string.report_summary_good_progress
+        WeeklyReportSummaryMessageType.KeepGoing -> R.string.report_summary_keep_going
+    },
+)
+
+private fun WeeklyReportDetailState.bestDayText(formatter: DateTimeFormatter): String =
+    bestDayEpochDay?.let { LocalDate.ofEpochDay(it).format(formatter) } ?: "-"
+
+@Composable
+private fun WeeklyReportDetailState.bestTimeText(): String {
+    val hour = bestHour ?: return "-"
+    val displayHour = when {
+        hour == 0 -> 12
+        hour > 12 -> hour - 12
+        else -> hour
+    }
+    return if (hour < 12) {
+        stringResource(R.string.report_best_time_am, displayHour)
+    } else {
+        stringResource(R.string.report_best_time_pm, displayHour)
+    }
+}
+
+@Composable
+private fun WeeklyReportDetailState.bestStreakText(): String =
+    if (longestAchievedStreak > 0) {
+        stringResource(R.string.report_streak_days, longestAchievedStreak)
+    } else {
+        "-"
+    }
+
+@Composable
 private fun WeeklyReportSharePreview(
-    model: WeeklyReportShareCardUiModel,
+    weekRangeText: String,
+    headline: String,
+    totalStepsText: String,
+    achievementRateText: String,
+    bestDayText: String,
+    bestTimeText: String,
+    streakText: String,
 ) {
     var isExpanded by remember { mutableStateOf(false) }
     val shape = RoundedCornerShape(24.dp)
@@ -346,15 +452,15 @@ private fun WeeklyReportSharePreview(
 
                         Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                             Text(
-                                text = "공유 미리보기",
+                                text = stringResource(R.string.report_share_preview_title),
                                 style = WalkLogTheme.typography.typography6SB,
                                 color = WalkLogTheme.colors.onSurface,
                             )
                             Text(
                                 text = if (isExpanded) {
-                                    "공유될 카드가 아래에 표시돼요"
+                                    stringResource(R.string.report_share_preview_expanded)
                                 } else {
-                                    "공유하기 전에 카드 형태를 확인해 보세요"
+                                    stringResource(R.string.report_share_preview_collapsed)
                                 },
                                 style = WalkLogTheme.typography.typography7M,
                                 color = WalkLogTheme.colors.onSurfaceVariant,
@@ -362,7 +468,7 @@ private fun WeeklyReportSharePreview(
                         }
                     }
                     Text(
-                        text = if (isExpanded) "접기" else "열기",
+                        text = if (isExpanded) stringResource(R.string.report_share_collapse) else stringResource(R.string.report_share_expand),
                         style = WalkLogTheme.typography.typography7M,
                         color = WalkLogTheme.colors.onPrimary,
                         modifier = Modifier
@@ -374,7 +480,13 @@ private fun WeeklyReportSharePreview(
 
                 if (isExpanded) {
                     WeeklyReportShareCard(
-                        model = model,
+                        weekRangeText = weekRangeText,
+                        headline = headline,
+                        totalStepsText = totalStepsText,
+                        achievementRateText = achievementRateText,
+                        bestDayText = bestDayText,
+                        bestTimeText = bestTimeText,
+                        streakText = streakText,
                         modifier = Modifier.fillMaxWidth(),
                     )
                 }
@@ -385,7 +497,15 @@ private fun WeeklyReportSharePreview(
 
 @Composable
 private fun WeeklyBarChartCard(dailyCounts: List<DailyStepCount>) {
-    val dayLabels = listOf("월", "화", "수", "목", "금", "토", "일")
+    val dayLabels = listOf(
+        stringResource(R.string.report_day_mon),
+        stringResource(R.string.report_day_tue),
+        stringResource(R.string.report_day_wed),
+        stringResource(R.string.report_day_thu),
+        stringResource(R.string.report_day_fri),
+        stringResource(R.string.report_day_sat),
+        stringResource(R.string.report_day_sun),
+    )
     val maxSteps = dailyCounts.maxOfOrNull { it.steps }?.coerceAtLeast(1) ?: 1
     val bestEpochDay = dailyCounts.maxByOrNull { it.steps }?.takeIf { it.steps > 0 }?.dateEpochDay
     val maxBarHeight = 160.dp
@@ -469,7 +589,7 @@ private fun WeeklyTotalStepsCard(totalStepsText: String) {
         ) {
             Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
                 Text(
-                    text = "이번 주 총 걸음",
+                    text = stringResource(R.string.report_weekly_total_steps_label),
                     style = WalkLogTheme.typography.typography7M,
                     color = WalkLogTheme.colors.onSurfaceVariant,
                 )
@@ -521,7 +641,7 @@ private fun WeeklyGoalCard(
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Text(
-                    text = "목표 달성",
+                    text = stringResource(R.string.report_goal_label),
                     style = WalkLogTheme.typography.typography7M,
                     color = WalkLogTheme.colors.onSurfaceVariant,
                 )
@@ -549,7 +669,7 @@ private fun WeeklyGoalCard(
                     color = WalkLogTheme.colors.onSurface,
                 )
                 Text(
-                    text = " 일",
+                    text = stringResource(R.string.report_days_suffix),
                     style = WalkLogTheme.typography.subTypography9M,
                     color = WalkLogTheme.colors.onSurfaceVariant,
                     modifier = Modifier.padding(bottom = 4.dp),
@@ -587,13 +707,13 @@ private fun WeeklyInsightCard(
             verticalArrangement = Arrangement.spacedBy(14.dp),
         ) {
             Text(
-                text = "주간 하이라이트",
+                text = stringResource(R.string.report_highlight_title),
                 style = WalkLogTheme.typography.typography7M,
                 color = WalkLogTheme.colors.onSurfaceVariant,
             )
-            InsightRow(label = "가장 많이 걸은 요일", value = bestDayText)
-            InsightRow(label = "가장 활발한 시간대", value = bestTimeText)
-            InsightRow(label = "최고 스트릭", value = bestStreakText)
+            InsightRow(label = stringResource(R.string.report_best_day_label), value = bestDayText)
+            InsightRow(label = stringResource(R.string.report_best_time_label), value = bestTimeText)
+            InsightRow(label = stringResource(R.string.report_best_streak_label), value = bestStreakText)
         }
     }
 }
@@ -617,8 +737,6 @@ private fun InsightRow(label: String, value: String) {
         )
     }
 }
-
-// ─── Overlays / States ────────────────────────────────────────────────────────
 
 @Composable
 private fun SharingOverlay() {
@@ -644,7 +762,7 @@ private fun SharingOverlay() {
                     trackColor = WalkLogTheme.colors.onSurface.copy(alpha = 0.18f),
                 )
                 Text(
-                    text = "공유 이미지를 만드는 중이에요",
+                    text = stringResource(R.string.report_sharing_preparing),
                     style = WalkLogTheme.typography.typography6SB,
                     color = WalkLogTheme.colors.onSurface,
                 )
@@ -662,25 +780,28 @@ private fun WeeklyReportEmptyState(modifier: Modifier = Modifier) {
     ) {
         Text(text = "📭", style = WalkLogTheme.typography.typography1B)
         Text(
-            text = "이번 주 걸음 기록이 없어요",
+            text = stringResource(R.string.report_empty_title),
             style = WalkLogTheme.typography.typography4SB,
             color = WalkLogTheme.colors.onSurface,
         )
         Text(
-            text = "걷기 시작하면 주간 리포트가 만들어져요",
+            text = stringResource(R.string.report_empty_desc),
             style = WalkLogTheme.typography.typography6M,
             color = WalkLogTheme.colors.onSurfaceVariant,
         )
     }
 }
 
-// ─── Helpers ──────────────────────────────────────────────────────────────────
-
 private fun formatStepsShort(steps: Int): String = when {
     steps <= 0 -> ""
     steps >= 1_000 -> "${steps / 1_000}k"
     else -> "$steps"
 }
+
+private val WeeklyReportUserMessage.stringRes: Int
+    @StringRes get() = when (this) {
+        WeeklyReportUserMessage.ShareFailed -> R.string.report_share_failed
+    }
 
 @Preview(showBackground = true, widthDp = 390, heightDp = 844)
 @Composable
@@ -691,17 +812,16 @@ private fun WeeklyReportScreenPreview() {
         }
         WeeklyReportDetailScreen(
             state = WeeklyReportDetailState(
-                dateRangeSubtitle = "4월 14일 — 4월 20일",
-                weekRangeText = "4월 3주차 · 4/14~4/20",
-                totalStepsText = "52,300보",
-                achievementRateText = "86%",
+                weekStartEpochDay = LocalDate.of(2026, 4, 14).toEpochDay(),
+                totalSteps = 52_300,
+                achievementPct = 86,
                 achievedDays = 6,
                 totalDays = 7,
                 achievementRate = 6f / 7f,
-                bestDayText = "수요일",
-                bestTimeText = "오후 3시",
-                bestStreakText = "5일",
-                summaryMessage = "훌륭해요! 목표에 가까워지고 있어요",
+                bestDayEpochDay = LocalDate.of(2026, 4, 15).toEpochDay(),
+                bestHour = 15,
+                longestAchievedStreak = 5,
+                summaryMessageType = WeeklyReportSummaryMessageType.GoodProgress,
                 dailyCounts = fakeCounts,
                 isLoading = false,
             ),

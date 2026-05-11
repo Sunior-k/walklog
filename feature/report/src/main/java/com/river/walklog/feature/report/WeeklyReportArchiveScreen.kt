@@ -23,20 +23,25 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.river.walklog.core.designsystem.component.WalkLogLinearProgressBar
 import com.river.walklog.core.designsystem.foundation.WalkLogTheme
+import com.river.walklog.core.ui.withComma
 import com.river.walklog.feature.report.component.WeeklyReportError
 import com.river.walklog.feature.report.component.WeeklyReportTopBar
-import com.river.walklog.feature.report.model.WeeklyReportArchiveItemUiModel
+import java.time.LocalDate
+import java.time.format.DateTimeFormatter
 
 @Composable
 fun WeeklyReportArchiveRoute(
@@ -50,8 +55,8 @@ fun WeeklyReportArchiveRoute(
 
     WeeklyReportArchiveScreen(
         state = state,
-        onClickBack = { onBack() },
-        onClickReport = { weekStartEpochDay -> onClickReport(weekStartEpochDay) },
+        onClickBack = onBack,
+        onClickReport = onClickReport,
     )
 }
 
@@ -102,7 +107,7 @@ internal fun WeeklyReportArchiveScreen(
 
 @Composable
 private fun WeeklyReportArchiveContent(
-    items: List<WeeklyReportArchiveItemUiModel>,
+    items: List<WeeklyReportArchiveItemUiState>,
     onClickReport: (Long) -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -118,12 +123,12 @@ private fun WeeklyReportArchiveContent(
     ) {
         Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
             Text(
-                text = "주간 리포트",
+                text = stringResource(R.string.report_title),
                 style = WalkLogTheme.typography.subTypography2B,
                 color = WalkLogTheme.colors.onSurface,
             )
             Text(
-                text = "최근 12주 기록을 모아봤어요",
+                text = stringResource(R.string.report_archive_subtitle),
                 style = WalkLogTheme.typography.typography7M,
                 color = WalkLogTheme.colors.onSurfaceVariant,
             )
@@ -139,7 +144,7 @@ private fun WeeklyReportArchiveContent(
 
         if (unlockedItems.isNotEmpty()) {
             Text(
-                text = "지난 리포트",
+                text = stringResource(R.string.report_past_title),
                 style = WalkLogTheme.typography.typography7SB,
                 color = WalkLogTheme.colors.onSurfaceVariant,
                 modifier = Modifier.padding(top = 2.dp),
@@ -159,11 +164,18 @@ private fun WeeklyReportArchiveContent(
 
 @Composable
 private fun WeeklyReportArchiveCard(
-    item: WeeklyReportArchiveItemUiModel,
+    item: WeeklyReportArchiveItemUiState,
     isFeatured: Boolean,
     onClick: () -> Unit,
 ) {
     val shape = RoundedCornerShape(if (isFeatured) 28.dp else 22.dp)
+    val locale = LocalConfiguration.current.locales[0]
+    val rangeFormatter = remember(locale) { DateTimeFormatter.ofPattern("M/d", locale) }
+    val monthFormatter = remember(locale) { DateTimeFormatter.ofPattern("MMMM", locale) }
+    val fullDateFormatPattern = stringResource(R.string.report_full_date_format_pattern)
+    val unlockDateFormatter = remember(locale, fullDateFormatPattern) {
+        DateTimeFormatter.ofPattern(fullDateFormatPattern, locale)
+    }
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -212,12 +224,16 @@ private fun WeeklyReportArchiveCard(
                 ) {
                     Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
                         Text(
-                            text = if (item.isLocked) "진행 중인 주" else "완료된 리포트",
+                            text = if (item.isLocked) stringResource(R.string.report_in_progress) else stringResource(R.string.report_completed),
                             style = WalkLogTheme.typography.subTypography12R,
                             color = WalkLogTheme.colors.primary,
                         )
                         Text(
-                            text = item.weekRangeText,
+                            text = stringResource(
+                                R.string.report_week_range,
+                                item.weekStart.format(monthFormatter),
+                                item.weekOfMonth,
+                            ),
                             style = if (isFeatured) {
                                 WalkLogTheme.typography.typography3B
                             } else {
@@ -226,7 +242,11 @@ private fun WeeklyReportArchiveCard(
                             color = WalkLogTheme.colors.onSurface,
                         )
                         Text(
-                            text = item.dateRangeText,
+                            text = stringResource(
+                                R.string.report_date_range,
+                                item.weekStart.format(rangeFormatter),
+                                item.weekEnd.format(rangeFormatter),
+                            ),
                             style = WalkLogTheme.typography.typography7M,
                             color = WalkLogTheme.colors.onSurfaceVariant,
                         )
@@ -247,12 +267,12 @@ private fun WeeklyReportArchiveCard(
                     horizontalArrangement = Arrangement.spacedBy(10.dp),
                 ) {
                     ArchiveMetric(
-                        label = "총 걸음",
-                        value = item.totalStepsText,
+                        label = stringResource(R.string.report_total_steps_label),
+                        value = stringResource(R.string.steps_with_suffix, item.totalSteps.withComma()),
                         modifier = Modifier.weight(1f),
                     )
                     ArchiveMetric(
-                        label = "달성률",
+                        label = stringResource(R.string.report_achievement_rate_label),
                         value = item.achievementRateText,
                         modifier = Modifier.weight(1f),
                     )
@@ -280,12 +300,15 @@ private fun WeeklyReportArchiveCard(
                     ) {
                         Text(text = "🔒", style = WalkLogTheme.typography.typography2B)
                         Text(
-                            text = "이번 주 리포트는 아직 준비 중이에요",
+                            text = stringResource(R.string.report_locked_message),
                             style = WalkLogTheme.typography.typography5SB,
                             color = WalkLogTheme.colors.onSurface,
                         )
                         Text(
-                            text = item.unlockMessage,
+                            text = stringResource(
+                                R.string.report_unlock_from,
+                                item.unlockDate.format(unlockDateFormatter),
+                            ),
                             style = WalkLogTheme.typography.typography7M,
                             color = WalkLogTheme.colors.onSurfaceVariant,
                         )
@@ -331,25 +354,21 @@ private fun WeeklyReportArchiveScreenPreview() {
                 isLoading = false,
                 isError = false,
                 archiveItems = listOf(
-                    WeeklyReportArchiveItemUiModel(
+                    WeeklyReportArchiveItemUiState(
                         weekStartEpochDay = 0L,
-                        weekRangeText = "3월 4일 - 3월 10일",
-                        dateRangeText = "2024.03.04 - 2024.03.10",
-                        totalStepsText = "42,069",
-                        achievementRateText = "84%",
+                        unlockDate = LocalDate.ofEpochDay(7L),
+                        totalSteps = 42_069,
+                        achievementPct = 84,
                         achievementRate = 0.84f,
                         isLocked = false,
-                        unlockMessage = "",
                     ),
-                    WeeklyReportArchiveItemUiModel(
+                    WeeklyReportArchiveItemUiState(
                         weekStartEpochDay = 0L,
-                        weekRangeText = "3월 11일 - 3월 17일",
-                        dateRangeText = "2024.03.11 - 2024.03.17",
-                        totalStepsText = "37,502",
-                        achievementRateText = "75%",
+                        unlockDate = LocalDate.ofEpochDay(7L),
+                        totalSteps = 37_502,
+                        achievementPct = 75,
                         achievementRate = 0.75f,
                         isLocked = true,
-                        unlockMessage = "3월 18일에 공개돼요",
                     ),
                 ),
             ),

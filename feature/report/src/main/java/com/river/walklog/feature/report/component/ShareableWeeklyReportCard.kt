@@ -11,11 +11,16 @@ import androidx.compose.ui.graphics.layer.GraphicsLayer
 import androidx.compose.ui.graphics.layer.drawLayer
 import androidx.compose.ui.unit.dp
 import com.river.walklog.core.designsystem.foundation.WalkLogTheme
-import com.river.walklog.feature.report.model.WeeklyReportShareCardUiModel
 
 @Composable
 fun ShareableWeeklyReportCard(
-    model: WeeklyReportShareCardUiModel,
+    weekRangeText: String,
+    headline: String,
+    totalStepsText: String,
+    achievementRateText: String,
+    bestDayText: String,
+    bestTimeText: String,
+    streakText: String,
     graphicsLayer: GraphicsLayer,
     modifier: Modifier = Modifier,
 ) {
@@ -30,7 +35,13 @@ fun ShareableWeeklyReportCard(
         color = WalkLogTheme.colors.background,
     ) {
         WeeklyReportShareCard(
-            model = model,
+            weekRangeText = weekRangeText,
+            headline = headline,
+            totalStepsText = totalStepsText,
+            achievementRateText = achievementRateText,
+            bestDayText = bestDayText,
+            bestTimeText = bestTimeText,
+            streakText = streakText,
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = 4.dp, vertical = 4.dp),
