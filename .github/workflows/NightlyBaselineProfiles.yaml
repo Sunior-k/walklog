@@ -31,7 +31,7 @@ jobs:
           large-packages: false
 
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Enable KVM group perms
         run: |
