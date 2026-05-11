@@ -146,6 +146,56 @@ internal val Typography = WalkLogTypography(
     subTypography13B = Base.copy(fontSize = 11.sp, lineHeight = 16.5.sp, fontWeight = FontWeight.Bold),
 )
 
+internal fun WalkLogTypography.scale(factor: Float): WalkLogTypography {
+    fun TextStyle.s(): TextStyle {
+        val scaled = (fontSize.value * factor).sp
+        val scaledLine = (lineHeight.value * factor).sp
+        return copy(fontSize = scaled, lineHeight = scaledLine)
+    }
+    return copy(
+        typography1R = typography1R.s(), typography1M = typography1M.s(),
+        typography1SB = typography1SB.s(), typography1B = typography1B.s(),
+        subTypography1R = subTypography1R.s(), subTypography1M = subTypography1M.s(),
+        subTypography1SB = subTypography1SB.s(), subTypography1B = subTypography1B.s(),
+        subTypography2R = subTypography2R.s(), subTypography2M = subTypography2M.s(),
+        subTypography2SB = subTypography2SB.s(), subTypography2B = subTypography2B.s(),
+        subTypography3R = subTypography3R.s(), subTypography3M = subTypography3M.s(),
+        subTypography3SB = subTypography3SB.s(), subTypography3B = subTypography3B.s(),
+        typography2R = typography2R.s(), typography2M = typography2M.s(),
+        typography2SB = typography2SB.s(), typography2B = typography2B.s(),
+        subTypography4R = subTypography4R.s(), subTypography4M = subTypography4M.s(),
+        subTypography4SB = subTypography4SB.s(), subTypography4B = subTypography4B.s(),
+        subTypography5R = subTypography5R.s(), subTypography5M = subTypography5M.s(),
+        subTypography5SB = subTypography5SB.s(), subTypography5B = subTypography5B.s(),
+        subTypography6R = subTypography6R.s(), subTypography6M = subTypography6M.s(),
+        subTypography6SB = subTypography6SB.s(), subTypography6B = subTypography6B.s(),
+        typography3R = typography3R.s(), typography3M = typography3M.s(),
+        typography3SB = typography3SB.s(), typography3B = typography3B.s(),
+        subTypography7R = subTypography7R.s(), subTypography7M = subTypography7M.s(),
+        subTypography7SB = subTypography7SB.s(), subTypography7B = subTypography7B.s(),
+        typography4R = typography4R.s(), typography4M = typography4M.s(),
+        typography4SB = typography4SB.s(), typography4B = typography4B.s(),
+        subTypography8R = subTypography8R.s(), subTypography8M = subTypography8M.s(),
+        subTypography8SB = subTypography8SB.s(), subTypography8B = subTypography8B.s(),
+        subTypography9R = subTypography9R.s(), subTypography9M = subTypography9M.s(),
+        subTypography9SB = subTypography9SB.s(), subTypography9B = subTypography9B.s(),
+        typography5R = typography5R.s(), typography5M = typography5M.s(),
+        typography5SB = typography5SB.s(), typography5B = typography5B.s(),
+        subTypography10R = subTypography10R.s(), subTypography10M = subTypography10M.s(),
+        subTypography10SB = subTypography10SB.s(), subTypography10B = subTypography10B.s(),
+        typography6R = typography6R.s(), typography6M = typography6M.s(),
+        typography6SB = typography6SB.s(), typography6B = typography6B.s(),
+        subTypography11R = subTypography11R.s(), subTypography11M = subTypography11M.s(),
+        subTypography11SB = subTypography11SB.s(), subTypography11B = subTypography11B.s(),
+        typography7R = typography7R.s(), typography7M = typography7M.s(),
+        typography7SB = typography7SB.s(), typography7B = typography7B.s(),
+        subTypography12R = subTypography12R.s(), subTypography12M = subTypography12M.s(),
+        subTypography12SB = subTypography12SB.s(), subTypography12B = subTypography12B.s(),
+        subTypography13R = subTypography13R.s(), subTypography13M = subTypography13M.s(),
+        subTypography13SB = subTypography13SB.s(), subTypography13B = subTypography13B.s(),
+    )
+}
+
 /**
  * 워크로그 Typography 토큰
  *

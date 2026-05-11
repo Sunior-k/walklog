@@ -5,8 +5,6 @@ import kotlin.test.assertEquals
 
 class MissionTest {
 
-    // ─── progressRatio ────────────────────────────────────────────────────
-
     @Test
     fun `progressRatio is currentSteps divided by targetSteps`() {
         val mission = mission(currentSteps = 3_000, targetSteps = 6_000)
@@ -43,7 +41,7 @@ class MissionTest {
         assertEquals(0f, mission.progressRatio)
     }
 
-    // ─── Helper ───────────────────────────────────────────────────────────
+    // helper
 
     private fun mission(
         currentSteps: Int = 0,

@@ -53,7 +53,7 @@ class OfflineFirstStepRepositoryTest {
         )
     }
 
-    // ─── isHealthConnectAvailable ──────────────────────────────────────────
+    // isHealthConnectAvailable
 
     @Test
     fun `isHealthConnectAvailable delegates to healthConnectDataSource`() {
@@ -64,7 +64,7 @@ class OfflineFirstStepRepositoryTest {
         assertFalse(repository.isHealthConnectAvailable)
     }
 
-    // ─── getStepsForDay ────────────────────────────────────────────────────
+    // getStepsForDay
 
     @Test
     fun `getStepsForDay emits DailyStepCount with 0 steps when no entity and HC returns 0`() = runTest {
@@ -108,7 +108,7 @@ class OfflineFirstStepRepositoryTest {
         }
     }
 
-    // ─── getStepCountsForRange ─────────────────────────────────────────────
+    // getStepCountsForRange
 
     @Test
     fun `getStepCountsForRange fills missing days with 0 steps`() = runTest {
@@ -147,7 +147,7 @@ class OfflineFirstStepRepositoryTest {
         }
     }
 
-    // ─── getWeeklyStepSummary ──────────────────────────────────────────────
+    // getWeeklyStepSummary
 
     @Test
     fun `getWeeklyStepSummary spans exactly 7 days from weekStart`() = runTest {
@@ -165,7 +165,7 @@ class OfflineFirstStepRepositoryTest {
         }
     }
 
-    // ─── getHourlyStepsForRange ────────────────────────────────────────────
+    // getHourlyStepsForRange
 
     @Test
     fun `getHourlyStepsForRange returns empty array when HC throws`() = runTest {
@@ -190,7 +190,7 @@ class OfflineFirstStepRepositoryTest {
         assertEquals(expected.toList(), result.toList())
     }
 
-    // ─── Helpers ───────────────────────────────────────────────────────────
+    // Helper
 
     private fun dailyEntity(
         epochDay: Long,
