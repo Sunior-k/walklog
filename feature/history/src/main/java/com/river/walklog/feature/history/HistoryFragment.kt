@@ -16,10 +16,15 @@ import androidx.fragment.app.viewModels
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.recyclerview.widget.GridLayoutManager
+import com.river.walklog.core.ui.withComma
 import com.river.walklog.feature.history.databinding.FragmentHistoryBinding
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
+import java.text.NumberFormat
+import java.time.LocalDate
+import java.time.format.DateTimeFormatter
+import java.time.temporal.TemporalAccessor
 import com.river.walklog.core.designsystem.R as DesignR
 
 @AndroidEntryPoint
@@ -85,10 +90,10 @@ class HistoryFragment : Fragment() {
     }
 
     private fun renderState(state: HistoryState) = with(binding) {
-        tvMonthLabel.text = state.monthLabel
+        tvMonthLabel.text = state.yearMonth.formatWithPattern(R.string.history_month_format_pattern)
         btnPrevMonth.isEnabled = state.canNavigateBack
         btnNextMonth.isEnabled = state.canNavigateForward
-        tvTotalSteps.text = state.totalStepsText
+        tvTotalSteps.text = getString(R.string.total_steps_format, state.totalSteps.withComma())
         tvAchievementRate.text = state.achievementRateText
 
         val isLoading = state.isLoading
@@ -104,7 +109,8 @@ class HistoryFragment : Fragment() {
         }
 
         state.selectedDaySummary?.let { summary ->
-            tvSelectedDate.text = summary.dateText
+            tvSelectedDate.text = LocalDate.ofEpochDay(summary.dateEpochDay)
+                .formatWithPattern(R.string.history_date_format_pattern)
             applyChipStyle(summary)
 
             groupHasData.isVisible = summary.hasData
@@ -121,9 +127,9 @@ class HistoryFragment : Fragment() {
             }
 
             if (summary.hasData) {
-                tvSelectedSteps.text = summary.stepsText
-                tvSelectedCalories.text = summary.caloriesText
-                tvSelectedDistance.text = summary.distanceText
+                tvSelectedSteps.text = summary.steps.withComma()
+                tvSelectedCalories.text = "${summary.calories.withComma()} kcal"
+                tvSelectedDistance.text = "${summary.distanceKm.formatDistance()} km"
                 pbGoalProgress.progress = (summary.achievementFraction * 100).toInt()
                 applyProgressBarStyle(summary.isAchieved)
                 applyComparisonStyle(summary)
@@ -154,17 +160,17 @@ class HistoryFragment : Fragment() {
             summary.isAchieved -> Triple(
                 ContextCompat.getColor(ctx, DesignR.color.walklog_success_container),
                 ContextCompat.getColor(ctx, DesignR.color.walklog_success_dark),
-                "목표 달성 ✓",
+                getString(R.string.chip_achieved),
             )
             summary.hasData -> Triple(
                 ContextCompat.getColor(ctx, DesignR.color.walklog_primary_container),
                 ContextCompat.getColor(ctx, DesignR.color.walklog_primary_dark),
-                summary.targetStatusText,
+                summary.targetStatusText(),
             )
             else -> Triple(
                 ContextCompat.getColor(ctx, DesignR.color.walklog_gray_100),
                 ContextCompat.getColor(ctx, DesignR.color.walklog_gray_400),
-                "기록 없음",
+                getString(R.string.chip_no_record),
             )
         }
         tvSelectedTargetStatus.text = text
@@ -188,7 +194,7 @@ class HistoryFragment : Fragment() {
             else -> ContextCompat.getColor(ctx, DesignR.color.walklog_gray_400) to ""
         }
         tvSelectedComparison.setTextColor(color)
-        tvSelectedComparison.text = "$prefix${summary.comparisonText}"
+        tvSelectedComparison.text = "$prefix${summary.comparisonText()}"
     }
 
     private fun applyProgressBarStyle(isAchieved: Boolean) = with(binding) {
@@ -206,12 +212,12 @@ class HistoryFragment : Fragment() {
 
     private fun applyInsightStyle(summary: SelectedDaySummary) = with(binding) {
         val insightContainer = groupSelectedInsight ?: return
-        insightContainer.isVisible = summary.hasData && summary.insightText.isNotBlank()
+        insightContainer.isVisible = summary.hasData
         if (!insightContainer.isVisible) return
 
-        tvSelectedInsight?.text = summary.insightText
-        tvSelectedMonthRank?.text = summary.monthRankText
-        tvSelectedInsightSteps?.text = "${summary.stepsText}보"
+        tvSelectedInsight?.text = summary.insightText()
+        tvSelectedMonthRank?.text = summary.monthRankText()
+        tvSelectedInsightSteps?.text = getString(R.string.total_steps_format, summary.steps.withComma())
         tvSelectedInsightGoal?.text = "${(summary.achievementFraction * 100).toInt()}%"
     }
 
@@ -231,8 +237,8 @@ class HistoryFragment : Fragment() {
             Triple(tvTimelineEveningLabel, tvTimelineEveningSteps, pbTimelineEvening),
         ).zip(segments).forEach { (views, segment) ->
             val (labelView, stepsView, progressView) = views
-            labelView.text = segment.label
-            stepsView.text = segment.stepsText
+            labelView.text = segment.labelText()
+            stepsView.text = getString(R.string.timeline_steps_format, segment.steps.withComma())
             progressView.apply {
                 progress = (segment.fraction * 100).toInt()
                 progressTintList = progressTint
@@ -240,6 +246,56 @@ class HistoryFragment : Fragment() {
             }
         }
     }
+
+    private fun TemporalAccessor.formatWithPattern(patternResId: Int): String =
+        DateTimeFormatter.ofPattern(getString(patternResId), resources.configuration.locales[0]).format(this)
+
+    private fun Number.formatDistance(): String =
+        NumberFormat.getNumberInstance(resources.configuration.locales[0]).apply {
+            minimumFractionDigits = 1
+            maximumFractionDigits = 1
+        }.format(toDouble())
+
+    private fun SelectedDaySummary.targetStatusText(): String = when {
+        !hasData -> getString(R.string.target_status_no_data)
+        isAchieved -> getString(R.string.target_status_achieved)
+        else -> getString(R.string.target_status_remaining, remainingSteps.withComma())
+    }
+
+    private fun SelectedDaySummary.comparisonText(): String {
+        if (!hasData) return getString(R.string.comparison_no_data)
+        val diff = comparisonDiff ?: return getString(R.string.comparison_no_prev_data)
+        return when {
+            diff > 0 -> getString(R.string.comparison_positive, diff.withComma())
+            diff < 0 -> getString(R.string.comparison_negative, (-diff).withComma())
+            else -> getString(R.string.comparison_same)
+        }
+    }
+
+    private fun SelectedDaySummary.insightText(): String {
+        if (!hasData) return getString(R.string.insight_no_data)
+        val diff = comparisonDiff
+        return when {
+            isAchieved && diff != null && diff > 0 ->
+                getString(R.string.insight_achieved_with_increase, diff.withComma())
+            isAchieved -> getString(R.string.insight_achieved)
+            diff != null && diff > 0 -> getString(R.string.insight_increase, diff.withComma())
+            diff != null && diff < 0 -> getString(R.string.insight_decrease, (-diff).withComma())
+            else -> getString(R.string.insight_remaining, remainingSteps.withComma())
+        }
+    }
+
+    private fun SelectedDaySummary.monthRankText(): String =
+        monthRank?.let { getString(R.string.month_rank, it, activeDaysInMonth) }
+            ?: getString(R.string.month_rank_none)
+
+    private fun SelectedDayTimelineSegment.labelText(): String = getString(
+        when (type) {
+            TimelineSegmentType.Morning -> R.string.timeline_morning
+            TimelineSegmentType.Afternoon -> R.string.timeline_afternoon
+            TimelineSegmentType.Evening -> R.string.timeline_evening
+        },
+    )
 
     override fun onDestroyView() {
         super.onDestroyView()

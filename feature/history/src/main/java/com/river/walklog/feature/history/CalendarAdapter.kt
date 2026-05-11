@@ -8,6 +8,8 @@ import androidx.recyclerview.widget.RecyclerView
 import com.river.walklog.feature.history.databinding.ItemCalendarDayBinding
 import com.river.walklog.feature.history.databinding.ItemCalendarEmptyBinding
 import com.river.walklog.feature.history.databinding.ItemCalendarHeaderBinding
+import java.time.DayOfWeek
+import java.time.format.TextStyle
 
 class CalendarAdapter(
     private val onDayClick: (CalendarItem.Day) -> Unit,
@@ -44,7 +46,8 @@ class CalendarAdapter(
         private val binding: ItemCalendarHeaderBinding,
     ) : RecyclerView.ViewHolder(binding.root) {
         fun bind(item: CalendarItem.DayLabel) {
-            binding.tvDayOfWeek.text = item.label
+            val locale = binding.root.context.resources.configuration.locales[0]
+            binding.tvDayOfWeek.text = DayOfWeek.of(item.dayOfWeek).getDisplayName(TextStyle.SHORT, locale)
         }
     }
 
@@ -61,7 +64,7 @@ class CalendarAdapter(
             override fun areItemsTheSame(oldItem: CalendarItem, newItem: CalendarItem): Boolean =
                 when {
                     oldItem is CalendarItem.DayLabel && newItem is CalendarItem.DayLabel ->
-                        oldItem.label == newItem.label
+                        oldItem.dayOfWeek == newItem.dayOfWeek
                     oldItem is CalendarItem.Empty && newItem is CalendarItem.Empty ->
                         oldItem.index == newItem.index
                     oldItem is CalendarItem.Day && newItem is CalendarItem.Day ->
