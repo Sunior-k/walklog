@@ -36,10 +36,12 @@ graph TB
     :core:common[common]:::jvm-library
     :core:model[model]:::jvm-library
     :core:analytics[analytics]:::android-library
+    :core:ui[ui]:::android-library
   end
 
   :feature:report -.-> :core:domain
   :feature:report -.-> :core:analytics
+  :feature:report -.-> :core:ui
   :core:domain --> :core:data
   :core:domain --> :core:model
   :core:data --> :core:model

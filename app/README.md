@@ -39,6 +39,8 @@ graph TB
     :core:model[model]:::jvm-library
     :core:analytics[analytics]:::android-library
     :core:designsystem[designsystem]:::android-library
+    :core:ui[ui]:::android-library
+    :core:network[network]:::android-library
   end
 
   :app -.-> :feature:home
@@ -61,6 +63,9 @@ graph TB
   :feature:recap -.-> :core:domain
   :feature:report -.-> :core:domain
   :feature:history -.-> :core:domain
+  :feature:history -.-> :core:ui
+  :feature:home -.-> :core:ui
+  :feature:report -.-> :core:ui
   :feature:widget -.-> :core:domain
   :feature:onboarding -.-> :core:data
   :feature:settings -.-> :core:data
@@ -71,7 +76,9 @@ graph TB
   :core:data --> :core:model
   :core:data -.-> :core:database
   :core:data -.-> :core:datastore
+  :core:data -.-> :core:network
   :core:data -.-> :core:common
+  :core:network -.-> :core:common
   :core:database --> :core:model
   :core:datastore --> :core:model
 
