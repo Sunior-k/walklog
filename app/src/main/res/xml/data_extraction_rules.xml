@@ -10,14 +10,14 @@
 <data-extraction-rules>
 
     <cloud-backup>
-        <!-- Room DB: 걸음 수 이력 (개인 건강 데이터) — 클라우드 백업 제외 -->
+        <!-- Room DB: 걸음 수 이력  — 클라우드 백업 제외 -->
         <exclude domain="database" path="." />
-        <!-- DataStore: 앱 설정값 — 기기 고유 상태 -->
+        <!-- DataStore: 앱 설정값 -->
         <exclude domain="file" path="datastore" />
     </cloud-backup>
 
     <device-transfer>
-        <!-- 기기 이전 시에도 DB는 신선한 상태로 시작 (센서 기준값 재보정 필요) -->
+        <!-- 기기 이전 시에도 걸음 수 이력 이전 x-->
         <exclude domain="database" path="." />
         <exclude domain="file" path="datastore" />
     </device-transfer>
