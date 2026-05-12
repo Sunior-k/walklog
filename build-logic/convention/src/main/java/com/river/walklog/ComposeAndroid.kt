@@ -13,9 +13,7 @@ internal fun Project.configureAndroidCompose() {
 
     androidExtension.apply {
 
-        buildFeatures.apply {
-            compose = true
-        }
+        buildFeatures.compose = true
 
         dependencies {
             val bom = findLibrary("androidx-compose-bom").get()

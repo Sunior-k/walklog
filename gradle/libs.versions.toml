@@ -1,6 +1,6 @@
 [versions]
 ## Android gradle plugin
-androidGradlePlugin = "8.13.1"
+androidGradlePlugin = "9.0.0"
 
 ## AndroidX
 # https://developer.android.com/jetpack/androidx/releases/core
@@ -33,11 +33,11 @@ androidxPaging = "3.3.4"
 
 ## Kotlin Symbol Processing
 # https://github.com/google/ksp/
-ksp = "2.1.0-1.0.29"
+ksp = "2.3.7"
 
 ## Hilt
 # https://github.com/google/dagger/releases
-hilt = "2.55"
+hilt = "2.59.2"
 # https://developer.android.com/jetpack/androidx/releases/hilt
 hiltCommon = "1.2.0"
 
@@ -51,7 +51,7 @@ retrofit = "2.11.0"
 
 ## Kotlin
 # https://github.com/JetBrains/kotlin
-kotlin = "2.1.0"
+kotlin = "2.3.21"
 # https://github.com/Kotlin/kotlinx.serialization
 kotlinxSerializationJson = "1.8.0"
 # https://github.com/Kotlin/kotlinx.coroutines
@@ -85,7 +85,7 @@ firebaseCrashlyticsGradle = "3.0.3"
 
 ## Baseline Profile
 # https://developer.android.com/topic/performance/baselineprofiles
-androidxBenchmark = "1.4.1"
+androidxBenchmark = "1.5.0-alpha06"
 androidxProfileinstaller = "1.4.1"
 androidxUiAutomator = "2.3.0"
 
@@ -124,8 +124,8 @@ litert = "1.0.1"
 
 ## OSS Licenses
 # https://developers.google.com/android/guides/opensource
-ossLicenses = "17.5.0"
-ossLicensesPlugin = "0.10.6"
+ossLicenses = "17.5.1"
+ossLicensesPlugin = "0.12.0"
 
 [libraries]
 android-gradlePlugin = { group = "com.android.tools.build", name = "gradle", version.ref = "androidGradlePlugin" }
