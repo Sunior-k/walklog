@@ -11,4 +11,5 @@ dependencies {
     "testImplementation"(findLibrary("turbine").get())
     "testImplementation"(findLibrary("coroutines-test").get())
     "testImplementation"(findLibrary("kotlin-test").get())
+    "androidTestImplementation"(findLibrary("androidx-runner").get())
 }
