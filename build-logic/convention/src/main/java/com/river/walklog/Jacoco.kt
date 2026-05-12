@@ -40,6 +40,8 @@ internal fun Project.configureJacoco() {
     }
 
     tasks.withType<Test>().configureEach {
+        failOnNoDiscoveredTests.set(false)
+
         extensions.configure<JacocoTaskExtension> {
             isIncludeNoLocationClasses = true
             excludes = listOf("jdk.internal.*")

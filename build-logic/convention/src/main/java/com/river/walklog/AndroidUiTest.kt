@@ -7,10 +7,8 @@ import org.gradle.api.Project
  *
  */
 internal fun Project.configureAndroidUiTestOptions() {
-    androidExtension.testOptions {
-        unitTests {
-            isReturnDefaultValues = true
-            isIncludeAndroidResources = true
-        }
+    androidExtension.testOptions.unitTests.apply {
+        isReturnDefaultValues = true
+        isIncludeAndroidResources = true
     }
 }

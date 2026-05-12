@@ -27,5 +27,4 @@ android {
 dependencies {
     api(projects.core.common)
     implementation(libs.litert)
-    implementation(libs.litert.support)
 }

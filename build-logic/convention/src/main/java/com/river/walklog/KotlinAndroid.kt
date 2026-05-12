@@ -8,35 +8,31 @@ import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 internal fun Project.configureKotlinAndroid() {
-    plugins.apply("org.jetbrains.kotlin.android")
-
     androidExtension.apply {
         compileSdk = 36
 
-        defaultConfig {
+        defaultConfig.apply {
             minSdk = 28
         }
 
-        buildTypes {
-            getByName("debug") {
-                enableUnitTestCoverage = true
-            }
-            getByName("release") {
-                isMinifyEnabled = false
-                proguardFiles(
-                    getDefaultProguardFile("proguard-android-optimize.txt"),
-                    "proguard-rules.pro",
-                )
-            }
+        buildTypes.findByName("debug")?.apply {
+            enableUnitTestCoverage = true
+        }
+        buildTypes.findByName("release")?.apply {
+            isMinifyEnabled = false
+            proguardFiles(
+                getDefaultProguardFile("proguard-android-optimize.txt"),
+                "proguard-rules.pro",
+            )
         }
 
-        compileOptions {
+        compileOptions.apply {
             sourceCompatibility = JavaVersion.VERSION_21
             targetCompatibility = JavaVersion.VERSION_21
         }
 
-        packaging {
-            resources {
+        packaging.apply {
+            resources.apply {
                 excludes += "META-INF/LICENSE.md"
                 excludes += "META-INF/LICENSE-notice.md"
             }
