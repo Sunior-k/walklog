@@ -120,7 +120,7 @@ healthConnect = "1.1.0-rc01"
 
 ## LiteRT (formerly TensorFlow Lite)
 # https://github.com/google-ai-edge/LiteRT
-litert = "1.0.1"
+litert = "1.4.2"
 
 ## OSS Licenses
 # https://developers.google.com/android/guides/opensource

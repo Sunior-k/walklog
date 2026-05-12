@@ -11,8 +11,9 @@ import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
 import org.tensorflow.lite.Interpreter
-import org.tensorflow.lite.support.common.FileUtil
 import java.io.Closeable
+import java.io.FileInputStream
+import java.nio.channels.FileChannel
 
 /**
  * On-device Human Activity Recognition classifier backed by a LiteRT model.
@@ -36,7 +37,15 @@ class ActivityClassifier(
 ) : ActivityStateProvider, Closeable {
 
     private val interpreter: Interpreter? = runCatching {
-        val model = FileUtil.loadMappedFile(context, MODEL_ASSET)
+        val model = context.assets.openFd(MODEL_ASSET).use { descriptor ->
+            FileInputStream(descriptor.fileDescriptor).channel.use { channel ->
+                channel.map(
+                    FileChannel.MapMode.READ_ONLY,
+                    descriptor.startOffset,
+                    descriptor.declaredLength,
+                )
+            }
+        }
         Interpreter(model, Interpreter.Options().apply { numThreads = 2 })
     }.getOrNull()
 
