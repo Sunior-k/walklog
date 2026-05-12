@@ -67,7 +67,7 @@ jobs:
 
       - name: Upload baseline profiles
         if: ${{ !cancelled() }}
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: baseline-profiles
           path: app/src/release/generated/baselineProfiles/
