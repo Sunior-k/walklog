@@ -1,5 +1,7 @@
 enableFeaturePreview("TYPESAFE_PROJECT_ACCESSORS")
 
+rootProject.name = "walklog-build-logic"
+
 @Suppress("UnstableApiUsage")
 dependencyResolutionManagement {
     repositories {

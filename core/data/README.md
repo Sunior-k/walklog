@@ -1,6 +1,6 @@
 # `:core:data`
 
-Repository 인터페이스(`StepRepository`, `UserSettingsRepository`, `WeatherRepository`)와 구현체. `core:model`을 `api()`로 직접 노출하고, `core:database`·`core:datastore`·`core:network`는 `implementation()`으로 내부 구현을 캡슐화합니다.
+Repository 인터페이스와 구현체. `core:model`을 `api()`로 직접 노출하고, `core:database`·`core:datastore`·`core:network`·`core:native`는 `implementation()`으로 내부 구현을 캡슐화합니다.
 
 ## Module dependency graph
 
@@ -19,6 +19,7 @@ graph TB
     :core:database[database]:::android-library
     :core:datastore[datastore]:::android-library
     :core:network[network]:::android-library
+    :core:native[native]:::android-library
     :core:common[common]:::jvm-library
     :core:model[model]:::jvm-library
   end
@@ -27,6 +28,7 @@ graph TB
   :core:data -.-> :core:database
   :core:data -.-> :core:datastore
   :core:data -.-> :core:network
+  :core:data -.-> :core:native
   :core:data -.-> :core:common
   :core:database --> :core:model
   :core:datastore --> :core:model

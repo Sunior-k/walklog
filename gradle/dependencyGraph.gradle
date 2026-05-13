@@ -33,6 +33,25 @@ tasks.register('projectDependencyGraph') {
         def dataModules = []
         def domainModules = [] // domain 모듈 리스트 추가
 
+        def resolveDependencyProject = { dependency ->
+            def dependencyProjectMethod = dependency.metaClass.respondsTo(dependency, 'getDependencyProject')
+            if (dependencyProjectMethod) {
+                return dependency.getDependencyProject()
+            }
+
+            def pathMethod = dependency.metaClass.respondsTo(dependency, 'getPath')
+            if (pathMethod) {
+                def dependencyProject = rootProject.findProject(dependency.getPath().toString())
+                if (dependencyProject != null) {
+                    return dependencyProject
+                }
+            }
+
+            throw new GradleException(
+                "Unable to resolve project dependency '${dependency}' (${dependency.class.name})"
+            )
+        }
+
         queue = [rootProject]
         while (!queue.isEmpty()) {
             def project = queue.remove(0)
@@ -69,7 +88,7 @@ tasks.register('projectDependencyGraph') {
                 if (config.name.toLowerCase().contains("test")) return
                 config.dependencies
                     .withType(ProjectDependency)
-                    .collect { it.dependencyProject }
+                    .collect { resolveDependencyProject(it) }
                     .each { dependency ->
                         projects.add(project)
                         projects.add(dependency)
