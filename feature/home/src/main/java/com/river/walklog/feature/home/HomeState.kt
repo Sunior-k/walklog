@@ -1,7 +1,7 @@
 package com.river.walklog.feature.home
 
 import androidx.compose.runtime.Immutable
-import com.river.walklog.core.engine.ActivityState
+import com.river.walklog.core.model.ActivityState
 import com.river.walklog.core.model.WeatherSummary
 import java.time.LocalDate
 import java.time.YearMonth

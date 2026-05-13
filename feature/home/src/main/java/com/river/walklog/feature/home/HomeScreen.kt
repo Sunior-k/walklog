@@ -58,7 +58,8 @@ import com.river.walklog.core.designsystem.component.WeatherSummaryCard
 import com.river.walklog.core.designsystem.foundation.RecapColors
 import com.river.walklog.core.designsystem.foundation.WalkLogColor
 import com.river.walklog.core.designsystem.foundation.WalkLogTheme
-import com.river.walklog.core.engine.ActivityState
+import com.river.walklog.core.model.ActivityState
+import com.river.walklog.core.ui.temperatureText
 import com.river.walklog.core.ui.withComma
 import com.river.walklog.feature.home.component.ForecastBanner
 import com.river.walklog.feature.home.component.ForecastBottomSheet

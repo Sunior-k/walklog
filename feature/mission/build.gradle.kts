@@ -9,9 +9,8 @@ android {
 }
 
 dependencies {
-    implementation(projects.core.data)
+    implementation(projects.core.domain)
     implementation(projects.core.analytics)
-    implementation(projects.core.native)
     implementation(projects.core.ui)
     implementation(libs.androidx.adaptive)
 }

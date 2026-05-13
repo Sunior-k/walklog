@@ -8,14 +8,13 @@ import com.river.walklog.core.data.repository.StepRepository
 import com.river.walklog.core.data.repository.UserSettingsRepository
 import com.river.walklog.core.data.repository.WeatherRepository
 import com.river.walklog.core.domain.usecase.AwardMissionPointsUseCase
+import com.river.walklog.core.domain.usecase.GetCurrentStreakUseCase
 import com.river.walklog.core.domain.usecase.GetMonthlyRecapUseCase
-import com.river.walklog.core.domain.usecase.GetWeeklyStepSummaryUseCase
-import com.river.walklog.core.engine.ActivityClassifier
-import com.river.walklog.core.engine.WalkingInsightsEngine
-import com.river.walklog.core.model.DailyStepCount
+import com.river.walklog.core.domain.usecase.GetWalkingInsightsUseCase
+import com.river.walklog.core.domain.usecase.GetWeeklyHomeStatsUseCase
+import com.river.walklog.core.domain.usecase.ObserveActivityStateUseCase
 import com.river.walklog.core.model.MissionType
 import com.river.walklog.core.model.WeatherSummary
-import com.river.walklog.core.model.WeeklyStepSummary
 import com.river.walklog.feature.home.notification.WalkingReminderScheduler
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
@@ -40,10 +39,11 @@ class HomeViewModel @Inject constructor(
     private val stepRepository: StepRepository,
     private val userSettingsRepository: UserSettingsRepository,
     private val weatherRepository: WeatherRepository,
-    private val getWeeklyStepSummary: GetWeeklyStepSummaryUseCase,
+    private val getWeeklyHomeStats: GetWeeklyHomeStatsUseCase,
     private val getMonthlyRecap: GetMonthlyRecapUseCase,
-    private val walkingInsightsEngine: WalkingInsightsEngine,
-    private val activityClassifier: ActivityClassifier,
+    private val getStreak: GetCurrentStreakUseCase,
+    private val getWalkingInsights: GetWalkingInsightsUseCase,
+    private val observeActivityState: ObserveActivityStateUseCase,
     private val awardMissionPoints: AwardMissionPointsUseCase,
     private val crashReporter: CrashReporter,
     private val walkingReminderScheduler: WalkingReminderScheduler,
@@ -56,8 +56,7 @@ class HomeViewModel @Inject constructor(
     private var activityJob: Job? = null
     private var weatherJob: Job? = null
     private var recapPreviewJob: Job? = null
-    private var currentStreakJob: Job? = null
-    private var latestWeeklySummary: WeeklyStepSummary? = null
+    private var streakJob: Job? = null
 
     init {
         crashReporter.setKey(CrashKeys.SCREEN, CrashKeys.Screens.HOME)
@@ -65,7 +64,7 @@ class HomeViewModel @Inject constructor(
         initDateText()
         initSensorStatus()
         observeUserSettings()
-        collectWeeklySummary()
+        collectWeeklyStats()
         loadRecapPreview()
         loadCurrentStreak()
         loadWalkingInsights()
@@ -92,17 +91,13 @@ class HomeViewModel @Inject constructor(
                 crashReporter.recordException(throwable)
             }
             .onEach { settings ->
-                val today = LocalDate.now().toString()
-                val alreadyCompletedToday = settings.lastDailyMissionAwardedDate == today
+                val alreadyCompletedToday = settings.lastDailyMissionAwardedDate == LocalDate.now().toString()
                 _state.update { state ->
-                    val updatedState = state.copy(
+                    state.copy(
                         userName = settings.nickname,
                         targetSteps = settings.dailyStepGoal,
                         missionIsCompleted = alreadyCompletedToday || state.missionIsCompleted,
                     )
-                    latestWeeklySummary?.let { summary ->
-                        updatedState.applyWeeklySummary(summary, settings.dailyStepGoal)
-                    } ?: updatedState
                 }
             }
             .launchIn(viewModelScope)
@@ -152,9 +147,8 @@ class HomeViewModel @Inject constructor(
     }
 
     private fun startObservingActivity() {
-        if (!activityClassifier.isModelAvailable) return
         activityJob?.cancel()
-        activityJob = activityClassifier.observeActivityState()
+        activityJob = observeActivityState()
             .catch { throwable ->
                 crashReporter.log("Activity classifier error: ${throwable.message}")
                 crashReporter.recordException(throwable)
@@ -179,82 +173,49 @@ class HomeViewModel @Inject constructor(
         }
     }
 
-    /** 최근 7일간의 시간대별 걸음 수 데이터를 불러와 걷기 예보를 갱신. */
+    private fun collectWeeklyStats() {
+        getWeeklyHomeStats()
+            .catch { throwable ->
+                crashReporter.log("Weekly summary query failed: ${throwable.message}")
+                crashReporter.recordException(throwable)
+            }
+            .onEach { stats ->
+                _state.update { state ->
+                    state.copy(
+                        weeklyTotalSteps = stats.totalSteps,
+                        weeklyAchievementRateText = "${stats.achievementPct}%",
+                        bestDayEpochDay = stats.bestDayEpochDay,
+                    )
+                }
+            }
+            .launchIn(viewModelScope)
+    }
+
     private fun loadWalkingInsights() {
         viewModelScope.launch {
             runCatching {
-                val today = LocalDate.now()
-                val toEpochDay = today.toEpochDay()
-                val fromEpochDay = toEpochDay - 6
-                val hourlySteps = stepRepository.getHourlyStepsForRange(fromEpochDay, toEpochDay)
-
-                val daysWithData = (0..6).count { dayOffset ->
-                    val start = dayOffset * 24
-                    (start until start + 24).any { hourlySteps[it] > 0f }
-                }
-
-                if (daysWithData >= 3) {
-                    val result = walkingInsightsEngine.analyze(
-                        hourlySteps = hourlySteps,
-                        targetStepsPerDay = _state.value.targetSteps,
-                        currentHour = LocalTime.now().hour,
+                val insights = getWalkingInsights(
+                    targetStepsPerDay = _state.value.targetSteps,
+                    currentHour = LocalTime.now().hour,
+                ) ?: return@runCatching
+                _state.update { state ->
+                    state.copy(
+                        streakRiskLevel = StreakRiskLevel.from(insights.streakRisk),
+                        forecastAverageStepsAtPeakHour = insights.averageStepsAtPeakHour,
+                        forecastTotalDays = insights.totalDays,
+                        forecastActiveDays = insights.activeDays,
+                        forecastHourlyAverages = insights.hourlyAverages,
+                        forecastPeakHour = insights.peakHour,
                     )
-                    _state.update { state ->
-                        state.copy(
-                            streakRiskLevel = StreakRiskLevel.from(result.streakRisk),
-                            forecastAverageStepsAtPeakHour = avgStepsAtPeakHour(hourlySteps, result.peakHour),
-                            forecastTotalDays = hourlySteps.size / HOURS_PER_DAY,
-                            forecastActiveDays = activeDays(hourlySteps),
-                            forecastHourlyAverages = computeHourlyAverages(hourlySteps),
-                            forecastPeakHour = result.peakHour,
-                        )
-                    }
-                    if (result.peakHour in 6..22) {
-                        schedulePeakHourAlarm(result.peakHour)
-                    }
+                }
+                if (insights.peakHour in 6..22) {
+                    schedulePeakHourAlarm(insights.peakHour)
                 }
             }.onFailure { e ->
                 crashReporter.log("Walking insights load failed: ${e.message}")
                 crashReporter.recordException(e)
             }
         }
-    }
-
-    private fun avgStepsAtPeakHour(hourlySteps: FloatArray, peakHour: Int): Int? {
-        val days = hourlySteps.size / HOURS_PER_DAY
-        if (days <= 0 || peakHour !in 0 until HOURS_PER_DAY) return null
-        var total = 0f
-        for (d in 0 until days) total += hourlySteps[d * HOURS_PER_DAY + peakHour]
-        return (total / days).toInt()
-    }
-
-    private fun computeHourlyAverages(hourlySteps: FloatArray): List<Float> {
-        val days = hourlySteps.size / HOURS_PER_DAY
-        return (0 until HOURS_PER_DAY).map { hour ->
-            var total = 0f
-            for (d in 0 until days) total += hourlySteps[d * HOURS_PER_DAY + hour]
-            total / days
-        }
-    }
-
-    private fun activeDays(hourlySteps: FloatArray): Int {
-        val days = hourlySteps.size / HOURS_PER_DAY
-        return (0 until days).count { d ->
-            (0 until HOURS_PER_DAY).any { h -> hourlySteps[d * HOURS_PER_DAY + h] > 0f }
-        }
-    }
-
-    private fun collectWeeklySummary() {
-        getWeeklyStepSummary()
-            .catch { throwable ->
-                crashReporter.log("Weekly summary query failed: ${throwable.message}")
-                crashReporter.recordException(throwable)
-            }
-            .onEach { summary ->
-                latestWeeklySummary = summary
-                _state.update { state -> state.applyWeeklySummary(summary, state.targetSteps) }
-            }
-            .launchIn(viewModelScope)
     }
 
     private fun loadRecapPreview() {
@@ -286,24 +247,14 @@ class HomeViewModel @Inject constructor(
     }
 
     private fun loadCurrentStreak() {
-        val today = LocalDate.now()
-        currentStreakJob?.cancel()
-        currentStreakJob = getMonthlyRecap(today.year, today.monthValue)
+        streakJob?.cancel()
+        streakJob = getStreak()
             .catch { throwable ->
                 crashReporter.log("Current streak query failed: ${throwable.message}")
                 crashReporter.recordException(throwable)
                 _state.update { it.copy(streakDays = 0) }
             }
-            .onEach { recap ->
-                _state.update { state ->
-                    state.copy(
-                        streakDays = computeCurrentStreak(
-                            dailyCounts = recap.dailyCounts,
-                            today = today,
-                        ),
-                    )
-                }
-            }
+            .onEach { streak -> _state.update { it.copy(streakDays = streak) } }
             .launchIn(viewModelScope)
     }
 
@@ -316,7 +267,7 @@ class HomeViewModel @Inject constructor(
                     (23 - now.hour) * 3600L + (59 - now.minute) * 60L + (60 - now.second)
                 delay(secondsUntilMidnight * 1000L)
                 initDateText()
-                collectWeeklySummary()
+                collectWeeklyStats()
                 loadRecapPreview()
                 loadCurrentStreak()
                 loadWalkingInsights()
@@ -328,7 +279,7 @@ class HomeViewModel @Inject constructor(
         viewModelScope.launch {
             crashReporter.log("Manual refresh triggered")
             _state.update { it.copy(isLoading = true) }
-            collectWeeklySummary()
+            collectWeeklyStats()
             loadRecapPreview()
             loadCurrentStreak()
             loadWalkingInsights()
@@ -346,7 +297,7 @@ class HomeViewModel @Inject constructor(
         weatherJob = viewModelScope.launch {
             _state.update { it.copy(isWeatherLoading = true) }
             val weather = loadWeatherWithRetry(forceRefresh = forceRefresh)
-            _state.update { state -> state.applyWeather(weather).copy(isWeatherLoading = false) }
+            _state.update { state -> state.copy(weather = weather, isWeatherLoading = false) }
         }
     }
 
@@ -370,45 +321,6 @@ class HomeViewModel @Inject constructor(
         return fallback
     }
 
-    // Mapping
-    private fun HomeState.applyWeeklySummary(
-        summary: WeeklyStepSummary,
-        targetSteps: Int,
-    ): HomeState {
-        val achievementPct = if (summary.dailyCounts.isEmpty() || targetSteps <= 0) {
-            0
-        } else {
-            summary.dailyCounts.count { it.steps >= targetSteps } * 100 / summary.dailyCounts.size
-        }
-
-        return copy(
-            weeklyTotalSteps = summary.totalSteps,
-            weeklyAchievementRateText = "$achievementPct%",
-            bestDayEpochDay = summary.bestDay?.dateEpochDay,
-        )
-    }
-
-    private fun HomeState.applyWeather(weather: WeatherSummary): HomeState = copy(weather = weather)
-
-    private fun computeCurrentStreak(
-        dailyCounts: List<DailyStepCount>,
-        today: LocalDate,
-    ): Int {
-        val todayEpochDay = today.toEpochDay()
-        val countsByDay = dailyCounts.associateBy { it.dateEpochDay }
-        var day = todayEpochDay
-        if (countsByDay[day]?.isAchieved != true) {
-            day--
-        }
-
-        var streak = 0
-        while (countsByDay[day]?.isAchieved == true) {
-            streak++
-            day--
-        }
-        return streak
-    }
-
     private fun awardDailyMission() {
         viewModelScope.launch {
             runCatching {
@@ -426,6 +338,5 @@ class HomeViewModel @Inject constructor(
         private const val WEATHER_LOAD_MAX_ATTEMPTS = 3
         private const val WEATHER_RETRY_DELAY_MS = 1_500L
         private const val DAILY_MISSION_POINTS = 20
-        private const val HOURS_PER_DAY = 24
     }
 }

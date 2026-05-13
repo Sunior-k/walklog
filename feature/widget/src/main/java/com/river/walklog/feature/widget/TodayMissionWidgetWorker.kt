@@ -134,7 +134,7 @@ class TodayMissionWidgetWorker @AssistedInject constructor(
     private fun updatePickerPreview(stepCount: DailyStepCount) {
         val numberFormat = NumberFormat.getNumberInstance(context.resources.configuration.locales[0])
         val remaining = (stepCount.targetSteps - stepCount.steps).coerceAtLeast(0)
-        val remainingText = if (stepCount.isAchieved) {
+        val remainingText = if (stepCount.steps >= stepCount.targetSteps) {
             context.getString(R.string.widget_goal_achieved)
         } else {
             context.getString(R.string.widget_steps_remaining, numberFormat.format(remaining))

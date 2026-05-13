@@ -7,7 +7,7 @@ import com.river.walklog.core.analytics.CrashReporter
 import com.river.walklog.core.data.repository.StepRepository
 import com.river.walklog.core.data.repository.UserSettingsRepository
 import com.river.walklog.core.data.repository.WeatherRepository
-import com.river.walklog.core.engine.WalkingInsightsEngine
+import com.river.walklog.core.domain.usecase.GetWalkingInsightsUseCase
 import com.river.walklog.core.model.WeatherSummary
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
@@ -24,7 +24,7 @@ import javax.inject.Inject
 
 @HiltViewModel
 class MissionDetailViewModel @Inject constructor(
-    private val walkingInsightsEngine: WalkingInsightsEngine,
+    private val getWalkingInsights: GetWalkingInsightsUseCase,
     private val stepRepository: StepRepository,
     private val userSettingsRepository: UserSettingsRepository,
     private val weatherRepository: WeatherRepository,
@@ -50,29 +50,17 @@ class MissionDetailViewModel @Inject constructor(
         viewModelScope.launch {
             runCatching {
                 val today = LocalDate.now()
-                val toEpochDay = today.toEpochDay()
-                val fromEpochDay = toEpochDay - 6
                 val settings = userSettingsRepository.settings.first()
-                val targetSteps = settings.dailyStepGoal
-                val currentSteps = stepRepository.getStepsForDay(toEpochDay).first().steps
-                val hourlySteps = stepRepository.getHourlyStepsForRange(fromEpochDay, toEpochDay)
-
-                val recommendedPeakHour = if (hourlySteps.any { it > 0f }) {
-                    val result = walkingInsightsEngine.analyze(
-                        hourlySteps = hourlySteps,
-                        targetStepsPerDay = targetSteps,
-                        currentHour = LocalTime.now().hour,
-                    )
-                    result.peakHour
-                } else {
-                    _state.value.recommendedPeakHour
-                }
-
+                val currentSteps = stepRepository.getStepsForDay(today.toEpochDay()).first().steps
+                val insights = getWalkingInsights(
+                    targetStepsPerDay = settings.dailyStepGoal,
+                    currentHour = LocalTime.now().hour,
+                )
                 _state.update { state ->
                     state.copy(
                         currentSteps = currentSteps,
-                        targetSteps = targetSteps,
-                        recommendedPeakHour = recommendedPeakHour,
+                        targetSteps = settings.dailyStepGoal,
+                        recommendedPeakHour = insights?.peakHour ?: state.recommendedPeakHour,
                     )
                 }
             }.onFailure { e ->

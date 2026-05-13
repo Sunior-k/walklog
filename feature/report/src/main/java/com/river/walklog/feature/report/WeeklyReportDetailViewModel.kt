@@ -4,10 +4,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.river.walklog.core.analytics.CrashKeys
 import com.river.walklog.core.analytics.CrashReporter
-import com.river.walklog.core.domain.usecase.GetWeeklyBestHourUseCase
-import com.river.walklog.core.domain.usecase.GetWeeklyStepSummaryUseCase
-import com.river.walklog.core.model.DailyStepCount
-import com.river.walklog.core.model.WeeklyStepSummary
+import com.river.walklog.core.domain.usecase.GetWeeklyReportDetailUseCase
+import com.river.walklog.core.model.WeeklyReportDetail
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -21,8 +19,7 @@ import javax.inject.Inject
 
 @HiltViewModel
 class WeeklyReportDetailViewModel @Inject constructor(
-    private val getWeeklyStepSummary: GetWeeklyStepSummaryUseCase,
-    private val getWeeklyBestHour: GetWeeklyBestHourUseCase,
+    private val getWeeklyReportDetail: GetWeeklyReportDetailUseCase,
     private val crashReporter: CrashReporter,
 ) : ViewModel() {
 
@@ -66,11 +63,8 @@ class WeeklyReportDetailViewModel @Inject constructor(
             )
         }
         detailJob = viewModelScope.launch {
-            getWeeklyStepSummary(weekStartEpochDay)
-                .onEach { summary ->
-                    val bestHour = getWeeklyBestHour(summary)
-                    _state.update { it.applyWeeklySummary(summary, bestHour) }
-                }
+            getWeeklyReportDetail(weekStartEpochDay)
+                .onEach { detail -> _state.update { it.applyDetail(detail) } }
                 .catch { e ->
                     crashReporter.log("Weekly report detail load failed: ${e.message}")
                     crashReporter.recordException(e)
@@ -81,45 +75,34 @@ class WeeklyReportDetailViewModel @Inject constructor(
     }
 }
 
-private fun WeeklyReportDetailState.applyWeeklySummary(
-    summary: WeeklyStepSummary,
-    bestHour: Int?,
-): WeeklyReportDetailState {
-    val stepMap = summary.dailyCounts.associateBy { it.dateEpochDay }
-    val weekCounts = (0L..6L).map { offset ->
-        val epochDay = summary.weekStartEpochDay + offset
-        stepMap[epochDay] ?: DailyStepCount(dateEpochDay = epochDay, steps = 0)
+private fun WeeklyReportDetailState.applyDetail(detail: WeeklyReportDetail): WeeklyReportDetailState {
+    if (detail.isEmpty) {
+        return copy(
+            weekStartEpochDay = detail.weekStartEpochDay,
+            isLoading = false,
+            isError = false,
+            isEmpty = true,
+        )
     }
-
-    val baseState = copy(
-        weekStartEpochDay = summary.weekStartEpochDay,
+    val achievementPct = (detail.achievementRate * 100).toInt()
+    return copy(
+        weekStartEpochDay = detail.weekStartEpochDay,
         isLoading = false,
         isError = false,
-    )
-
-    if (weekCounts.none { it.steps > 0 }) {
-        return baseState.copy(isEmpty = true)
-    }
-
-    val achievedDays = weekCounts.count { it.isAchieved }
-    val achievementRate = achievedDays / 7f
-    val achievementPct = (achievementRate * 100).toInt()
-
-    return baseState.copy(
-        totalSteps = summary.totalSteps,
+        isEmpty = false,
+        totalSteps = detail.totalSteps,
         achievementPct = achievementPct,
-        achievedDays = achievedDays,
-        totalDays = 7,
-        achievementRate = achievementRate,
-        bestDayEpochDay = summary.bestDay?.dateEpochDay,
-        bestHour = bestHour,
-        longestAchievedStreak = summary.longestAchievedStreak,
-        dailyCounts = weekCounts,
+        achievedDays = detail.achievedDays,
+        totalDays = detail.totalDays,
+        achievementRate = detail.achievementRate,
+        bestDayEpochDay = detail.bestDayEpochDay,
+        bestHour = detail.bestHour,
+        longestAchievedStreak = detail.longestAchievedStreak,
+        dailyCounts = detail.weekCounts,
         summaryMessageType = when {
             achievementPct >= 100 -> WeeklyReportSummaryMessageType.AllAchieved
             achievementPct >= 70 -> WeeklyReportSummaryMessageType.GoodProgress
             else -> WeeklyReportSummaryMessageType.KeepGoing
         },
-        isEmpty = false,
     )
 }
