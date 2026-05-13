@@ -33,11 +33,13 @@ graph TB
     :core:common[common]:::jvm-library
     :core:model[model]:::jvm-library
     :core:analytics[analytics]:::android-library
+    :core:testing[testing]:::android-library
     :core:ui[ui]:::android-library
   end
 
   :feature:mission -.-> :core:domain
   :feature:mission -.-> :core:analytics
+  :feature:mission -.-> :core:testing
   :feature:mission -.-> :core:ui
   :core:domain --> :core:data
   :core:domain --> :core:model
@@ -47,6 +49,8 @@ graph TB
   :core:data -.-> :core:common
   :core:database --> :core:model
   :core:datastore --> :core:model
+  :core:testing --> :core:data
+  :core:testing --> :core:model
 
 classDef android-application fill:#CAFFBF,stroke:#000,stroke-width:2px,color:#000;
 classDef android-feature fill:#FFD6A5,stroke:#000,stroke-width:2px,color:#000;
@@ -74,5 +78,5 @@ classDef jvm-library fill:#BDB2FF,stroke:#000,stroke-width:2px,color:#000;
 
 </details>
 
-Arrow legend: `-->` = `api()` &nbsp;·&nbsp; `-.->` = `implementation()`
+Arrow legend: `-->` = `api()` &nbsp;·&nbsp; `-.->` = `implementation()` / `testImplementation()`
 <!--endregion-->

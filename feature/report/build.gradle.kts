@@ -12,4 +12,5 @@ dependencies {
     implementation(projects.core.domain)
     implementation(projects.core.analytics)
     implementation(projects.core.ui)
+    testImplementation(projects.core.testing)
 }

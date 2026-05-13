@@ -1,0 +1,272 @@
+package com.river.walklog.feature.report
+
+import com.river.walklog.core.analytics.CrashReporter
+import com.river.walklog.core.testing.MainDispatcherRule
+import com.river.walklog.core.domain.usecase.GetWeeklyReportDetailUseCase
+import com.river.walklog.core.model.DailyStepCount
+import com.river.walklog.core.model.WeeklyReportDetail
+import io.mockk.every
+import io.mockk.mockk
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.test.runTest
+import org.junit.Before
+import org.junit.Rule
+import org.junit.Test
+import kotlin.test.assertEquals
+import kotlin.test.assertFalse
+import kotlin.test.assertNull
+import kotlin.test.assertTrue
+
+@OptIn(ExperimentalCoroutinesApi::class)
+class WeeklyReportDetailViewModelTest {
+
+    @get:Rule
+    val mainDispatcherRule = MainDispatcherRule()
+    private lateinit var getWeeklyReportDetail: GetWeeklyReportDetailUseCase
+    private lateinit var crashReporter: CrashReporter
+    private lateinit var viewModel: WeeklyReportDetailViewModel
+
+    @Before
+    fun setUp() {
+        getWeeklyReportDetail = mockk()
+        crashReporter = mockk(relaxed = true)
+        viewModel = WeeklyReportDetailViewModel(getWeeklyReportDetail, crashReporter)
+    }
+
+    // 초기 상태 (loadReport 호출 전)
+
+    @Test
+    fun `initial state has isLoading true`() {
+        assertTrue(viewModel.state.value.isLoading)
+    }
+
+    @Test
+    fun `initial state has isError false`() {
+        assertFalse(viewModel.state.value.isError)
+    }
+
+    @Test
+    fun `initial state has isEmpty false`() {
+        assertFalse(viewModel.state.value.isEmpty)
+    }
+
+    @Test
+    fun `initial state has isSharing false`() {
+        assertFalse(viewModel.state.value.isSharing)
+    }
+
+    @Test
+    fun `initial weekStartEpochDay is null`() {
+        assertNull(viewModel.state.value.weekStartEpochDay)
+    }
+
+    // loadReport — 성공
+
+    @Test
+    fun `loadReport sets isLoading false on success`() = runTest {
+        every { getWeeklyReportDetail(WEEK_START) } returns flowOf(detail())
+        viewModel.loadReport(WEEK_START)
+        assertFalse(viewModel.state.value.isLoading)
+    }
+
+    @Test
+    fun `loadReport sets isEmpty false when detail has data`() = runTest {
+        every { getWeeklyReportDetail(WEEK_START) } returns flowOf(detail())
+        viewModel.loadReport(WEEK_START)
+        assertFalse(viewModel.state.value.isEmpty)
+    }
+
+    @Test
+    fun `loadReport sets weekStartEpochDay`() = runTest {
+        every { getWeeklyReportDetail(WEEK_START) } returns flowOf(detail())
+        viewModel.loadReport(WEEK_START)
+        assertEquals(WEEK_START, viewModel.state.value.weekStartEpochDay)
+    }
+
+    @Test
+    fun `loadReport maps totalSteps from detail`() = runTest {
+        every { getWeeklyReportDetail(WEEK_START) } returns flowOf(detail(totalSteps = 42_000))
+        viewModel.loadReport(WEEK_START)
+        assertEquals(42_000, viewModel.state.value.totalSteps)
+    }
+
+    @Test
+    fun `loadReport maps achievedDays from detail`() = runTest {
+        every { getWeeklyReportDetail(WEEK_START) } returns flowOf(detail(achievedDays = 5))
+        viewModel.loadReport(WEEK_START)
+        assertEquals(5, viewModel.state.value.achievedDays)
+    }
+
+    @Test
+    fun `loadReport maps bestHour from detail`() = runTest {
+        every { getWeeklyReportDetail(WEEK_START) } returns flowOf(detail(bestHour = 14))
+        viewModel.loadReport(WEEK_START)
+        assertEquals(14, viewModel.state.value.bestHour)
+    }
+
+    @Test
+    fun `loadReport computes achievementPct from achievementRate`() = runTest {
+        every { getWeeklyReportDetail(WEEK_START) } returns flowOf(detail(achievementRate = 5 / 7f))
+        viewModel.loadReport(WEEK_START)
+        assertEquals(71, viewModel.state.value.achievementPct)
+    }
+
+    // summaryMessageType 분기
+
+    @Test
+    fun `summaryMessageType is AllAchieved when achievementPct is 100`() = runTest {
+        every { getWeeklyReportDetail(WEEK_START) } returns flowOf(detail(achievementRate = 1.0f))
+        viewModel.loadReport(WEEK_START)
+        assertEquals(WeeklyReportSummaryMessageType.AllAchieved, viewModel.state.value.summaryMessageType)
+    }
+
+    @Test
+    fun `summaryMessageType is GoodProgress when achievementPct is exactly 70`() = runTest {
+        every { getWeeklyReportDetail(WEEK_START) } returns flowOf(detail(achievementRate = 0.70f))
+        viewModel.loadReport(WEEK_START)
+        assertEquals(WeeklyReportSummaryMessageType.GoodProgress, viewModel.state.value.summaryMessageType)
+    }
+
+    @Test
+    fun `summaryMessageType is GoodProgress when achievementPct is between 70 and 99`() = runTest {
+        every { getWeeklyReportDetail(WEEK_START) } returns flowOf(detail(achievementRate = 0.85f))
+        viewModel.loadReport(WEEK_START)
+        assertEquals(WeeklyReportSummaryMessageType.GoodProgress, viewModel.state.value.summaryMessageType)
+    }
+
+    @Test
+    fun `summaryMessageType is KeepGoing when achievementPct is below 70`() = runTest {
+        every { getWeeklyReportDetail(WEEK_START) } returns flowOf(detail(achievementRate = 0.57f))
+        viewModel.loadReport(WEEK_START)
+        assertEquals(WeeklyReportSummaryMessageType.KeepGoing, viewModel.state.value.summaryMessageType)
+    }
+
+    @Test
+    fun `summaryMessageType is KeepGoing when achievementPct is 0`() = runTest {
+        every { getWeeklyReportDetail(WEEK_START) } returns flowOf(detail(achievementRate = 0f))
+        viewModel.loadReport(WEEK_START)
+        assertEquals(WeeklyReportSummaryMessageType.KeepGoing, viewModel.state.value.summaryMessageType)
+    }
+
+    // loadReport — 빈 결과
+
+    @Test
+    fun `loadReport sets isEmpty true when detail is empty`() = runTest {
+        every { getWeeklyReportDetail(WEEK_START) } returns flowOf(WeeklyReportDetail.empty(WEEK_START))
+        viewModel.loadReport(WEEK_START)
+        assertTrue(viewModel.state.value.isEmpty)
+    }
+
+    @Test
+    fun `loadReport sets isLoading false for empty detail`() = runTest {
+        every { getWeeklyReportDetail(WEEK_START) } returns flowOf(WeeklyReportDetail.empty(WEEK_START))
+        viewModel.loadReport(WEEK_START)
+        assertFalse(viewModel.state.value.isLoading)
+    }
+
+    // loadReport — 에러
+
+    @Test
+    fun `loadReport sets isError true when use case throws`() = runTest {
+        every { getWeeklyReportDetail(WEEK_START) } returns flow { throw RuntimeException("network") }
+        viewModel.loadReport(WEEK_START)
+        assertTrue(viewModel.state.value.isError)
+    }
+
+    @Test
+    fun `loadReport sets isLoading false on error`() = runTest {
+        every { getWeeklyReportDetail(WEEK_START) } returns flow { throw RuntimeException("network") }
+        viewModel.loadReport(WEEK_START)
+        assertFalse(viewModel.state.value.isLoading)
+    }
+
+    // loadReport — 중복 호출 시 isLoading 초기화
+
+    @Test
+    fun `second loadReport resets isSharing to false`() = runTest {
+        every { getWeeklyReportDetail(WEEK_START) } returns flowOf(detail())
+        viewModel.loadReport(WEEK_START)
+        viewModel.startSharing()
+
+        every { getWeeklyReportDetail(WEEK_START + 7) } returns flowOf(detail(weekStart = WEEK_START + 7))
+        viewModel.loadReport(WEEK_START + 7)
+
+        assertFalse(viewModel.state.value.isSharing)
+    }
+
+    // 공유 상태
+
+    @Test
+    fun `startSharing sets isSharing true`() {
+        viewModel.startSharing()
+        assertTrue(viewModel.state.value.isSharing)
+    }
+
+    @Test
+    fun `completeSharing sets isSharing false`() {
+        viewModel.startSharing()
+        viewModel.completeSharing()
+        assertFalse(viewModel.state.value.isSharing)
+    }
+
+    @Test
+    fun `failSharing sets isSharing false`() {
+        viewModel.startSharing()
+        viewModel.failSharing()
+        assertFalse(viewModel.state.value.isSharing)
+    }
+
+    @Test
+    fun `failSharing sets userMessage to ShareFailed`() {
+        viewModel.failSharing()
+        assertEquals(WeeklyReportUserMessage.ShareFailed, viewModel.state.value.userMessage)
+    }
+
+    @Test
+    fun `clearUserMessage removes userMessage`() {
+        viewModel.failSharing()
+        viewModel.clearUserMessage()
+        assertNull(viewModel.state.value.userMessage)
+    }
+
+    @Test
+    fun `userMessage is null initially`() {
+        assertNull(viewModel.state.value.userMessage)
+    }
+
+    // achievementRateText
+
+    @Test
+    fun `achievementRateText formats achievementPct as percentage string`() = runTest {
+        every { getWeeklyReportDetail(WEEK_START) } returns flowOf(detail(achievementRate = 0.71f))
+        viewModel.loadReport(WEEK_START)
+        assertEquals("71%", viewModel.state.value.achievementRateText)
+    }
+
+    // helpers
+
+    private fun detail(
+        weekStart: Long = WEEK_START,
+        totalSteps: Int = 10_000,
+        achievedDays: Int = 3,
+        achievementRate: Float = 3 / 7f,
+        bestHour: Int? = null,
+    ) = WeeklyReportDetail(
+        weekStartEpochDay = weekStart,
+        weekCounts = List(7) { i -> DailyStepCount(dateEpochDay = weekStart + i, steps = 0) },
+        totalSteps = totalSteps,
+        achievedDays = achievedDays,
+        totalDays = 7,
+        achievementRate = achievementRate,
+        bestDayEpochDay = null,
+        bestHour = bestHour,
+        longestAchievedStreak = 0,
+        isEmpty = false,
+    )
+
+    private companion object {
+        const val WEEK_START = 19_000L
+    }
+}

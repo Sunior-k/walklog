@@ -18,7 +18,10 @@ class GetWeeklyHomeStatsUseCase @Inject constructor(
             WeeklyHomeStats(
                 totalSteps = summary.dailyCounts.sumOf { it.steps },
                 achievementPct = achievementPct,
-                bestDayEpochDay = summary.dailyCounts.maxByOrNull { it.steps }?.dateEpochDay,
+                bestDayEpochDay = summary.dailyCounts
+                    .maxByOrNull { it.steps }
+                    ?.takeIf { it.steps > 0 }
+                    ?.dateEpochDay,
             )
         }
 }

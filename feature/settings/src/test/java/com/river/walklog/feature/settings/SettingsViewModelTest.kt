@@ -1,22 +1,19 @@
 package com.river.walklog.feature.settings
 
 import com.river.walklog.core.analytics.CrashReporter
+import com.river.walklog.core.testing.MainDispatcherRule
 import com.river.walklog.core.data.repository.UserSettingsRepository
 import com.river.walklog.core.model.ThemeMode
 import com.river.walklog.core.model.UserSettings
 import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.flowOf
-import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
-import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
-import kotlinx.coroutines.test.setMain
-import org.junit.After
 import org.junit.Before
+import org.junit.Rule
 import org.junit.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -24,20 +21,15 @@ import kotlin.test.assertFalse
 @OptIn(ExperimentalCoroutinesApi::class)
 class SettingsViewModelTest {
 
-    private val testDispatcher = UnconfinedTestDispatcher()
+    @get:Rule
+    val mainDispatcherRule = MainDispatcherRule()
     private lateinit var repository: UserSettingsRepository
     private lateinit var crashReporter: CrashReporter
 
     @Before
     fun setUp() {
-        Dispatchers.setMain(testDispatcher)
         repository = mockk(relaxed = true)
         crashReporter = mockk(relaxed = true)
-    }
-
-    @After
-    fun tearDown() {
-        Dispatchers.resetMain()
     }
 
     // 초기 상태 및 설정 로딩

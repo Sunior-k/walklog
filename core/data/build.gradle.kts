@@ -20,4 +20,5 @@ dependencies {
     implementation(libs.coroutines.android)
     implementation(libs.androidx.health.connect)
     implementation(libs.play.services.location)
+    testImplementation(projects.core.testing)
 }

@@ -282,31 +282,36 @@ Room DB data (step history) and DataStore data (nickname, points, settings) are 
 
 | Location | Runner | Target |
 |---|---|---|
-| `src/test/` | Robolectric JVM | Component units such as ViewModel, UseCase, Repository, and single Composable |
+| `src/test/` | JVM / Robolectric | ViewModel, UseCase, Repository, mapper, and single Composable tests |
 | `src/androidTest/` | Physical device / emulator | Full screens, tested at Route-level Compose UI |
+| `:core:testing` | Shared test utilities | `MainDispatcherRule` and reusable Fake repositories |
+
+ViewModel tests use Fake repositories from `core:testing` with real UseCases by default. MockK is reserved for boundaries that should not use real implementations, such as CrashReporter, schedulers, Android framework wrappers, and repository implementation internals.
 
 ```bash
 ./gradlew test
-./gradlew :core:domain:test
-./gradlew :core:data:test
-./gradlew :feature:home:test
+./gradlew :core:domain:testDebugUnitTest
+./gradlew :core:data:testDebugUnitTest
+./gradlew :feature:home:testDebugUnitTest
 ./gradlew connectedAndroidTest
 ```
 
 ### Test Coverage
 
-**Model layer** - `MissionTest` (progressRatio boundaries)
-
 **Common layer** - `ResultTest` (onSuccess / onError chaining)
 
 **Domain / Data layer**
-- `WeeklyStepSummaryTest`, `MonthlyRecapTest` - domain model invariants
-- `GetWeeklyStepSummaryUseCaseTest`, `GetWeeklyReportArchiveUseCaseTest`, `GetWeeklyBestHourUseCaseTest` - aggregation, archive, and best-hour logic
-- `StepRepositoryImplTest` - Health Connect delegation, Flow mapping, zero-fill for missing dates
+- `GetWeeklyStepSummaryUseCaseTest`, `GetWeeklyReportArchiveUseCaseTest`, `GetWeeklyReportDetailUseCaseTest`, `GetWeeklyBestHourUseCaseTest` - weekly aggregation, archive/detail, and best-hour logic
+- `GetMonthlyRecapUseCaseTest`, `GetCurrentStreakUseCaseTest`, `GetWeeklyHomeStatsUseCaseTest` - recap, streak, and home summary logic
+- `GetWalkingInsightsUseCaseTest`, `ObserveActivityStateUseCaseTest`, `AwardMissionPointsUseCaseTest` - native analysis boundary, activity state, and mission reward rules
+- `OfflineFirstStepRepositoryTest`, `DefaultWeatherRepositoryTest`, `DataStoreUserSettingsRepositoryTest`, `DefaultActivityStateRepositoryTest` - repository implementations with mocked internal DataSources
+- `NetworkWeatherSummaryMappingTest`, `LocaleWeatherLocationProviderTest` - data mapping and locale fallback behavior
 
 **Feature ViewModel layer**
+- `HomeViewModelTest`, `MissionDetailViewModelTest` - Fake repositories + real UseCases
 - `HistoryViewModelTest` - calendar item structure, month navigation, statistics formatting
 - `OnboardingViewModelTest` - four-step page transition state machine and repository call on completion
+- `RecapViewModelTest`, `WeeklyReportArchiveViewModelTest`, `WeeklyReportDetailViewModelTest` - report and recap UI state mapping
 - `SettingsViewModelTest` - nickname observation, point observation, and Intent-to-repository mapping
 
 **Compose UI tests (androidTest)**
@@ -314,10 +319,11 @@ Room DB data (step history) and DataStore data (nickname, points, settings) are 
 - `WeeklyReportScreenTest` - archive/detail rendering and share button state
 - `MissionDetailScreenTest` - before/after achievement states and back callback
 - `RecapScreenTest` - slide transition and pause/play
-- `ForecastDetailBottomSheetTest` - BottomSheet show/dismiss
 
 ### Main Tools
 
+- **Fake repositories in `core:testing`**: Reusable test doubles for repository contracts
+- **`MainDispatcherRule`**: JUnit Rule for ViewModel coroutine tests
 - **MockK**: Coroutine-friendly Kotlin mock library
 - **Turbine**: Flow testing library
 - **Robolectric**: Android environment emulation on the JVM
@@ -344,7 +350,7 @@ Room DB data (step history) and DataStore data (nickname, points, settings) are 
 | Security | Network Security Config, ProGuard/R8 obfuscation, backup protection |
 | Image | Coil 3 |
 | Build | Gradle Kotlin DSL, Version Catalog, Convention Plugins, CMake 3.22.1 |
-| Testing | JUnit4, MockK, Turbine, Robolectric, Compose UI Test, Espresso |
+| Testing | `core:testing` Fake repositories, JUnit4, MockK, Turbine, Robolectric, Compose UI Test, Espresso |
 
 ---
 
@@ -357,7 +363,7 @@ Room DB data (step history) and DataStore data (nickname, points, settings) are 
 | `river.android.feature` | `feature:*` | Library base + Hilt + Compose + HiltNavigation |
 | `river.android.compose` | Compose modules | Compose BOM, tooling, compiler plugin |
 | `river.android.test` | Unit test modules | JUnit4, MockK, Turbine, Coroutines Test |
-| `river.android.uitest` | Compose UI tests | Robolectric, Compose UI Test, Mock |
+| `river.android.uitest` | Compose UI tests | Robolectric, Compose UI Test, MockK |
 | `river.kotlin.library` | Pure Kotlin modules such as `core:domain` | JVM target, Kotlin only |
 | `river.kotlin.test` | Pure Kotlin tests | JUnit, Kotlin Test, Coroutines Test |
 
@@ -384,9 +390,9 @@ When adding a new feature module, declaring only `id("river.android.feature")` a
 ### Module Specific
 
 ```bash
-./gradlew :core:domain:test
-./gradlew :core:data:test
-./gradlew :feature:home:connectedAndroidTest
+./gradlew :core:domain:testDebugUnitTest
+./gradlew :core:data:testDebugUnitTest
+./gradlew :feature:home:connectedDebugAndroidTest
 ./gradlew :app:generateBaselineProfile
 ./gradlew projectDependencyGraph
 ```

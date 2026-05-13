@@ -10,7 +10,9 @@ import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.runTest
 import org.junit.Before
 import org.junit.Test
+import java.time.DayOfWeek
 import java.time.LocalDate
+import java.time.temporal.TemporalAdjusters
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
@@ -119,6 +121,54 @@ class GetWeeklyReportArchiveUseCaseTest {
             val prev = items.first { !it.isLocked }
             assertEquals(10_000, prev.totalSteps)
             assertEquals(1, prev.achievedDays)
+            awaitComplete()
+        }
+    }
+
+    @Test
+    fun `totalDays equals dailyCounts size when it exceeds 7`() = runTest {
+        val anchorDate = LocalDate.of(2026, 4, 15)
+        val previousWeekStart = LocalDate.of(2026, 4, 6)
+
+        every {
+            repository.getWeeklyStepSummary(LocalDate.of(2026, 4, 13).toEpochDay())
+        } returns flowOf(WeeklyStepSummary(weekStartEpochDay = LocalDate.of(2026, 4, 13).toEpochDay(), dailyCounts = emptyList()))
+
+        val counts = List(10) { i ->
+            DailyStepCount(
+                dateEpochDay = previousWeekStart.toEpochDay() + i,
+                steps = 7_000,
+                targetSteps = 6_000,
+            )
+        }
+        every {
+            repository.getWeeklyStepSummary(previousWeekStart.toEpochDay())
+        } returns flowOf(WeeklyStepSummary(weekStartEpochDay = previousWeekStart.toEpochDay(), dailyCounts = counts))
+
+        useCase(anchorDate = anchorDate, weekCount = 2).test {
+            val prev = awaitItem().first { !it.isLocked }
+            assertEquals(10, prev.totalDays)
+            awaitComplete()
+        }
+    }
+
+    @Test
+    fun `invoke with no explicit parameters uses LocalDate_now as anchor and DEFAULT_WEEK_COUNT weeks`() = runTest {
+        val today = LocalDate.now()
+        val currentWeekStart = today.with(java.time.temporal.TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY))
+
+        // Stub all DEFAULT_WEEK_COUNT (12) weekly summaries with empty data
+        (0 until 12).forEach { i ->
+            val weekStart = currentWeekStart.minusWeeks(i.toLong())
+            every {
+                repository.getWeeklyStepSummary(weekStart.toEpochDay())
+            } returns flowOf(WeeklyStepSummary(weekStartEpochDay = weekStart.toEpochDay(), dailyCounts = emptyList()))
+        }
+
+        useCase().test {
+            val items = awaitItem()
+            // Current week is always included (isLocked = true)
+            assertTrue(items.any { it.isLocked })
             awaitComplete()
         }
     }

@@ -1,6 +1,7 @@
 package com.river.walklog.feature.history
 
 import com.river.walklog.core.analytics.CrashReporter
+import com.river.walklog.core.testing.MainDispatcherRule
 import com.river.walklog.core.data.repository.StepRepository
 import com.river.walklog.core.data.repository.UserSettingsRepository
 import com.river.walklog.core.domain.usecase.GetMonthlyRecapUseCase
@@ -11,16 +12,12 @@ import com.river.walklog.core.model.UserSettings
 import io.mockk.coEvery
 import io.mockk.every
 import io.mockk.mockk
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.flowOf
-import kotlinx.coroutines.test.UnconfinedTestDispatcher
-import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
-import kotlinx.coroutines.test.setMain
-import org.junit.After
 import org.junit.Before
+import org.junit.Rule
 import org.junit.Test
 import java.time.YearMonth
 import kotlin.test.assertEquals
@@ -30,7 +27,8 @@ import kotlin.test.assertTrue
 @OptIn(ExperimentalCoroutinesApi::class)
 class HistoryViewModelTest {
 
-    private val testDispatcher = UnconfinedTestDispatcher()
+    @get:Rule
+    val mainDispatcherRule = MainDispatcherRule()
     private lateinit var getMonthlyRecap: GetMonthlyRecapUseCase
     private lateinit var stepRepository: StepRepository
     private lateinit var userSettingsRepository: UserSettingsRepository
@@ -38,18 +36,12 @@ class HistoryViewModelTest {
 
     @Before
     fun setUp() {
-        Dispatchers.setMain(testDispatcher)
         getMonthlyRecap = mockk()
         stepRepository = mockk()
         userSettingsRepository = mockk()
         crashReporter = mockk(relaxed = true)
         every { userSettingsRepository.settings } returns flowOf(defaultUserSettings())
         coEvery { stepRepository.getHourlyStepsForRange(any(), any()) } returns FloatArray(24)
-    }
-
-    @After
-    fun tearDown() {
-        Dispatchers.resetMain()
     }
 
     @Test
