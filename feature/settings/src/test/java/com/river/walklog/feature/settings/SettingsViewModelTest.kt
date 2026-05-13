@@ -46,10 +46,14 @@ class SettingsViewModelTest {
     fun `state is populated from repository settings on init`() {
         val settings = UserSettings(
             isOnboardingCompleted = true,
+            nickname = "",
+            totalPoints = 0,
             dailyStepGoal = 8_000,
             notificationsEnabled = false,
             recoveryMissionSteps = 3_000,
             themeMode = ThemeMode.DARK,
+            lastDailyMissionAwardedDate = "",
+            lastRecoveryMissionAwardedDate = "",
         )
         every { repository.settings } returns flowOf(settings)
         val viewModel = SettingsViewModel(repository, crashReporter)
@@ -155,9 +159,13 @@ class SettingsViewModelTest {
 
     private fun defaultSettings() = UserSettings(
         isOnboardingCompleted = true,
+        nickname = "",
+        totalPoints = 0,
         dailyStepGoal = 10_000,
         notificationsEnabled = true,
         recoveryMissionSteps = 6_000,
         themeMode = ThemeMode.SYSTEM,
+        lastDailyMissionAwardedDate = "",
+        lastRecoveryMissionAwardedDate = "",
     )
 }

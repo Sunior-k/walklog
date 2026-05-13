@@ -6,6 +6,7 @@ import com.river.walklog.core.data.healthconnect.HealthConnectStepDataSource
 import com.river.walklog.core.database.dao.DailyStepDao
 import com.river.walklog.core.database.entity.DailyStepEntity
 import com.river.walklog.core.model.DailyStepCount
+import com.river.walklog.core.model.ThemeMode
 import com.river.walklog.core.model.UserSettings
 import io.mockk.coEvery
 import io.mockk.coJustRun
@@ -37,7 +38,7 @@ class OfflineFirstStepRepositoryTest {
         healthConnectDataSource = mockk()
         dailyStepDao = mockk()
         userSettingsRepository = mockk {
-            every { settings } returns flowOf(UserSettings())
+            every { settings } returns flowOf(defaultUserSettings())
         }
         coEvery { dailyStepDao.updateStepsOnly(any(), any(), any()) } returns 1
         coJustRun { dailyStepDao.insertIfNotExists(any()) }
@@ -203,3 +204,15 @@ class OfflineFirstStepRepositoryTest {
         lastUpdatedAt = 0L,
     )
 }
+
+private fun defaultUserSettings() = UserSettings(
+    isOnboardingCompleted = false,
+    nickname = "",
+    totalPoints = 0,
+    dailyStepGoal = 10_000,
+    notificationsEnabled = true,
+    recoveryMissionSteps = 6_000,
+    themeMode = ThemeMode.SYSTEM,
+    lastDailyMissionAwardedDate = "",
+    lastRecoveryMissionAwardedDate = "",
+)

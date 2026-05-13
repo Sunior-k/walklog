@@ -6,6 +6,7 @@ import com.river.walklog.core.data.repository.UserSettingsRepository
 import com.river.walklog.core.domain.usecase.GetMonthlyRecapUseCase
 import com.river.walklog.core.model.DailyStepCount
 import com.river.walklog.core.model.MonthlyRecap
+import com.river.walklog.core.model.ThemeMode
 import com.river.walklog.core.model.UserSettings
 import io.mockk.coEvery
 import io.mockk.every
@@ -42,7 +43,7 @@ class HistoryViewModelTest {
         stepRepository = mockk()
         userSettingsRepository = mockk()
         crashReporter = mockk(relaxed = true)
-        every { userSettingsRepository.settings } returns flowOf(UserSettings())
+        every { userSettingsRepository.settings } returns flowOf(defaultUserSettings())
         coEvery { stepRepository.getHourlyStepsForRange(any(), any()) } returns FloatArray(24)
     }
 
@@ -457,3 +458,15 @@ class HistoryViewModelTest {
         )
     }
 }
+
+private fun defaultUserSettings() = UserSettings(
+    isOnboardingCompleted = false,
+    nickname = "",
+    totalPoints = 0,
+    dailyStepGoal = 10_000,
+    notificationsEnabled = true,
+    recoveryMissionSteps = 6_000,
+    themeMode = ThemeMode.SYSTEM,
+    lastDailyMissionAwardedDate = "",
+    lastRecoveryMissionAwardedDate = "",
+)
