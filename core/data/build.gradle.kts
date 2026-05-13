@@ -14,6 +14,7 @@ dependencies {
     api(projects.core.model)
     implementation(projects.core.database)
     implementation(projects.core.datastore)
+    implementation(projects.core.native)
     implementation(projects.core.network)
     implementation(projects.core.common)
     implementation(libs.coroutines.android)

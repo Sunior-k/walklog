@@ -25,6 +25,6 @@ android {
 }
 
 dependencies {
-    api(projects.core.common)
+    implementation(libs.coroutines.android)
     implementation(libs.litert)
 }

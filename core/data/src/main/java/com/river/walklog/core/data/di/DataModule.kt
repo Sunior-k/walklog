@@ -1,10 +1,14 @@
 package com.river.walklog.core.data.di
 
 import com.river.walklog.core.data.repository.DataStoreUserSettingsRepository
+import com.river.walklog.core.data.repository.DefaultActivityStateRepository
+import com.river.walklog.core.data.repository.DefaultWalkingInsightsRepository
 import com.river.walklog.core.data.repository.DefaultWeatherRepository
 import com.river.walklog.core.data.repository.OfflineFirstStepRepository
+import com.river.walklog.core.data.repository.ActivityStateRepository
 import com.river.walklog.core.data.repository.StepRepository
 import com.river.walklog.core.data.repository.UserSettingsRepository
+import com.river.walklog.core.data.repository.WalkingInsightsRepository
 import com.river.walklog.core.data.repository.WeatherRepository
 import com.river.walklog.core.data.weather.GpsWeatherLocationProvider
 import com.river.walklog.core.data.weather.LocaleWeatherLocationProvider
@@ -31,6 +35,14 @@ abstract class DataModule {
     @Binds
     @Singleton
     abstract fun bindWeatherRepository(impl: DefaultWeatherRepository): WeatherRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindActivityStateRepository(impl: DefaultActivityStateRepository): ActivityStateRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindWalkingInsightsRepository(impl: DefaultWalkingInsightsRepository): WalkingInsightsRepository
 
     @Binds
     @Singleton
