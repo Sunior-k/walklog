@@ -57,9 +57,9 @@ graph TB
   :app -.-> :core:designsystem
 
   :feature:home -.-> :core:domain
-  :feature:home -.-> :core:native
-  :feature:mission -.-> :core:data
-  :feature:mission -.-> :core:native
+  :feature:mission -.-> :core:domain
+  :feature:mission -.-> :core:ui
+  :feature:mission -.-> :core:analytics
   :feature:recap -.-> :core:domain
   :feature:report -.-> :core:domain
   :feature:history -.-> :core:domain
@@ -72,11 +72,11 @@ graph TB
 
   :core:domain --> :core:data
   :core:domain --> :core:model
-  :core:native --> :core:common
   :core:data --> :core:model
   :core:data -.-> :core:database
   :core:data -.-> :core:datastore
   :core:data -.-> :core:network
+  :core:data -.-> :core:native
   :core:data -.-> :core:common
   :core:network -.-> :core:common
   :core:database --> :core:model

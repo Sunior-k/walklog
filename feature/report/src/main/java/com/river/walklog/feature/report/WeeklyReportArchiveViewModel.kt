@@ -31,28 +31,19 @@ class WeeklyReportArchiveViewModel @Inject constructor(
 
     private fun collectReportArchive() {
         getWeeklyReportArchive()
-            .onEach { entries ->
+            .onEach { items ->
                 _state.update {
                     it.copy(
-                        archiveItems = entries
-                            .filter { entry -> entry.isLocked || entry.summary.totalSteps > 0 }
-                            .map { entry ->
-                                val achievedDays = entry.summary.dailyCounts.count { it.isAchieved }
-                                val totalDays = entry.summary.dailyCounts.size.coerceAtLeast(7)
-                                val achievementPct = if (entry.summary.dailyCounts.isEmpty()) {
-                                    0
-                                } else {
-                                    achievedDays * 100 / totalDays
-                                }
-                                WeeklyReportArchiveItemUiState(
-                                    weekStartEpochDay = entry.weekStartEpochDay,
-                                    unlockDate = entry.unlockDate,
-                                    totalSteps = entry.summary.totalSteps,
-                                    achievementPct = achievementPct,
-                                    achievementRate = achievementPct / 100f,
-                                    isLocked = entry.isLocked,
-                                )
-                            },
+                        archiveItems = items.map { item ->
+                            WeeklyReportArchiveItemUiState(
+                                weekStartEpochDay = item.weekStartEpochDay,
+                                unlockDate = item.unlockDate,
+                                totalSteps = item.totalSteps,
+                                achievementPct = item.achievementPct,
+                                achievementRate = item.achievementRate,
+                                isLocked = item.isLocked,
+                            )
+                        },
                         isLoading = false,
                         isError = false,
                     )

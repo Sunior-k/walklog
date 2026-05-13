@@ -118,7 +118,7 @@ class HistoryViewModel @Inject constructor(
                 }
                 val todayEpochDay = LocalDate.now().toEpochDay()
                 val achievedDays = dailyCounts.count { count ->
-                    if (count.dateEpochDay == todayEpochDay) count.steps >= todayGoal else count.isAchieved
+                    if (count.dateEpochDay == todayEpochDay) count.steps >= todayGoal else count.steps >= count.targetSteps
                 }
                 val totalDays = recap.totalDays
                 val achievedPct = if (totalDays > 0) (achievedDays * 100 / totalDays) else 0

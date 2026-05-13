@@ -16,10 +16,7 @@ graph TB
   subgraph :core
     direction TB
     :core:native[native]:::android-library
-    :core:common[common]:::jvm-library
   end
-
-  :core:native --> :core:common
 
 classDef android-application fill:#CAFFBF,stroke:#000,stroke-width:2px,color:#000;
 classDef android-feature fill:#FFD6A5,stroke:#000,stroke-width:2px,color:#000;
@@ -55,9 +52,9 @@ Arrow legend: `-->` = `api()` &nbsp;·&nbsp; `-.->` = `implementation()`
 | 파일 | 역할 |
 |---|---|
 | `WalkingInsightsEngine.kt` | JNI 브리지 — C++ 엔진 호출, 입력 검증, 결과 역직렬화 |
-| `ActivityClassifier.kt` | LiteRT Interpreter 래핑 — 센서 윈도우 → 활동 상태 분류 |
 | `WalkingInsightsResult.kt` | 엔진 결과 데이터 클래스 |
-| `ActivityState.kt` | 활동 상태 열거형 (WALKING / STATIONARY / UNKNOWN) |
+| `ActivityClassifier.kt` | LiteRT Interpreter 래핑 — 센서 윈도우 → 활동 상태 분류 |
+| `EngineActivityState.kt` | 엔진 활동 상태 열거형 |
 | `di/NativeEngineModule.kt` | Hilt `@Singleton` 바인딩 |
 | `cpp/walking_insights_engine.h/cpp` | 네이티브 분석 알고리즘 |
 | `cpp/walking_insights_jni.cpp` | JNI 진입점 |

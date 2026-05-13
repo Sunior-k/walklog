@@ -57,6 +57,7 @@ import com.river.walklog.core.designsystem.component.WeatherSummaryCard
 import com.river.walklog.core.designsystem.foundation.WalkLogColor
 import com.river.walklog.core.designsystem.foundation.WalkLogTheme
 import com.river.walklog.core.model.MissionType
+import com.river.walklog.core.ui.temperatureText
 import java.text.NumberFormat
 import kotlin.math.min
 import com.river.walklog.core.designsystem.R as DesignR

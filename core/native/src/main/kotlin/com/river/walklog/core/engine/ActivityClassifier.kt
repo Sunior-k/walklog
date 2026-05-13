@@ -1,8 +1,7 @@
 package com.river.walklog.core.engine
 
 import android.content.Context
-import com.river.walklog.core.common.ActivityStateProvider
-import com.river.walklog.core.common.dispatcher.WalkLogDispatchers
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -33,8 +32,8 @@ import java.nio.channels.FileChannel
 class ActivityClassifier(
     context: Context,
     private val sensorCollector: ActivitySensorCollector,
-    private val dispatchers: WalkLogDispatchers,
-) : ActivityStateProvider, Closeable {
+    private val defaultDispatcher: CoroutineDispatcher,
+) : Closeable {
 
     private val interpreter: Interpreter? = runCatching {
         val model = context.assets.openFd(MODEL_ASSET).use { descriptor ->
@@ -52,18 +51,18 @@ class ActivityClassifier(
     val isModelAvailable: Boolean get() = interpreter != null
 
     private val _isStationary = MutableStateFlow(false)
-    override val isStationary: StateFlow<Boolean> = _isStationary.asStateFlow()
+    val isStationary: StateFlow<Boolean> = _isStationary.asStateFlow()
 
     /**
-     * Emits the classified [ActivityState] for each complete 1-second sensor window.
-     * Also updates [isStationary] so that [OfflineFirstStepRepository] can gate step recording.
+     * Emits the classified [EngineActivityState] for each complete 1-second sensor window.
+     * Also updates [isStationary].
      * Cancels automatically when the collector's underlying sensor subscription is cancelled.
      */
-    fun observeActivityState(): Flow<ActivityState> =
+    fun observeActivityState(): Flow<EngineActivityState> =
         sensorCollector.observeWindows()
             .map { window -> classify(window) }
-            .onEach { state -> _isStationary.value = state == ActivityState.STATIONARY }
-            .flowOn(dispatchers.default)
+            .onEach { state -> _isStationary.value = state == EngineActivityState.STATIONARY }
+            .flowOn(defaultDispatcher)
 
     /**
      * Classifies the current activity from a sliding sensor window.
@@ -71,8 +70,8 @@ class ActivityClassifier(
      * @param sensorWindow FloatArray of size [WINDOW_SIZE × CHANNELS].
      *                     Layout: [t0_ax, t0_ay, t0_az, t0_gx, t0_gy, t0_gz, t1_ax, …]
      */
-    fun classify(sensorWindow: FloatArray): ActivityState {
-        val interp = interpreter ?: return ActivityState.UNKNOWN
+    fun classify(sensorWindow: FloatArray): EngineActivityState {
+        val interp = interpreter ?: return EngineActivityState.UNKNOWN
 
         require(sensorWindow.size == WINDOW_SIZE * CHANNELS) {
             "sensorWindow must be ${WINDOW_SIZE * CHANNELS} values " +
@@ -90,8 +89,8 @@ class ActivityClassifier(
         interp.run(input, output)
 
         val maxIdx = output[0].indices.maxByOrNull { output[0][it] }
-            ?: ActivityState.UNKNOWN.ordinal
-        return ActivityState.entries[maxIdx]
+            ?: EngineActivityState.UNKNOWN.ordinal
+        return EngineActivityState.entries[maxIdx]
     }
 
     override fun close() = interpreter?.close() ?: Unit
@@ -100,6 +99,6 @@ class ActivityClassifier(
         private const val MODEL_ASSET   = "activity_classifier.tflite"
         const val WINDOW_SIZE           = 50  // 50 Hz × 1 s = 50 time steps
         const val CHANNELS              = 6   // accel x/y/z + gyro x/y/z
-        private val OUTPUT_CLASSES      = ActivityState.entries.size
+        private val OUTPUT_CLASSES      = EngineActivityState.entries.size
     }
 }

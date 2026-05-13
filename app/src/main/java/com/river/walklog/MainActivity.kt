@@ -3,6 +3,7 @@ package com.river.walklog
 import android.content.res.Configuration
 import android.os.Bundle
 import androidx.activity.enableEdgeToEdge
+import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
@@ -25,13 +26,12 @@ import com.google.android.material.bottomnavigation.BottomNavigationView
 import com.google.android.material.navigation.NavigationBarView
 import com.google.android.material.navigationrail.NavigationRailView
 import com.river.walklog.core.analytics.CrashReporter
-import com.river.walklog.core.data.repository.UserSettingsRepository
 import com.river.walklog.core.model.ThemeMode
 import com.river.walklog.core.model.UserSettings
 import com.river.walklog.feature.widget.TodayMissionWidgetWorker
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -46,10 +46,9 @@ import javax.inject.Inject
 class MainActivity : AppCompatActivity() {
 
     @Inject
-    lateinit var userSettingsRepository: UserSettingsRepository
-
-    @Inject
     lateinit var crashReporter: CrashReporter
+
+    private val viewModel: MainActivityViewModel by viewModels()
 
     private val bottomNavDestinations = setOf(
         R.id.homeFragment,
@@ -58,22 +57,15 @@ class MainActivity : AppCompatActivity() {
         R.id.settingsFragment,
     )
     private var navController: NavController? = null
-    private var isStartupReady = false
+    private var isContentReady = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
-        installSplashScreen().setKeepOnScreenCondition { !isStartupReady }
+        val splashScreen = installSplashScreen()
         super.onCreate(savedInstanceState)
-
-        lifecycleScope.launch {
-            val initialSettings = userSettingsRepository.settings.first()
-            applyThemeMode(initialSettings.themeMode)
-            setupContent(
-                savedInstanceState = savedInstanceState,
-                initialSettings = initialSettings,
-            )
-            observeThemeMode()
-            isStartupReady = true
+        splashScreen.setKeepOnScreenCondition {
+            viewModel.uiState.value.shouldKeepSplashScreen() || !isContentReady
         }
+        observeStartupState(savedInstanceState)
     }
 
     override fun onStart() {
@@ -310,16 +302,24 @@ class MainActivity : AppCompatActivity() {
         controller.isAppearanceLightNavigationBars = !isNightMode
     }
 
-    private fun observeThemeMode() {
+    private fun observeStartupState(savedInstanceState: Bundle?) {
         lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
-                userSettingsRepository.settings
-                    .map { it.themeMode }
+                viewModel.uiState
+                    .filterIsInstance<MainActivityUiState.Success>()
+                    .map { it.userSettings }
                     .distinctUntilChanged()
-                    .collect { themeMode ->
-                        val nightMode = themeMode.toNightMode()
+                    .collect { settings ->
+                        val nightMode = settings.themeMode.toNightMode()
                         if (AppCompatDelegate.getDefaultNightMode() != nightMode) {
-                            applyThemeMode(themeMode)
+                            applyThemeMode(settings.themeMode)
+                        }
+                        if (!isContentReady) {
+                            setupContent(
+                                savedInstanceState = savedInstanceState,
+                                initialSettings = settings,
+                            )
+                            isContentReady = true
                         }
                     }
             }

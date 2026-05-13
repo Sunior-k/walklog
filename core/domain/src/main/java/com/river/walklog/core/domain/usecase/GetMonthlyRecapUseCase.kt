@@ -24,7 +24,7 @@ class GetMonthlyRecapUseCase @Inject constructor(
         val totalSteps = dailyCounts.sumOf { it.steps }
         val activeDays = dailyCounts.count { it.steps > 0 }
         val averageStepsPerDay = if (activeDays > 0) totalSteps / activeDays else 0
-        val achievedDays = dailyCounts.count { it.isAchieved }
+        val achievedDays = dailyCounts.count { it.steps >= it.targetSteps }
         val bestDay = dailyCounts.maxByOrNull { it.steps }?.takeIf { it.steps > 0 }
         val longestStreak = computeLongestStreak(dailyCounts)
         val estimatedCalories = (totalSteps * 0.04f).toInt()
@@ -48,7 +48,7 @@ class GetMonthlyRecapUseCase @Inject constructor(
         var longest = 0
         var current = 0
         for (day in dailyCounts) {
-            if (day.isAchieved) {
+            if (day.steps >= day.targetSteps) {
                 current++
                 if (current > longest) longest = current
             } else {

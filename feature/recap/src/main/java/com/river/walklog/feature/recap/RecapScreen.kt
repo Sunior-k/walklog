@@ -490,7 +490,7 @@ private fun TotalStepsSlide(recap: MonthlyRecap) {
                     .padding(horizontal = 20.dp, vertical = 10.dp),
             ) {
                 SlideDescription(
-                    stringResource(RecapR.string.recap_total_distance, recap.distanceKm),
+                    stringResource(RecapR.string.recap_total_distance, (recap.totalSteps * 0.00075f).toInt()),
                     color = WalkLogColor.StaticWhite,
                 )
             }
@@ -592,7 +592,7 @@ private fun CaloriesSlide(recap: MonthlyRecap) {
 
 @Composable
 private fun AchievementSlide(recap: MonthlyRecap) {
-    val pct = (recap.achievementRate * 100).toInt()
+    val pct = if (recap.totalDays == 0) 0 else (recap.achievedDays * 100 / recap.totalDays)
 
     SlideScaffold(
         gradientColors = listOf(
@@ -656,7 +656,7 @@ private fun AchievementCalendar(
                             .size(20.dp)
                             .clip(CircleShape)
                             .background(
-                                if (day.isAchieved) {
+                                if (day.steps >= day.targetSteps) {
                                     WalkLogColor.StaticWhite
                                 } else {
                                     WalkLogColor.StaticWhite.copy(alpha = 0.2f)

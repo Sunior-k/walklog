@@ -31,7 +31,7 @@ class GetWeeklyStepSummaryUseCaseTest {
         val targetEpochDay = 19_000L
         every {
             repository.getWeeklyStepSummary(targetEpochDay)
-        } returns flowOf(WeeklyStepSummary.empty(targetEpochDay))
+        } returns flowOf(WeeklyStepSummary(weekStartEpochDay = targetEpochDay, dailyCounts = emptyList()))
 
         useCase(targetEpochDay).test {
             assertEquals(targetEpochDay, awaitItem().weekStartEpochDay)
@@ -44,7 +44,7 @@ class GetWeeklyStepSummaryUseCaseTest {
         val capturedEpochDay = slot<Long>()
         every {
             repository.getWeeklyStepSummary(capture(capturedEpochDay))
-        } returns flowOf(WeeklyStepSummary.empty(0L))
+        } returns flowOf(WeeklyStepSummary(weekStartEpochDay = 0L, dailyCounts = emptyList()))
 
         useCase().test {
             awaitItem()
@@ -66,7 +66,7 @@ class GetWeeklyStepSummaryUseCaseTest {
         val capturedEpochDay = slot<Long>()
         every {
             repository.getWeeklyStepSummary(capture(capturedEpochDay))
-        } returns flowOf(WeeklyStepSummary.empty(0L))
+        } returns flowOf(WeeklyStepSummary(weekStartEpochDay = 0L, dailyCounts = emptyList()))
 
         useCase().test {
             awaitItem()
