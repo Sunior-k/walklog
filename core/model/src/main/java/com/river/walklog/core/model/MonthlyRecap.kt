@@ -12,10 +12,4 @@ data class MonthlyRecap(
     val activeDays: Int,
     val estimatedCalories: Int,
     val dailyCounts: List<DailyStepCount>,
-) {
-    val achievementRate: Float
-        get() = if (totalDays == 0) 0f else achievedDays.toFloat() / totalDays
-
-    val distanceKm: Int
-        get() = (totalSteps * 0.00075f).toInt()
-}
+)

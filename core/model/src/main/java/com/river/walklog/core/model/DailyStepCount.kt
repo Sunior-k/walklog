@@ -5,8 +5,6 @@ data class DailyStepCount(
     val steps: Int,
     val targetSteps: Int = DEFAULT_TARGET_STEPS,
 ) {
-    val isAchieved: Boolean get() = steps >= targetSteps
-
     companion object {
         const val DEFAULT_TARGET_STEPS = 6_000
     }

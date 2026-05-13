@@ -9,9 +9,6 @@ data class WeatherSummary(
     val windSpeedMetersPerSecond: Float?,
     val isAvailable: Boolean = true,
 ) {
-    val temperatureText: String
-        get() = temperatureCelsius?.let { "$it°" } ?: "-"
-
     companion object {
         fun unavailable(locationName: String = ""): WeatherSummary = WeatherSummary(
             locationName = locationName,
