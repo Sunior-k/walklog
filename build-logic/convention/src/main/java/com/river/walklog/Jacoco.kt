@@ -77,10 +77,10 @@ internal fun Project.configureAndroidJacocoReport(variantName: String = "debug")
         )
         classDirectories.setFrom(
             files(
-                fileTree(layout.buildDirectory.dir("tmp/kotlin-classes/$variantName")) {
+                fileTree(layout.buildDirectory.dir("intermediates/built_in_kotlinc/$variantName/compile${capitalizedVariantName}Kotlin/classes")) {
                     exclude(coverageExcludes)
                 },
-                fileTree(layout.buildDirectory.dir("intermediates/javac/$variantName/classes")) {
+                fileTree(layout.buildDirectory.dir("intermediates/javac/$variantName/compile${capitalizedVariantName}JavaWithJavac/classes")) {
                     exclude(coverageExcludes)
                 },
             ),

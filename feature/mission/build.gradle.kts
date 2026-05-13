@@ -13,4 +13,5 @@ dependencies {
     implementation(projects.core.analytics)
     implementation(projects.core.ui)
     implementation(libs.androidx.adaptive)
+    testImplementation(projects.core.testing)
 }

@@ -1,4 +1,5 @@
 import com.river.walklog.setNamespace
+
 plugins {
     id("river.android.feature")
     id("river.android.uitest")
@@ -14,4 +15,5 @@ dependencies {
     implementation(projects.core.analytics)
     implementation(libs.androidx.health.connect)
     implementation(libs.androidx.adaptive)
+    testImplementation(projects.core.testing)
 }

@@ -19,4 +19,5 @@ dependencies {
     implementation(libs.androidx.constraintlayout)
     implementation(libs.androidx.fragment.ktx)
     implementation(libs.oss.licenses)
+    testImplementation(projects.core.testing)
 }

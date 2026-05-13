@@ -6,10 +6,7 @@ configureAndroidUiTestOptions()
 configureAndroidJacocoReport()
 
 dependencies {
-    "testImplementation"(findLibrary("junit4").get())
     "testImplementation"(findLibrary("robolectric").get())
-    "testImplementation"(findLibrary("mockk").get())
-    "testImplementation"(findLibrary("coroutines-test").get())
     "testImplementation"(findLibrary("androidx-compose-ui-test").get())
     "androidTestImplementation"(findLibrary("androidx-runner").get())
     "debugImplementation"(findLibrary("androidx-compose-ui-test-manifest").get())

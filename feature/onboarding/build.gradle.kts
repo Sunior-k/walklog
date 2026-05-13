@@ -14,4 +14,5 @@ dependencies {
     implementation(projects.core.ui)
     implementation(projects.core.analytics)
     implementation(libs.androidx.health.connect)
+    testImplementation(projects.core.testing)
 }

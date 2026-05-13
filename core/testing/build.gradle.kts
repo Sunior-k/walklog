@@ -2,16 +2,18 @@ import com.river.walklog.setNamespace
 
 plugins {
     id("river.android.library")
-    id("river.android.hilt")
-    id("river.android.test")
 }
 
 android {
-    setNamespace("core.domain")
+    setNamespace("core.testing")
 }
 
 dependencies {
     api(projects.core.data)
     api(projects.core.model)
-    testImplementation(projects.core.testing)
+    api(libs.junit4)
+    api(libs.coroutines.test)
+    api(libs.mockk)
+    api(libs.turbine)
+    api(libs.kotlin.test)
 }
