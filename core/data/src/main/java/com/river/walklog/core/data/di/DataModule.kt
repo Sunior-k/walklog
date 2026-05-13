@@ -1,12 +1,13 @@
 package com.river.walklog.core.data.di
 
 import com.river.walklog.core.data.repository.DataStoreUserSettingsRepository
-import com.river.walklog.core.data.repository.KmaWeatherRepository
+import com.river.walklog.core.data.repository.DefaultWeatherRepository
 import com.river.walklog.core.data.repository.OfflineFirstStepRepository
 import com.river.walklog.core.data.repository.StepRepository
 import com.river.walklog.core.data.repository.UserSettingsRepository
 import com.river.walklog.core.data.repository.WeatherRepository
-import com.river.walklog.core.data.weather.DefaultWeatherLocationProvider
+import com.river.walklog.core.data.weather.GpsWeatherLocationProvider
+import com.river.walklog.core.data.weather.LocaleWeatherLocationProvider
 import com.river.walklog.core.data.weather.WeatherLocationProvider
 import dagger.Binds
 import dagger.Module
@@ -29,11 +30,16 @@ abstract class DataModule {
 
     @Binds
     @Singleton
-    abstract fun bindWeatherRepository(impl: KmaWeatherRepository): WeatherRepository
+    abstract fun bindWeatherRepository(impl: DefaultWeatherRepository): WeatherRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindWeatherLocationProvider(impl: GpsWeatherLocationProvider): WeatherLocationProvider
 
     companion object {
         @Provides
         @Singleton
-        fun provideWeatherLocationProvider(): WeatherLocationProvider = DefaultWeatherLocationProvider()
+        fun provideLocaleWeatherLocationProvider(): LocaleWeatherLocationProvider =
+            LocaleWeatherLocationProvider()
     }
 }

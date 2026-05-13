@@ -36,7 +36,7 @@ suspend fun Context.readStoredThemeMode(): ThemeMode =
 
 @Singleton
 class UserPreferencesDataSource @Inject constructor(
-    @ApplicationContext private val context: Context,
+    @param:ApplicationContext private val context: Context,
 ) {
     private val dataStore = context.walkLogUserPreferencesDataStore
 

@@ -203,7 +203,7 @@ fun OnboardingRoute(
                 }
                 2 -> viewModel.advancePage()
                 3 -> {
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU && state.notificationsEnabled) {
                         notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
                     } else {
                         viewModel.complete()

@@ -4,8 +4,8 @@ import com.river.walklog.core.network.model.NetworkWeatherSummary
 
 interface WeatherNetworkDataSource {
     suspend fun getCurrentWeather(
-        nx: Int,
-        ny: Int,
+        latitude: Double,
+        longitude: Double,
         locationName: String,
     ): NetworkWeatherSummary
 }

@@ -4,6 +4,7 @@ import com.river.walklog.core.common.dispatcher.WalkLogDispatchers
 import com.river.walklog.core.data.healthconnect.HealthConnectStepDataSource
 import com.river.walklog.core.database.dao.DailyStepDao
 import com.river.walklog.core.database.entity.DailyStepEntity
+import com.river.walklog.core.database.entity.asExternalModel
 import com.river.walklog.core.model.DailyStepCount
 import com.river.walklog.core.model.WeeklyStepSummary
 import kotlinx.coroutines.delay
@@ -69,7 +70,7 @@ class OfflineFirstStepRepository @Inject constructor(
         dailyStepDao.observeForDay(dateEpochDay)
             .onStart { seedFromHealthConnect(dateEpochDay) }
             .map { entity ->
-                entity?.toDomain() ?: DailyStepCount(dateEpochDay = dateEpochDay, steps = 0)
+                entity?.asExternalModel() ?: DailyStepCount(dateEpochDay = dateEpochDay, steps = 0)
             }
             .flowOn(dispatchers.io)
 
@@ -84,7 +85,7 @@ class OfflineFirstStepRepository @Inject constructor(
             .map { entities ->
                 val entityMap = entities.associateBy { it.dateEpochDay }
                 (fromEpochDay..toEpochDay).map { day ->
-                    entityMap[day]?.toDomain()
+                    entityMap[day]?.asExternalModel()
                         ?: DailyStepCount(dateEpochDay = day, steps = 0)
                 }
             }
@@ -158,12 +159,6 @@ class OfflineFirstStepRepository @Inject constructor(
             }
         }
     }
-
-    private fun DailyStepEntity.toDomain() = DailyStepCount(
-        dateEpochDay = dateEpochDay,
-        steps = totalSteps,
-        targetSteps = targetSteps,
-    )
 
     private companion object {
         const val POLL_INTERVAL_MS = 10_000L

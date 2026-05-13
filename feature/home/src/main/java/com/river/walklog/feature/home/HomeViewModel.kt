@@ -344,8 +344,9 @@ class HomeViewModel @Inject constructor(
     private fun loadWeather(forceRefresh: Boolean = false) {
         weatherJob?.cancel()
         weatherJob = viewModelScope.launch {
+            _state.update { it.copy(isWeatherLoading = true) }
             val weather = loadWeatherWithRetry(forceRefresh = forceRefresh)
-            _state.update { state -> state.applyWeather(weather) }
+            _state.update { state -> state.applyWeather(weather).copy(isWeatherLoading = false) }
         }
     }
 

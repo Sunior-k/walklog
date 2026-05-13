@@ -1,6 +1,8 @@
 package com.river.walklog.feature.home
 
+import android.Manifest
 import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -41,6 +43,9 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import android.app.Activity
+import android.content.pm.PackageManager
+import androidx.core.content.ContextCompat
 import androidx.health.connect.client.HealthConnectClient
 import androidx.health.connect.client.PermissionController
 import androidx.health.connect.client.permission.HealthPermission
@@ -80,6 +85,13 @@ fun HomeRoute(
 
     var showForecastSheet by rememberSaveable { mutableStateOf(false) }
 
+    // 위치 권한 런처
+    val locationPermissionLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestPermission(),
+    ) { granted ->
+        if (granted) viewModel.refreshWeather()
+    }
+
     // Health Connect 권한 요청 런처
     val healthPermissionsLauncher = rememberLauncherForActivityResult(
         PermissionController.createRequestPermissionResultContract(),
@@ -88,6 +100,22 @@ fun HomeRoute(
             HealthPermission.getReadPermission(StepsRecord::class),
         )
         viewModel.updatePermissionResult(granted)
+    }
+
+    // 위치 권한 초기 확인 — 미허용 상태면 요청
+    LaunchedEffect(Unit) {
+        val granted = ContextCompat.checkSelfPermission(
+            context,
+            Manifest.permission.ACCESS_COARSE_LOCATION,
+        ) == PackageManager.PERMISSION_GRANTED
+        if (!granted) {
+            val shouldShowRationale = (context as? Activity)
+                ?.shouldShowRequestPermissionRationale(Manifest.permission.ACCESS_COARSE_LOCATION)
+                ?: false
+            if (!shouldShowRationale) {
+                locationPermissionLauncher.launch(Manifest.permission.ACCESS_COARSE_LOCATION)
+            }
+        }
     }
 
     // 초기 권한 확인
@@ -273,6 +301,7 @@ private fun HomeCompactContent(
             conditionText = stringResource(state.weather.condition.conditionRes()),
             adviceText = stringResource(state.weather.walkingAdviceRes()),
             supportingText = state.weatherSupportingText(),
+            isLoading = state.isWeatherLoading,
             onRefreshClick = onRefreshWeather,
         )
 
@@ -398,6 +427,7 @@ private fun HomeExpandedContent(
                     conditionText = stringResource(state.weather.condition.conditionRes()),
                     adviceText = stringResource(state.weather.walkingAdviceRes()),
                     supportingText = state.weatherSupportingText(),
+                    isLoading = state.isWeatherLoading,
                     onRefreshClick = onRefreshWeather,
                     modifier = Modifier.fillMaxWidth(),
                 )
@@ -825,6 +855,7 @@ private fun HomeScreenPermissionPreview() {
         )
     }
 }
+
 
 @Preview(showBackground = true, backgroundColor = 0xFFFFFFFF, widthDp = 900, heightDp = 840)
 @Composable
