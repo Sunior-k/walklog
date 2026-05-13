@@ -287,31 +287,36 @@ Room DB(걸음 수 이력)와 DataStore(닉네임·포인트·설정)는 클라�
 
 | 위치 | 러너 | 대상 |
 |---|---|---|
-| `src/test/` | Robolectric JVM | 컴포넌트 단위 (ViewModel, UseCase, Repository, 단일 Composable) |
+| `src/test/` | JVM / Robolectric | ViewModel, UseCase, Repository, mapper, 단일 Composable 테스트 |
 | `src/androidTest/` | 실기기/에뮬레이터 | 화면 전체 (Route 단위 Compose UI 테스트) |
+| `:core:testing` | 공유 테스트 유틸리티 | `MainDispatcherRule`과 재사용 가능한 Fake repository |
+
+ViewModel 테스트는 `core:testing`의 Fake repository와 실제 UseCase 조합을 기본으로 합니다. MockK는 Android framework wrapper, repository 구현체 내부 DataSource처럼 실제 구현 대신 경계를 끊어야 하는 곳에만 사용합니다.
 
 ```bash
 ./gradlew test
-./gradlew :core:domain:test
-./gradlew :core:data:test
-./gradlew :feature:home:test
+./gradlew :core:domain:testDebugUnitTest
+./gradlew :core:data:testDebugUnitTest
+./gradlew :feature:home:testDebugUnitTest
 ./gradlew connectedAndroidTest
 ```
 
 ### 테스트 커버리지
 
-**Model 계층** — `MissionTest` (progressRatio 경계값)
-
 **Common 계층** — `ResultTest` (onSuccess / onError 체이닝)
 
 **Domain / Data 계층**
-- `WeeklyStepSummaryTest` · `MonthlyRecapTest` — 도메인 모델 불변식
-- `GetWeeklyStepSummaryUseCaseTest` · `GetWeeklyReportArchiveUseCaseTest` · `GetWeeklyBestHourUseCaseTest` — 집계·아카이브·베스트아워 로직
-- `StepRepositoryImplTest` — HC 위임, Flow 매핑, 누락 날짜 zero-fill
+- `GetWeeklyStepSummaryUseCaseTest` · `GetWeeklyReportArchiveUseCaseTest` · `GetWeeklyReportDetailUseCaseTest` · `GetWeeklyBestHourUseCaseTest` — 주간 집계, 아카이브/상세, 베스트아워 로직
+- `GetMonthlyRecapUseCaseTest` · `GetCurrentStreakUseCaseTest` · `GetWeeklyHomeStatsUseCaseTest` — 리캡, 스트릭, 홈 요약 로직
+- `GetWalkingInsightsUseCaseTest` · `ObserveActivityStateUseCaseTest` · `AwardMissionPointsUseCaseTest` — native 분석 경계, 활동 상태, 미션 보상 규칙
+- `OfflineFirstStepRepositoryTest` · `DefaultWeatherRepositoryTest` · `DataStoreUserSettingsRepositoryTest` · `DefaultActivityStateRepositoryTest` — 내부 DataSource를 mock 처리한 repository 구현체 테스트
+- `NetworkWeatherSummaryMappingTest` · `LocaleWeatherLocationProviderTest` — 데이터 매핑과 locale fallback 동작
 
 **Feature ViewModel 계층**
+- `HomeViewModelTest` · `MissionDetailViewModelTest` — Fake repository + 실제 UseCase
 - `HistoryViewModelTest` — 달력 아이템 구조, 월 이동, 통계 포맷
 - `OnboardingViewModelTest` — 4단계 페이지 전환 상태 머신, 완료 시 repository 호출
+- `RecapViewModelTest` · `WeeklyReportArchiveViewModelTest` · `WeeklyReportDetailViewModelTest` — 리포트/리캡 UI state mapping
 - `SettingsViewModelTest` — 닉네임 관찰, 포인트 관찰, 각 Intent → repository 매핑
 
 **Compose UI 테스트 (androidTest)**
@@ -319,10 +324,11 @@ Room DB(걸음 수 이력)와 DataStore(닉네임·포인트·설정)는 클라�
 - `WeeklyReportScreenTest` — 아카이브·상세 렌더링, 공유 버튼 상태
 - `MissionDetailScreenTest` — 달성 전/후 상태, 뒤로가기 콜백
 - `RecapScreenTest` — 슬라이드 전환, 일시정지/재생
-- `ForecastDetailBottomSheetTest` — BottomSheet 표시/닫기
 
 ### 주요 도구
 
+- **`core:testing` Fake repository**: repository 계약용 재사용 테스트 더블
+- **`MainDispatcherRule`**: ViewModel coroutine 테스트용 JUnit Rule
 - **MockK**: 코루틴 친화적인 Kotlin mock 라이브러리
 - **Turbine**: `Flow` 테스트 전용 라이브러리
 - **Robolectric**: JVM 위에서 Android 환경 에뮬레이션
@@ -349,7 +355,7 @@ Room DB(걸음 수 이력)와 DataStore(닉네임·포인트·설정)는 클라�
 | Security | Network Security Config, ProGuard/R8 obfuscation, Backup protection               |
 | Image | Coil 3                                                                            |
 | Build | Gradle Kotlin DSL, Version Catalog, Convention Plugins, CMake 3.22.1 |
-| Testing | JUnit4, MockK, Turbine, Robolectric, Compose UI Test, Espresso                    |
+| Testing | `core:testing` Fake repository, JUnit4, MockK, Turbine, Robolectric, Compose UI Test, Espresso |
 
 
 ---
@@ -363,7 +369,7 @@ Room DB(걸음 수 이력)와 DataStore(닉네임·포인트·설정)는 클라�
 | `river.android.feature` | `feature:*` | library 기반 + Hilt + Compose + HiltNavigation |
 | `river.android.compose` | Compose 사용 모듈 | Compose BOM, tooling, compiler plugin |
 | `river.android.test` | 단위 테스트 모듈 | JUnit4, MockK, Turbine, Coroutines Test |
-| `river.android.uitest` | Compose UI 테스트 | Robolectric, Compose UI Test, Mock |
+| `river.android.uitest` | Compose UI 테스트 | Robolectric, Compose UI Test, MockK |
 | `river.kotlin.library` | `core:domain` 등 순수 Kotlin | JVM 타겟, Kotlin only |
 | `river.kotlin.test` | 순수 Kotlin 테스트 | JUnit, Kotlin Test, Coroutines Test |
 
@@ -390,9 +396,9 @@ Room DB(걸음 수 이력)와 DataStore(닉네임·포인트·설정)는 클라�
 ### Module Specific
 
 ```bash
-./gradlew :core:domain:test
-./gradlew :core:data:test
-./gradlew :feature:home:connectedAndroidTest
+./gradlew :core:domain:testDebugUnitTest
+./gradlew :core:data:testDebugUnitTest
+./gradlew :feature:home:connectedDebugAndroidTest
 ./gradlew :app:generateBaselineProfile
 ./gradlew projectDependencyGraph
 ```
