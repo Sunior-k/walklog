@@ -32,13 +32,11 @@ class WalkLogApplication : Application(), Configuration.Provider {
      * 참고: https://firebase.google.com/docs/crashlytics/customize-crash-reports
      */
     private fun configureCrashlytics() {
+        if (BuildConfig.DEBUG) return
+
         val crashlytics = FirebaseCrashlytics.getInstance()
-
-        crashlytics.setCrashlyticsCollectionEnabled(!BuildConfig.DEBUG)
-
-        if (!BuildConfig.DEBUG) {
-            crashlytics.setCustomKey("app_version_name", BuildConfig.VERSION_NAME)
-            crashlytics.setCustomKey("app_version_code", BuildConfig.VERSION_CODE)
-        }
+        crashlytics.setCrashlyticsCollectionEnabled(true)
+        crashlytics.setCustomKey("app_version_name", BuildConfig.VERSION_NAME)
+        crashlytics.setCustomKey("app_version_code", BuildConfig.VERSION_CODE)
     }
 }
