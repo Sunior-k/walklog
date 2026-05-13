@@ -1,18 +1,15 @@
 package com.river.walklog.feature.onboarding
 
 import com.river.walklog.core.analytics.CrashReporter
+import com.river.walklog.core.testing.MainDispatcherRule
 import com.river.walklog.core.data.repository.UserSettingsRepository
 import io.mockk.coVerify
 import io.mockk.mockk
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
-import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
-import kotlinx.coroutines.test.setMain
-import org.junit.After
 import org.junit.Before
+import org.junit.Rule
 import org.junit.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -21,22 +18,17 @@ import kotlin.test.assertTrue
 @OptIn(ExperimentalCoroutinesApi::class)
 class OnboardingViewModelTest {
 
-    private val testDispatcher = UnconfinedTestDispatcher()
+    @get:Rule
+    val mainDispatcherRule = MainDispatcherRule()
     private lateinit var userSettingsRepository: UserSettingsRepository
     private lateinit var crashReporter: CrashReporter
     private lateinit var viewModel: OnboardingViewModel
 
     @Before
     fun setUp() {
-        Dispatchers.setMain(testDispatcher)
         userSettingsRepository = mockk(relaxed = true)
         crashReporter = mockk(relaxed = true)
         viewModel = OnboardingViewModel(userSettingsRepository, crashReporter)
-    }
-
-    @After
-    fun tearDown() {
-        Dispatchers.resetMain()
     }
 
     // 초기 상태
