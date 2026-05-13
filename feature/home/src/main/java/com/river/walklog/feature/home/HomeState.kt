@@ -20,6 +20,7 @@ data class HomeState(
     val forecastTotalDays: Int = 0,
     val forecastActiveDays: Int = 0,
     val weather: WeatherSummary = WeatherSummary.unavailable(),
+    val isWeatherLoading: Boolean = true,
     val missionRewardPoints: Int = 20,
     val missionIsRecovery: Boolean = false,
     val missionIsCompleted: Boolean = false,
