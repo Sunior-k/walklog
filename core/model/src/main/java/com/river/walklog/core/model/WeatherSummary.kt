@@ -13,7 +13,7 @@ data class WeatherSummary(
         get() = temperatureCelsius?.let { "$it°" } ?: "-"
 
     companion object {
-        fun unavailable(locationName: String = "서울"): WeatherSummary = WeatherSummary(
+        fun unavailable(locationName: String = ""): WeatherSummary = WeatherSummary(
             locationName = locationName,
             temperatureCelsius = null,
             condition = WeatherCondition.UNKNOWN,

@@ -1,12 +1,15 @@
 package com.river.walklog.core.network.di
 
 import com.river.walklog.core.network.KmaWeatherNetworkDataSource
+import com.river.walklog.core.network.OpenMeteoWeatherNetworkDataSource
 import com.river.walklog.core.network.WeatherNetworkDataSource
 import dagger.Binds
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
+import dagger.multibindings.IntoMap
+import dagger.multibindings.StringKey
 import okhttp3.OkHttpClient
 import javax.inject.Singleton
 
@@ -15,9 +18,17 @@ import javax.inject.Singleton
 abstract class NetworkModule {
 
     @Binds
-    @Singleton
-    abstract fun bindWeatherNetworkDataSource(
+    @IntoMap
+    @StringKey("KR")
+    abstract fun bindKmaWeatherDataSource(
         impl: KmaWeatherNetworkDataSource,
+    ): WeatherNetworkDataSource
+
+    @Binds
+    @IntoMap
+    @StringKey("*")
+    abstract fun bindOpenMeteoWeatherDataSource(
+        impl: OpenMeteoWeatherNetworkDataSource,
     ): WeatherNetworkDataSource
 
     companion object {

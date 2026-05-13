@@ -125,6 +125,8 @@ litert = "1.4.2"
 ## OSS Licenses
 # https://developers.google.com/android/guides/opensource
 ossLicenses = "17.5.1"
+# https://developers.google.com/android/guides/releases
+playServicesLocation = "21.3.0"
 ossLicensesPlugin = "0.12.0"
 
 [libraries]
@@ -226,6 +228,7 @@ androidx-profileinstaller = { group = "androidx.profileinstaller", name = "profi
 androidx-uiautomator = { group = "androidx.test.uiautomator", name = "uiautomator", version.ref = "androidxUiAutomator" }
 
 oss-licenses = { group = "com.google.android.gms", name = "play-services-oss-licenses", version.ref = "ossLicenses" }
+play-services-location = { group = "com.google.android.gms", name = "play-services-location", version.ref = "playServicesLocation" }
 oss-licenses-plugin = { group = "com.google.android.gms", name = "oss-licenses-plugin", version.ref = "ossLicensesPlugin" }
 
 [bundles]

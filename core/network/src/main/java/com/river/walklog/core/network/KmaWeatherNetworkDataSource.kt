@@ -9,6 +9,12 @@ import okhttp3.OkHttpClient
 import okhttp3.Request
 import org.json.JSONObject
 import javax.inject.Inject
+import kotlin.math.PI
+import kotlin.math.cos
+import kotlin.math.ln
+import kotlin.math.pow
+import kotlin.math.sin
+import kotlin.math.tan
 
 class KmaWeatherNetworkDataSource @Inject constructor(
     private val okHttpClient: OkHttpClient,
@@ -16,13 +22,14 @@ class KmaWeatherNetworkDataSource @Inject constructor(
 ) : WeatherNetworkDataSource {
 
     override suspend fun getCurrentWeather(
-        nx: Int,
-        ny: Int,
+        latitude: Double,
+        longitude: Double,
         locationName: String,
     ): NetworkWeatherSummary = withContext(dispatchers.io) {
         val serviceKey = BuildConfig.KMA_SERVICE_KEY
         if (serviceKey.isBlank()) return@withContext NetworkWeatherSummary.unavailable(locationName)
 
+        val (nx, ny) = latLonToKmaGrid(latitude, longitude)
         val base = KmaForecastTime.latestUltraShortForecastBase()
         val urlBuilder = KMA_BASE_URL.toHttpUrl()
             .newBuilder()
@@ -91,10 +98,7 @@ class KmaWeatherNetworkDataSource @Inject constructor(
         )
     }
 
-    private fun mapCondition(
-        sky: Int?,
-        precipitationType: Int?,
-    ): NetworkWeatherCondition = when (precipitationType) {
+    private fun mapCondition(sky: Int?, precipitationType: Int?): NetworkWeatherCondition = when (precipitationType) {
         1, 5 -> NetworkWeatherCondition.RAIN
         2, 6 -> NetworkWeatherCondition.RAIN_SNOW
         3, 7 -> NetworkWeatherCondition.SNOW
@@ -106,6 +110,39 @@ class KmaWeatherNetworkDataSource @Inject constructor(
             else -> NetworkWeatherCondition.UNKNOWN
         }
     }
+
+    /**
+     * 위경도 -> 격자 좌표(nx, ny)로 변환.
+     * 기상청 공식 LCC 투영 파라미터를 사용.
+     */
+    private fun latLonToKmaGrid(lat: Double, lon: Double): Pair<Int, Int> {
+        val re = 6371.00877
+        val grid = 5.0
+        val slat1 = 30.0.toRadians()
+        val slat2 = 60.0.toRadians()
+        val olon = 126.0.toRadians()
+        val olat = 38.0.toRadians()
+        val xo = 43.0
+        val yo = 136.0
+
+        val sn = ln(cos(slat1) / cos(slat2)) / ln(
+            tan((PI / 4 + slat2 / 2)) / tan((PI / 4 + slat1 / 2))
+        )
+        val sf = tan(PI / 4 + slat1 / 2).pow(sn) * cos(slat1) / sn
+        val ro = re / grid * sf / tan(PI / 4 + olat / 2).pow(sn)
+
+        val ra = re / grid * sf / tan(PI / 4 + lat.toRadians() / 2).pow(sn)
+        var theta = lon.toRadians() - olon
+        if (theta > PI) theta -= 2 * PI
+        if (theta < -PI) theta += 2 * PI
+        theta *= sn
+
+        val nx = (ra * sin(theta) + xo + 0.5).toInt()
+        val ny = (ro - ra * cos(theta) + yo + 0.5).toInt()
+        return nx to ny
+    }
+
+    private fun Double.toRadians() = this * PI / 180.0
 
     companion object {
         private const val KMA_BASE_URL = "https://apis.data.go.kr/1360000/VilageFcstInfoService_2.0"

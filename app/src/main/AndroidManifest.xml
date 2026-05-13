@@ -13,6 +13,9 @@
     <!-- 알림 (API 33+) -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 
+    <!-- 위치 기반 날씨 조회 -->
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+
     <!--
         Health Connect 앱 패키지 가시성.
         Android 11(API 30)+ 에서 HealthConnectClient.getSdkStatus() 등
