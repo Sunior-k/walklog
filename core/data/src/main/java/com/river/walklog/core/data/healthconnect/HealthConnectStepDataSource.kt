@@ -26,7 +26,7 @@ import javax.inject.Singleton
  */
 @Singleton
 class HealthConnectStepDataSource @Inject constructor(
-    @ApplicationContext private val context: Context,
+    @param:ApplicationContext private val context: Context,
 ) {
     private val client: HealthConnectClient by lazy {
         HealthConnectClient.getOrCreate(context)

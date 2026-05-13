@@ -23,7 +23,7 @@ import javax.inject.Singleton
  */
 @Singleton
 class ActivitySensorCollector @Inject constructor(
-    @ApplicationContext private val context: Context,
+    @param:ApplicationContext private val context: Context,
 ) {
     private val sensorManager = context.getSystemService(Context.SENSOR_SERVICE) as SensorManager
 
