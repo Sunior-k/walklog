@@ -4,9 +4,9 @@
 
 [English](README.md) | 한국어
 
-[![Kotlin](https://img.shields.io/badge/Kotlin-2.1.0-7F52FF?logo=kotlin&logoColor=white)](https://kotlinlang.org)
-[![Android Gradle Plugin](https://img.shields.io/badge/AGP-8.13.1-3DDC84?logo=android&logoColor=white)](https://developer.android.com/build)
-[![Compose BOM](https://img.shields.io/badge/Compose%20BOM-2025.06.00-4285F4?logo=jetpackcompose&logoColor=white)](https://developer.android.com/jetpack/compose/bom)
+[![Kotlin](https://img.shields.io/badge/Kotlin-2.3.21-7F52FF?logo=kotlin&logoColor=white)](https://kotlinlang.org)
+[![Android Gradle Plugin](https://img.shields.io/badge/AGP-9.2.1-3DDC84?logo=android&logoColor=white)](https://developer.android.com/build)
+[![Compose BOM](https://img.shields.io/badge/Compose%20BOM-2026.05.00-4285F4?logo=jetpackcompose&logoColor=white)](https://developer.android.com/jetpack/compose/bom)
 [![Min SDK](https://img.shields.io/badge/minSdk-28-informational?logo=android&logoColor=white)](https://developer.android.com)
 [![Compile SDK](https://img.shields.io/badge/compileSdk-36-informational?logo=android&logoColor=white)](https://developer.android.com)
 [![Target SDK](https://img.shields.io/badge/targetSdk-35-informational?logo=android&logoColor=white)](https://developer.android.com)
@@ -332,24 +332,24 @@ Room DB(걸음 수 이력)와 DataStore(닉네임·포인트·설정)는 클라�
 
 # Tech Stack
 
-| 영역 | 기술                                                                                 |
-|---|------------------------------------------------------------------------------------|
-| Language | Kotlin 2.1.0, C++17                                                                |
-| UI | Jetpack Compose, Material 3, XML Layouts + ViewBinding, XML Navigation host        |
-| Animation | Lottie                                                                             |
+| 영역 | 기술                                                                                |
+|---|-----------------------------------------------------------------------------------|
+| Language | Kotlin 2.3.21, C++17                                                              |
+| UI | Jetpack Compose, Material 3, XML Layouts + ViewBinding, XML Navigation host       |
+| Animation | Lottie                                                                            |
 | Architecture | MVVM, Google Recommended Architecture                      |
-| DI | Hilt 2.55, Hilt WorkManager                                                        |
-| Async | Kotlin Coroutines, Flow                                                            |
-| Persistence | Room 2.7.1, DataStore Preferences                                                  |
-| Network | OkHttp (KMA 초단기예보 API), in-memory weather cache                                    |
-| On-device AI | LiteRT 1.0.1 (Activity Classifier), NDK/JNI (Walking Insights Engine)              |
-| Widget | Jetpack Glance 1.1.1, WorkManager                                                  |
-| Analytics | Firebase Crashlytics, Firebase Analytics                                           |
+| DI | Hilt 2.59.2, Hilt WorkManager                                                     |
+| Async | Kotlin Coroutines, Flow                                                           |
+| Persistence | Room 2.8.4, DataStore Preferences                                                 |
+| Network | OkHttp (KMA / Open-Meteo), in-memory weather cache              |
+| On-device AI | LiteRT 1.4.2 (Activity Classifier), NDK/JNI (Walking Insights Engine)             |
+| Widget | Jetpack Glance 1.1.1, WorkManager                                                 |
+| Analytics | Firebase Crashlytics, Firebase Analytics                                          |
 | Performance | Baseline Profile, R8 Full Mode                       |
-| Security | Network Security Config, ProGuard/R8 obfuscation, Backup protection                |
-| Image | Coil 3                                                                             |
+| Security | Network Security Config, ProGuard/R8 obfuscation, Backup protection               |
+| Image | Coil 3                                                                            |
 | Build | Gradle Kotlin DSL, Version Catalog, Convention Plugins, CMake 3.22.1 |
-| Testing | JUnit4, MockK, Turbine, Robolectric, Compose UI Test, Espresso                     |
+| Testing | JUnit4, MockK, Turbine, Robolectric, Compose UI Test, Espresso                    |
 
 
 ---
@@ -375,8 +375,8 @@ Room DB(걸음 수 이력)와 DataStore(닉네임·포인트·설정)는 클라�
 
 ### Requirements
 
-- Android Studio Hedgehog 이상 (JDK 21 포함)
-- Android SDK 35
+- Android Studio Narwhal 이상 (JDK 21 포함)
+- Android SDK 36
 - Firebase 프로젝트 + `google-services.json`
 
 ### Build
@@ -403,7 +403,7 @@ Room DB(걸음 수 이력)와 DataStore(닉네임·포인트·설정)는 클라�
 |---|---|---|
 | `android.permission.health.READ_STEPS` | Health Connect 설치 기기 | 걸음 수 읽기 |
 | `PERMISSION_READ_HEALTH_DATA_IN_BACKGROUND` | Health Connect | 백그라운드 위젯 업데이트 |
-| `INTERNET` | 모든 버전 | KMA 날씨 API |
+| `INTERNET` | 모든 버전 | 날씨 API (KMA / Open-Meteo) |
 | `POST_NOTIFICATIONS` | API 33+ | 피크아워 알림 |
 | `RECEIVE_BOOT_COMPLETED` | 모든 버전 | 재부팅 후 AlarmManager 재등록 |
 
@@ -432,7 +432,7 @@ Room DB(걸음 수 이력)와 DataStore(닉네임·포인트·설정)는 클라�
 | 영역                                 | 현재 상태                                                    |
 |------------------------------------|----------------------------------------------------------|
 | 걸음 수 파이프라인                         | 완성 (Health Connect → Room → Domain → UI)                 |
-| 날씨 파이프라인                           | 완성 (KMA → DefaultWeatherRepository → WeatherSummaryCard) |
+| 날씨 파이프라인                           | 완성 (KMA / Open-Meteo → DefaultWeatherRepository → WeatherSummaryCard) |
 | 홈 화면                               | 완성 (닉네임 표시, 미션 달성 포인트 지급 포함)                             |
 | 주간 리포트                             | 완성 (Archive + Detail 2화면, 막대 그래프, 이미지 공유)                |
 | 월간 리캡                              | 완성                                                       |

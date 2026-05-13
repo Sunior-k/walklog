@@ -4,9 +4,9 @@
 
 English | [한국어](README.ko.md)
 
-[![Kotlin](https://img.shields.io/badge/Kotlin-2.1.0-7F52FF?logo=kotlin&logoColor=white)](https://kotlinlang.org)
-[![Android Gradle Plugin](https://img.shields.io/badge/AGP-8.13.1-3DDC84?logo=android&logoColor=white)](https://developer.android.com/build)
-[![Compose BOM](https://img.shields.io/badge/Compose%20BOM-2025.06.00-4285F4?logo=jetpackcompose&logoColor=white)](https://developer.android.com/jetpack/compose/bom)
+[![Kotlin](https://img.shields.io/badge/Kotlin-2.3.21-7F52FF?logo=kotlin&logoColor=white)](https://kotlinlang.org)
+[![Android Gradle Plugin](https://img.shields.io/badge/AGP-9.2.1-3DDC84?logo=android&logoColor=white)](https://developer.android.com/build)
+[![Compose BOM](https://img.shields.io/badge/Compose%20BOM-2026.05.00-4285F4?logo=jetpackcompose&logoColor=white)](https://developer.android.com/jetpack/compose/bom)
 [![Min SDK](https://img.shields.io/badge/minSdk-28-informational?logo=android&logoColor=white)](https://developer.android.com)
 [![Compile SDK](https://img.shields.io/badge/compileSdk-36-informational?logo=android&logoColor=white)](https://developer.android.com)
 [![Target SDK](https://img.shields.io/badge/targetSdk-35-informational?logo=android&logoColor=white)](https://developer.android.com)
@@ -329,15 +329,15 @@ Room DB data (step history) and DataStore data (nickname, points, settings) are 
 
 | Area | Technology |
 |---|---|
-| Language | Kotlin 2.1.0, C++17 |
+| Language | Kotlin 2.3.21, C++17 |
 | UI | Jetpack Compose, Material 3, XML Layouts + ViewBinding, XML Navigation host |
 | Animation | Lottie |
 | Architecture | MVVM, Google Recommended Architecture |
-| DI | Hilt 2.55, Hilt WorkManager |
+| DI | Hilt 2.59.2, Hilt WorkManager |
 | Async | Kotlin Coroutines, Flow |
-| Persistence | Room 2.7.1, DataStore Preferences |
-| Network | OkHttp (KMA ultra-short-term forecast API), in-memory weather cache |
-| On-device AI | LiteRT 1.0.1 (Activity Classifier), NDK/JNI (Walking Insights Engine) |
+| Persistence | Room 2.8.4, DataStore Preferences |
+| Network | OkHttp (KMA / Open-Meteo — location-based provider selection), in-memory weather cache |
+| On-device AI | LiteRT 1.4.2 (Activity Classifier), NDK/JNI (Walking Insights Engine) |
 | Widget | Jetpack Glance 1.1.1, WorkManager |
 | Analytics | Firebase Crashlytics, Firebase Analytics |
 | Performance | Baseline Profile, R8 Full Mode |
@@ -369,8 +369,8 @@ When adding a new feature module, declaring only `id("river.android.feature")` a
 
 ### Requirements
 
-- Android Studio Hedgehog or later (includes JDK 21)
-- Android SDK 35
+- Android Studio Narwhal (2025.1.1) or later (includes JDK 21)
+- Android SDK 36
 - Firebase project + `google-services.json`
 
 ### Build
@@ -397,7 +397,7 @@ When adding a new feature module, declaring only `id("river.android.feature")` a
 |---|---|---|
 | `android.permission.health.READ_STEPS` | Devices with Health Connect | Read step count |
 | `PERMISSION_READ_HEALTH_DATA_IN_BACKGROUND` | Health Connect | Background widget updates |
-| `INTERNET` | All versions | KMA weather API |
+| `INTERNET` | All versions | Weather API (KMA / Open-Meteo) |
 | `POST_NOTIFICATIONS` | API 33+ | Peak-hour notifications |
 | `RECEIVE_BOOT_COMPLETED` | All versions | Re-register AlarmManager after reboot |
 
