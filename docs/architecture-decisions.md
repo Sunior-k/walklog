@@ -202,8 +202,8 @@ class HomeFragment : Fragment() {
 모든 ViewModel은 단방향 데이터 흐름을 따릅니다.
 
 ```
-UI Event (UserIntent)
-    ↓ handleIntent()
+UI Event (함수 호출)
+    ↓ viewModel.refresh() / viewModel.updatePermissionResult(granted)
 ViewModel
     ↓ StateFlow<UiState>
 UI (Compose)
@@ -219,8 +219,9 @@ viewModel.setUserName("익명")          // UI가 ViewModel 상태를 직접 수
 val name = viewModel.userName          // UI가 ViewModel에서 직접 값을 읽음
 
 // 올바른 패턴 (UDF):
-// UI는 Intent만 전달
-viewModel.handleIntent(HomeIntent.OnRefresh)
+// UI는 ViewModel의 공개 함수를 직접 호출
+viewModel.refresh()
+viewModel.refreshWeather()
 
 // ViewModel은 State만 노출
 val state: StateFlow<HomeState> = _state.asStateFlow()
