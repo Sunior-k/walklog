@@ -63,7 +63,12 @@
 -dontwarn androidx.navigation.**
 
 # ── Firebase / Crashlytics ────────────────────────────────────────────────────
-# Firebase SDK consumer rules로 대부분 처리됨; 추가 안전망
+# Firebase ComponentRegistrar는 ServiceLoader로 발견되어 리플렉션으로 instantiate됨.
+# R8이 no-arg 생성자를 제거하면 "component is not present" crash 발생.
+# 특정 클래스명 대신 인터페이스 구현체 전체를 보호
+-keepclassmembers class * implements com.google.firebase.components.ComponentRegistrar {
+    <init>();
+}
 -dontwarn com.google.firebase.**
 -dontwarn com.google.android.gms.**
 
