@@ -2,8 +2,8 @@ package com.river.walklog.feature.onboarding
 
 import com.river.walklog.core.analytics.CrashReporter
 import com.river.walklog.core.testing.MainDispatcherRule
-import com.river.walklog.core.data.repository.UserSettingsRepository
-import io.mockk.coVerify
+import com.river.walklog.core.testing.repository.FakeUserSettingsRepository
+import com.river.walklog.core.testing.repository.defaultUserSettings
 import io.mockk.mockk
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.advanceUntilIdle
@@ -20,13 +20,13 @@ class OnboardingViewModelTest {
 
     @get:Rule
     val mainDispatcherRule = MainDispatcherRule()
-    private lateinit var userSettingsRepository: UserSettingsRepository
+    private lateinit var userSettingsRepository: FakeUserSettingsRepository
     private lateinit var crashReporter: CrashReporter
     private lateinit var viewModel: OnboardingViewModel
 
     @Before
     fun setUp() {
-        userSettingsRepository = mockk(relaxed = true)
+        userSettingsRepository = FakeUserSettingsRepository(defaultUserSettings(isOnboardingCompleted = false))
         crashReporter = mockk(relaxed = true)
         viewModel = OnboardingViewModel(userSettingsRepository, crashReporter)
     }
@@ -106,7 +106,7 @@ class OnboardingViewModelTest {
         viewModel.complete()
         advanceUntilIdle()
 
-        coVerify { userSettingsRepository.setDailyStepGoal(9_000) }
+        assertEquals(9_000, userSettingsRepository.settings.value.dailyStepGoal)
     }
 
     @Test
@@ -115,7 +115,7 @@ class OnboardingViewModelTest {
         viewModel.complete()
         advanceUntilIdle()
 
-        coVerify { userSettingsRepository.setNotificationsEnabled(false) }
+        assertFalse(userSettingsRepository.settings.value.notificationsEnabled)
     }
 
     @Test
@@ -123,7 +123,7 @@ class OnboardingViewModelTest {
         viewModel.complete()
         advanceUntilIdle()
 
-        coVerify { userSettingsRepository.setOnboardingCompleted() }
+        assertTrue(userSettingsRepository.settings.value.isOnboardingCompleted)
     }
 
     @Test
@@ -150,7 +150,7 @@ class OnboardingViewModelTest {
         repeat(4) { viewModel.advancePage() }
         advanceUntilIdle()
 
-        coVerify { userSettingsRepository.setOnboardingCompleted() }
+        assertTrue(userSettingsRepository.settings.value.isOnboardingCompleted)
         assertEquals(OnboardingNavigationDestination.Home, viewModel.state.value.navigationDestination)
     }
 

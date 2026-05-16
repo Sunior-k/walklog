@@ -1,15 +1,12 @@
 package com.river.walklog.feature.history
 
 import com.river.walklog.core.analytics.CrashReporter
-import com.river.walklog.core.testing.MainDispatcherRule
-import com.river.walklog.core.data.repository.StepRepository
-import com.river.walklog.core.data.repository.UserSettingsRepository
 import com.river.walklog.core.domain.usecase.GetMonthlyRecapUseCase
 import com.river.walklog.core.model.DailyStepCount
 import com.river.walklog.core.model.MonthlyRecap
-import com.river.walklog.core.model.ThemeMode
-import com.river.walklog.core.model.UserSettings
-import io.mockk.coEvery
+import com.river.walklog.core.testing.MainDispatcherRule
+import com.river.walklog.core.testing.repository.FakeStepRepository
+import com.river.walklog.core.testing.repository.FakeUserSettingsRepository
 import io.mockk.every
 import io.mockk.mockk
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -30,18 +27,16 @@ class HistoryViewModelTest {
     @get:Rule
     val mainDispatcherRule = MainDispatcherRule()
     private lateinit var getMonthlyRecap: GetMonthlyRecapUseCase
-    private lateinit var stepRepository: StepRepository
-    private lateinit var userSettingsRepository: UserSettingsRepository
+    private lateinit var stepRepository: FakeStepRepository
+    private lateinit var userSettingsRepository: FakeUserSettingsRepository
     private lateinit var crashReporter: CrashReporter
 
     @Before
     fun setUp() {
         getMonthlyRecap = mockk()
-        stepRepository = mockk()
-        userSettingsRepository = mockk()
+        stepRepository = FakeStepRepository()
+        userSettingsRepository = FakeUserSettingsRepository()
         crashReporter = mockk(relaxed = true)
-        every { userSettingsRepository.settings } returns flowOf(defaultUserSettings())
-        coEvery { stepRepository.getHourlyStepsForRange(any(), any()) } returns FloatArray(24)
     }
 
     @Test
@@ -326,7 +321,7 @@ class HistoryViewModelTest {
         hourlySteps[8] = 1_200f
         hourlySteps[13] = 2_000f
         hourlySteps[19] = 800f
-        coEvery { stepRepository.getHourlyStepsForRange(firstDayEpoch, firstDayEpoch) } returns hourlySteps
+        stepRepository.setHourlySteps(hourlySteps)
         stubRecap(
             emptyRecap(
                 totalSteps = 4_000,
@@ -450,15 +445,3 @@ class HistoryViewModelTest {
         )
     }
 }
-
-private fun defaultUserSettings() = UserSettings(
-    isOnboardingCompleted = false,
-    nickname = "",
-    totalPoints = 0,
-    dailyStepGoal = 10_000,
-    notificationsEnabled = true,
-    recoveryMissionSteps = 6_000,
-    themeMode = ThemeMode.SYSTEM,
-    lastDailyMissionAwardedDate = "",
-    lastRecoveryMissionAwardedDate = "",
-)
