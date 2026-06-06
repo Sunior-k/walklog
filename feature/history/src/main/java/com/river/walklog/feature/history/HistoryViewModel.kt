@@ -123,13 +123,17 @@ class HistoryViewModel @Inject constructor(
                 val totalDays = recap.totalDays
                 val achievedPct = if (totalDays > 0) (achievedDays * 100 / totalDays) else 0
                 val totalSteps = recap.totalSteps
-                _state.update {
-                    it.copy(
+                _state.update { current ->
+                    val preservedTimeline = current.selectedDaySummary
+                        ?.takeIf { it.dateEpochDay == selectedDay?.dateEpochDay }
+                        ?.timelineSegments
+                        ?: emptyList()
+                    current.copy(
                         items = calendarItems,
                         selectedDaySummary = selectedDay?.toSelectedDaySummary(
                             previousDay = previousDay,
                             monthDays = dayItems,
-                        ),
+                        )?.copy(timelineSegments = preservedTimeline),
                         totalSteps = totalSteps,
                         achievementRatePct = achievedPct,
                         isLoading = false,

@@ -296,7 +296,7 @@
 
                     <!-- 걸음 수 -->
                     <LinearLayout
-                        android:layout_width="wrap_content"
+                        android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="10dp"
                         android:gravity="bottom"
@@ -304,8 +304,11 @@
 
                         <TextView
                             android:id="@+id/tv_selected_steps"
-                            android:layout_width="wrap_content"
+                            android:layout_width="0dp"
                             android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:maxLines="1"
+                            android:ellipsize="end"
                             android:textAppearance="@style/WalkLog.TextAppearance.Display1B"
                             android:textColor="@color/walklog_text_primary"
                             tools:text="8,420" />
@@ -315,6 +318,7 @@
                             android:layout_height="wrap_content"
                             android:layout_marginStart="5dp"
                             android:layout_marginBottom="8dp"
+                            android:maxLines="1"
                             android:text="@string/history_steps_unit"
                             android:textAppearance="@style/WalkLog.TextAppearance.SubTypography10R"
                             android:textColor="@color/walklog_text_secondary" />
@@ -600,8 +604,10 @@
 
                                 <TextView
                                     android:id="@+id/tv_timeline_morning_label"
-                                    android:layout_width="40dp"
+                                    android:layout_width="0dp"
                                     android:layout_height="wrap_content"
+                                    android:layout_weight="2"
+                                    android:maxLines="1"
                                     android:text="@string/timeline_morning"
                                     android:textAppearance="@style/WalkLog.TextAppearance.SubTypography12B"
                                     android:textColor="@color/walklog_text_primary" />
@@ -612,15 +618,17 @@
                                     android:layout_width="0dp"
                                     android:layout_height="7dp"
                                     android:layout_marginHorizontal="10dp"
-                                    android:layout_weight="1"
+                                    android:layout_weight="5"
                                     android:max="100"
                                     tools:progress="46" />
 
                                 <TextView
                                     android:id="@+id/tv_timeline_morning_steps"
-                                    android:layout_width="64dp"
+                                    android:layout_width="0dp"
                                     android:layout_height="wrap_content"
+                                    android:layout_weight="3"
                                     android:gravity="end"
+                                    android:maxLines="1"
                                     android:textAppearance="@style/WalkLog.TextAppearance.SubTypography12R"
                                     android:textColor="@color/walklog_text_secondary"
                                     tools:text="2,320보" />
@@ -636,8 +644,10 @@
 
                                 <TextView
                                     android:id="@+id/tv_timeline_afternoon_label"
-                                    android:layout_width="40dp"
+                                    android:layout_width="0dp"
                                     android:layout_height="wrap_content"
+                                    android:layout_weight="2"
+                                    android:maxLines="1"
                                     android:text="@string/timeline_afternoon"
                                     android:textAppearance="@style/WalkLog.TextAppearance.SubTypography12B"
                                     android:textColor="@color/walklog_text_primary" />
@@ -648,15 +658,17 @@
                                     android:layout_width="0dp"
                                     android:layout_height="7dp"
                                     android:layout_marginHorizontal="10dp"
-                                    android:layout_weight="1"
+                                    android:layout_weight="5"
                                     android:max="100"
                                     tools:progress="100" />
 
                                 <TextView
                                     android:id="@+id/tv_timeline_afternoon_steps"
-                                    android:layout_width="64dp"
+                                    android:layout_width="0dp"
                                     android:layout_height="wrap_content"
+                                    android:layout_weight="3"
                                     android:gravity="end"
+                                    android:maxLines="1"
                                     android:textAppearance="@style/WalkLog.TextAppearance.SubTypography12R"
                                     android:textColor="@color/walklog_text_secondary"
                                     tools:text="4,980보" />
@@ -672,8 +684,10 @@
 
                                 <TextView
                                     android:id="@+id/tv_timeline_evening_label"
-                                    android:layout_width="40dp"
+                                    android:layout_width="0dp"
                                     android:layout_height="wrap_content"
+                                    android:layout_weight="2"
+                                    android:maxLines="1"
                                     android:text="@string/timeline_evening"
                                     android:textAppearance="@style/WalkLog.TextAppearance.SubTypography12B"
                                     android:textColor="@color/walklog_text_primary" />
@@ -684,15 +698,17 @@
                                     android:layout_width="0dp"
                                     android:layout_height="7dp"
                                     android:layout_marginHorizontal="10dp"
-                                    android:layout_weight="1"
+                                    android:layout_weight="5"
                                     android:max="100"
                                     tools:progress="58" />
 
                                 <TextView
                                     android:id="@+id/tv_timeline_evening_steps"
-                                    android:layout_width="64dp"
+                                    android:layout_width="0dp"
                                     android:layout_height="wrap_content"
+                                    android:layout_weight="3"
                                     android:gravity="end"
+                                    android:maxLines="1"
                                     android:textAppearance="@style/WalkLog.TextAppearance.SubTypography12R"
                                     android:textColor="@color/walklog_text_secondary"
                                     tools:text="2,870보" />
