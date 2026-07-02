@@ -99,6 +99,7 @@ class MainActivity : AppCompatActivity() {
             savedInstanceState = savedInstanceState,
             initialSettings = initialSettings,
         )
+        observeSignOut()
     }
 
     private fun setupNavigation(
@@ -165,6 +166,24 @@ class MainActivity : AppCompatActivity() {
 
     private fun Bundle?.restoredDestinationId(): Int? =
         this?.getInt(KEY_CURRENT_DESTINATION_ID)?.takeIf { it != 0 }
+
+    private fun observeSignOut() {
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                viewModel.signOutEvent.collect {
+                    navController?.let { nav ->
+                        nav.navigate(
+                            R.id.loginFragment,
+                            null,
+                            navOptions {
+                                popUpTo(nav.graph.id) { inclusive = true }
+                            },
+                        )
+                    }
+                }
+            }
+        }
+    }
 
     // 요청된 시작점으로 NavGraph 재설정
     private fun setStartDestination(
