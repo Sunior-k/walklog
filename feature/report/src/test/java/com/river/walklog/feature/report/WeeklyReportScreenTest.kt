@@ -17,10 +17,12 @@ import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
+import org.robolectric.annotation.Config
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 
 @RunWith(AndroidJUnit4::class)
+@Config(sdk = [33])
 class WeeklyReportScreenTest {
 
     @get:Rule

@@ -8,7 +8,6 @@ import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import androidx.test.platform.app.InstrumentationRegistry
 import com.river.walklog.core.designsystem.foundation.WalkLogTheme
 import com.river.walklog.core.model.DailyStepCount
 import com.river.walklog.core.model.MonthlyRecap
@@ -16,10 +15,12 @@ import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
+import org.robolectric.annotation.Config
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 
 @RunWith(AndroidJUnit4::class)
+@Config(sdk = [33])
 class RecapScreenTest {
 
     @get:Rule
@@ -28,11 +29,7 @@ class RecapScreenTest {
     private val activity get() = composeTestRule.activity
 
     private fun monthLabel(year: Int, month: Int): String {
-        val locale = InstrumentationRegistry.getInstrumentation()
-            .targetContext
-            .resources
-            .configuration
-            .locales[0]
+        val locale = activity.resources.configuration.locales[0]
         return LocalDate.of(year, month, 1)
             .format(DateTimeFormatter.ofPattern("MMMM", locale))
     }
