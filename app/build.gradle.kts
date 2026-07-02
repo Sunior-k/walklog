@@ -3,6 +3,7 @@ import com.google.firebase.crashlytics.buildtools.gradle.CrashlyticsExtension
 plugins {
     id("river.android.application")
     id("river.android.compose")
+    id("river.android.test")
     alias(libs.plugins.google.services)
     alias(libs.plugins.firebase.crashlytics)
     alias(libs.plugins.baselineprofile)
@@ -105,4 +106,5 @@ dependencies {
     baselineProfile(projects.benchmark)
 
     androidTestImplementation(libs.androidx.runner)
+    testImplementation(projects.core.testing)
 }

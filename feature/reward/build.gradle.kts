@@ -11,4 +11,5 @@ android {
 
 dependencies {
     implementation(projects.core.analytics)
+    testImplementation(projects.core.testing)
 }
