@@ -10,4 +10,5 @@ data class UserSettings(
     val themeMode: ThemeMode,
     val lastDailyMissionAwardedDate: String,
     val lastRecoveryMissionAwardedDate: String,
+    val userId: String,
 )
