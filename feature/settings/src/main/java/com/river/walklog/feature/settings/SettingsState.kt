@@ -12,4 +12,6 @@ data class SettingsState(
     val recoveryMissionSteps: Int = 6_000,
     val themeMode: ThemeMode = ThemeMode.SYSTEM,
     val isLoading: Boolean = true,
+    val isSignedIn: Boolean = false,
+    val userEmail: String = "",
 )

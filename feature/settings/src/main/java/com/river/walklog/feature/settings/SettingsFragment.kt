@@ -8,6 +8,7 @@ import android.view.ViewGroup
 import android.widget.SeekBar
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.isVisible
 import androidx.core.view.updatePadding
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
@@ -15,6 +16,8 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import com.google.android.gms.oss.licenses.OssLicensesMenuActivity
+import com.river.walklog.core.auth.GoogleSignInResult
+import com.river.walklog.core.auth.getGoogleIdToken
 import com.river.walklog.core.model.ThemeMode
 import com.river.walklog.feature.settings.databinding.FragmentSettingsBinding
 import dagger.hilt.android.AndroidEntryPoint
@@ -59,18 +62,16 @@ class SettingsFragment : Fragment() {
 
     private fun setupListeners() = with(binding) {
         profileCard.setOnClickListener { showNicknameEditDialog() }
+        btnGoogleSignIn.setOnClickListener { launchGoogleSignIn() }
+        btnSignOut.setOnClickListener { viewModel.signOut() }
         seekDailyStepGoal.setOnSeekBarChangeListener(
             onProgressChanged = { progress, fromUser ->
-                if (fromUser) {
-                    viewModel.updateStepGoal(progress.toSteps(min = DAILY_STEP_MIN))
-                }
+                if (fromUser) viewModel.updateStepGoal(progress.toSteps(min = DAILY_STEP_MIN))
             },
         )
         seekRecoveryMissionSteps.setOnSeekBarChangeListener(
             onProgressChanged = { progress, fromUser ->
-                if (fromUser) {
-                    viewModel.updateRecoverySteps(progress.toSteps(min = RECOVERY_STEP_MIN))
-                }
+                if (fromUser) viewModel.updateRecoverySteps(progress.toSteps(min = RECOVERY_STEP_MIN))
             },
         )
         switchNotifications.setOnCheckedChangeListener { _, isChecked ->
@@ -101,6 +102,18 @@ class SettingsFragment : Fragment() {
         tvAvatar.text = displayName.take(1).uppercase()
         tvPointsBadge.text = numberFormat.format(state.totalPoints) + " P"
 
+        // Google 계정 섹션
+        if (state.isSignedIn) {
+            tvGoogleEmail.isVisible = true
+            btnSignOut.isVisible = true
+            btnGoogleSignIn.isVisible = false
+            tvGoogleEmail.text = state.userEmail
+        } else {
+            tvGoogleEmail.isVisible = false
+            btnSignOut.isVisible = false
+            btnGoogleSignIn.isVisible = true
+        }
+
         tvDailyStepGoal.text = state.dailyStepGoal.toStepText(numberFormat)
         tvRecoveryMissionSteps.text = state.recoveryMissionSteps.toStepText(numberFormat)
 
@@ -129,10 +142,19 @@ class SettingsFragment : Fragment() {
 
     private fun showNicknameEditDialog() {
         val sheet = NicknameEditBottomSheet.newInstance(viewModel.state.value.nickname)
-        sheet.onSave = { newNickname ->
-            viewModel.updateNickname(newNickname)
-        }
+        sheet.onSave = { newNickname -> viewModel.updateNickname(newNickname) }
         sheet.show(childFragmentManager, NicknameEditBottomSheet.TAG)
+    }
+
+    private fun launchGoogleSignIn() {
+        val clientId = getString(R.string.default_web_client_id)
+        viewLifecycleOwner.lifecycleScope.launch {
+            when (val result = getGoogleIdToken(requireActivity(), clientId)) {
+                is GoogleSignInResult.Success -> viewModel.onGoogleIdTokenReceived(result.idToken)
+                is GoogleSignInResult.Cancelled -> Unit
+                is GoogleSignInResult.Failed -> Unit
+            }
+        }
     }
 
     private fun Int.toStepText(numberFormat: NumberFormat): String =
@@ -164,7 +186,6 @@ private fun SeekBar.setOnSeekBarChangeListener(
             }
 
             override fun onStartTrackingTouch(seekBar: SeekBar?) = Unit
-
             override fun onStopTrackingTouch(seekBar: SeekBar?) = Unit
         },
     )
