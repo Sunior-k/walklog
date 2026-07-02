@@ -60,7 +60,6 @@ kotlinxCoroutine = "1.11.0"
 ## Test
 # https://github.com/junit-team/junit4
 junit4 = "4.13.2"
-junitJupiter = "5.14.4"
 # https://mockk.io/
 mockk = "1.14.9"
 # https://github.com/cashapp/turbine
@@ -191,7 +190,6 @@ retrofit-kotlin-serialization = { module = "com.squareup.retrofit2:converter-kot
 kotlinx-serialization-json = { group = "org.jetbrains.kotlinx", name = "kotlinx-serialization-json", version.ref = "kotlinxSerializationJson" }
 
 junit4 = { group = "junit", name = "junit", version.ref = "junit4" }
-junit-jupiter = { group = "org.junit.jupiter", name = "junit-jupiter", version.ref = "junitJupiter" }
 
 androidx-test-ext = { group = "androidx.test.ext", name = "junit-ktx", version.ref = "androidxTestExt" }
 androidx-test-espresso-core = { group = "androidx.test.espresso", name = "espresso-core", version.ref = "androidxEspresso" }

@@ -5,6 +5,8 @@ import com.river.walklog.core.model.DailyStepCount
 import com.river.walklog.core.model.WeeklyStepSummary
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.emitAll
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
 
 class FakeStepRepository : StepRepository {
@@ -15,6 +17,7 @@ class FakeStepRepository : StepRepository {
     private val dailyStepCounts = MutableStateFlow<Map<Long, DailyStepCount>>(emptyMap())
     private var hourlySteps = FloatArray(HOURS_PER_WEEK)
     private var syncTodayStepsResult = 0
+    private var throwable: Throwable? = null
 
     override fun observeCurrentSteps(): Flow<Int> = currentSteps
 
@@ -26,12 +29,16 @@ class FakeStepRepository : StepRepository {
     override fun getStepCountsForRange(
         fromEpochDay: Long,
         toEpochDay: Long,
-    ): Flow<List<DailyStepCount>> =
-        dailyStepCounts.map { counts ->
-            (fromEpochDay..toEpochDay).map { epochDay ->
-                counts[epochDay] ?: DailyStepCount(dateEpochDay = epochDay, steps = 0)
-            }
-        }
+    ): Flow<List<DailyStepCount>> = flow {
+        throwable?.let { throw it }
+        emitAll(
+            dailyStepCounts.map { counts ->
+                (fromEpochDay..toEpochDay).map { epochDay ->
+                    counts[epochDay] ?: DailyStepCount(dateEpochDay = epochDay, steps = 0)
+                }
+            },
+        )
+    }
 
     override fun getWeeklyStepSummary(weekStartEpochDay: Long): Flow<WeeklyStepSummary> =
         getStepCountsForRange(
@@ -69,6 +76,14 @@ class FakeStepRepository : StepRepository {
 
     fun setSyncTodayStepsResult(steps: Int) {
         syncTodayStepsResult = steps
+    }
+
+    fun setThrowable(t: Throwable) {
+        throwable = t
+    }
+
+    fun clearThrowable() {
+        throwable = null
     }
 
     private companion object {
