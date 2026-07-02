@@ -580,6 +580,133 @@ LiteRT 모델 파일(`.tflite`)은 별도 변환 및 배포 관리가 필요합�
 
 ---
 
+## ADR-16. core:auth 분리 — Firebase Auth + Credential Manager
+
+### 결정
+
+Google 로그인 로직을 `feature:onboarding`·`feature:settings` 등에 직접 두지 않고, **`core:auth`** 독립 모듈로 분리했습니다.
+
+```
+feature:onboarding / feature:login / feature:settings
+        ↓ inject
+SignInWithGoogleUseCase / SignOutUseCase  (core:domain)
+        ↓
+AuthRepository  (interface, core:auth)
+        ↓ binds
+FirebaseAuthRepository  (impl, core:auth — callbackFlow<AuthUser?>)
+```
+
+### 이유
+
+Firebase Auth를 feature 모듈이 직접 의존하면:
+
+- 여러 feature에 Firebase SDK가 노출됨
+- 로그인 제공자를 교체(Firebase → 자체 OAuth 등)하면 모든 feature 수정 필요
+- 단위 테스트에서 Firebase 의존성을 끊기 어려움
+
+`core:auth`가 `AuthRepository` 인터페이스를 제공하고 구현체(`FirebaseAuthRepository`)를 Hilt로 바인딩하면:
+
+- feature 모듈은 `AuthRepository`만 알고 Firebase를 모름
+- 로그인 제공자 교체 시 `FirebaseAuthRepository`만 교체
+- 테스트에서 `FakeAuthRepository`로 대체 가능
+
+**Credential Manager 선택 이유:**
+
+기존 `GoogleSignInClient`(legacy) 대신 Android Credential Manager API를 사용합니다.
+
+| 항목 | Credential Manager | GoogleSignInClient (legacy) |
+|---|---|---|
+| Android 공식 권장 | Android 14+ 권장 | Deprecated |
+| Passkey 지원 | 기본 지원 | 미지원 |
+| 비동기 모델 | suspend 함수 | Task/callback |
+| One Tap 통합 | GetSignInWithGoogleOption | 별도 설정 |
+
+`getGoogleIdToken()` 함수가 `suspend` 함수로 구현되어 있어 Kotlin coroutine과 자연스럽게 통합됩니다.
+
+### AuthStateListener → callbackFlow
+
+```kotlin
+// FirebaseAuthRepository.kt
+override val currentUser: Flow<AuthUser?> = callbackFlow {
+    val listener = FirebaseAuth.AuthStateListener { auth ->
+        trySend(auth.currentUser?.toAuthUser())
+    }
+    firebaseAuth.addAuthStateListener(listener)
+    awaitClose { firebaseAuth.removeAuthStateListener(listener) }
+}
+```
+
+`MainActivityViewModel`이 이 Flow를 구독해 앱 실행 중 세션 만료·로그아웃을 감지하고, `signOutEvent`를 `LoginFragment`로 전달합니다.
+
+---
+
+## ADR-17. Firestore 동기화 + sync:work 모듈
+
+### 결정
+
+사용자 설정(닉네임·포인트·목표·알림 등)을 기기 간에 유지하기 위해 **Firebase Firestore** 원격 저장소와 **`sync:work`** 모듈을 추가했습니다.
+
+```
+DataStoreUserSettingsRepository (core:data)
+    implements Syncable
+    ↓ sync()
+FirestoreUserSettingsDataSource (core:data)
+    ↓ Firestore: users/{uid}/data/settings
+
+WorkManagerSyncManager (sync:work)
+    implements SyncManager
+    ↓ requestSync()
+UserSettingsSyncWorker (sync:work, HiltWorker)
+    ↓ UserSettingsRepository.sync()
+```
+
+### Syncable / SyncManager 인터페이스
+
+```kotlin
+// core:data
+interface Syncable { suspend fun sync(): Boolean }
+interface SyncManager { fun requestSync() }
+```
+
+Repository가 `Syncable`을 구현하고, `SyncManager` 구현체(`WorkManagerSyncManager`)가 WorkManager를 통해 네트워크 연결 조건부로 동기화를 예약합니다.
+
+### sync() 로직 (merge 전략)
+
+1. DataStore에서 로컬 설정 읽기
+2. Firestore에서 원격 설정 fetch
+3. 원격 값이 있으면 로컬에 병합 (재설치 후 데이터 복원)
+4. 병합된 최신 로컬 값을 Firestore에 업로드 (최신 상태 반영)
+
+```kotlin
+// merge 규칙 요약
+nickname       = remote.nickname 우선 (비어있지 않으면)
+totalPoints    = max(local, remote)   // 포인트는 손실 방지
+dailyStepGoal  = remote.dailyStepGoal 우선 (0이 아니면)
+isOnboardingCompleted = local OR remote
+```
+
+포인트는 `max()` 를 취해 어느 기기에서 더 많이 쌓았든 손실이 없습니다.
+
+### Firestore 경로
+
+```
+users/{uid}/data/settings  (FirestoreUserSettings 문서)
+```
+
+Firestore Security Rules에서 `request.auth.uid == userId` 조건으로 본인 문서만 읽기·쓰기 허용합니다.
+
+### 이유
+
+DataStore는 기기 로컬 저장소이므로 재설치 시 데이터가 소실됩니다. Firestore 동기화로 기기 교체·재설치 후에도 닉네임·포인트·목표가 복원됩니다. WorkManager의 `KEEP` 정책(`ExistingWorkPolicy.KEEP`)을 사용해 동일한 sync 작업이 중복 예약되지 않습니다.
+
+### 트레이드오프
+
+- 로그인하지 않은 사용자(`userId == ""`)는 sync를 건너뜀 — 로컬 전용으로 동작
+- 오프라인이면 WorkManager가 네트워크 연결 시점에 자동 재시도
+- Firestore 쓰기 비용이 발생하지만, 설정 문서는 1개이므로 MAU 규모에서 무시할 수준
+
+---
+
 ## ADR-15. Health Connect Android 14+ 매니페스트 요구사항
 
 ### 결정

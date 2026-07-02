@@ -58,13 +58,14 @@ WalkLog는 **Google Health Connect**를 통해 오늘의 걸음 수를 읽고, �
 
 | 영역 | 주요 기능 |
 |---|---|
-| **Onboarding** | 닉네임 입력, Health Connect 권한, 목표 설정, 알림 권한을 4단계 `HorizontalPager`로 제공 |
+| **Login** | Credential Manager 기반 Google 로그인 제공; 신규 사용자는 온보딩으로, 기존 사용자는 Firestore 설정 복원 후 홈으로 바로 이동 |
+| **Onboarding** | Google 로그인(건너뛰기 확인 다이얼로그 포함), 닉네임 입력, Health Connect 권한, 목표 설정, 알림 권한을 5단계 `HorizontalPager`로 제공; 기존 계정 감지 시 Firestore 데이터 복원 후 홈으로 바로 이동 |
 | **Home** | 실시간 걸음 수, 목표 달성률, 스트릭, 날씨 기반 걷기 카드, 주간 리포트 요약 표시 |
 | **Mission** | 오늘 미션과 회복 미션을 제공하고, 피크타임 기반 추천 시간대와 달성 포인트 지급 지원 |
 | **Weekly Report** | 최근 12주 리포트와 상세 차트 제공, `FileProvider` 기반 이미지 공유 지원 |
 | **Monthly Recap** | 월간 걸음 데이터를 8장 스토리형 슬라이드로 제공하고 자동 진행과 일시정지 지원 |
 | **Step History** | 캘린더 기반 일별 걸음 수와 칼로리, 거리 등 상세 활동 정보 제공 |
-| **Settings** | 프로필, 목표 걸음 수, 회복 걸음 수, 알림, 라이트/다크/시스템 테마 설정 지원 |
+| **Settings** | 프로필, 목표 걸음 수, 회복 걸음 수, 알림, 라이트/다크/시스템 테마 설정, Google 로그인/로그아웃 및 계정 이메일 표시 지원 |
 | **Reward** | 포인트 사용처 확장을 위한 잠금 상태 티저 화면 제공 |
 | **App Widget** | Jetpack Glance 기반 위젯과 WorkManager 15분 자동 업데이트 지원 |
 
@@ -88,6 +89,7 @@ WalkLog는 **Google Health Connect**를 통해 오늘의 걸음 수를 읽고, �
 | `core:domain` | Use cases | `core:domain` |
 | `core:datastore` | DataSource | `core:datastore` |
 | `core:database` | Room DB · DAO · Entity | `core:database` |
+| `core:auth` | Firebase Auth · Credential Manager | — |
 
 - **`core:model`** 은 순수 Kotlin 데이터 클래스만 포함. Android 의존성 없음.
 - **`core:database`** · **`core:datastore`** 는 `api(core:model)`로 모델 타입을 위로 노출.
@@ -114,9 +116,9 @@ Hilt를 전 계층에 일관되게 적용합니다.
 | `@HiltAndroidApp` | `WalkLogApplication` — DI 그래프 루트                        |
 | `@AndroidEntryPoint` | 모든 Fragment                                             |
 | `@HiltViewModel` | 모든 ViewModel                                            |
-| `@Singleton` | `StepRepositoryImpl`, `HealthConnectStepDataSource`.... |
-| `@InstallIn(SingletonComponent)` | `DatabaseModule`, `DataModule`, `AnalyticsModule`...    |
-| Hilt WorkManager | `TodayMissionWidgetWorker`          |
+| `@Singleton` | `StepRepositoryImpl`, `HealthConnectStepDataSource`, `FirebaseAuthRepository`... |
+| `@InstallIn(SingletonComponent)` | `DatabaseModule`, `DataModule`, `AnalyticsModule`, `AuthBindingModule`, `SyncModule`... |
+| Hilt WorkManager | `TodayMissionWidgetWorker`, `UserSettingsSyncWorker` |
 
 ```kotlin
 // 인터페이스 바인딩 예시 (core:analytics)
@@ -349,6 +351,8 @@ ViewModel 테스트는 `core:testing`의 Fake repository와 실제 UseCase 조�
 | Persistence | Room 2.8.4, DataStore Preferences                                                 |
 | Network | OkHttp (KMA / Open-Meteo), in-memory weather cache              |
 | On-device AI | LiteRT 1.4.2 (Activity Classifier), NDK/JNI (Walking Insights Engine)             |
+| Auth | Firebase Auth, Credential Manager (Google 로그인)                                    |
+| Cloud Sync | Firebase Firestore (cross-device 설정 동기화, `sync:work` WorkManager 기반)            |
 | Widget | Jetpack Glance 1.1.1, WorkManager                                                 |
 | Analytics | Firebase Crashlytics, Firebase Analytics                                          |
 | Performance | Baseline Profile, R8 Full Mode                       |
@@ -447,10 +451,13 @@ ViewModel 테스트는 `core:testing`의 Fake repository와 실제 UseCase 조�
 | R8 + 보안 설정                         | 완성                                                       |
 | Crashlytics 전면 적용                  | 완성                                                       |
 | SplashScreen                       | 완성                                                       |
-| 온보딩                                | 완성 (4단계 HorizontalPager + 닉네임 입력)                        |
+| 구글 로그인 / 로그아웃                      | 완성 (core:auth + Credential Manager + Firebase Auth)      |
+| 로그인 화면                             | 완성 (feature:login — 재인증 화면, 신규/기존 사용자 분기)                |
+| 온보딩                                | 완성 (5단계 HorizontalPager — Google 로그인·닉네임·HC 권한·목표·알림)    |
+| Firestore 설정 동기화                   | 완성 (sync:work WorkManager, 기기 간 설정 복원)                   |
 | 걸음 기록 달력                           | 완성 (날짜 탭 상세 패널)                                          |
-| 설정 화면                              | 완성 (프로필 섹션, 닉네임 수정, 포인트 표시)                              |
-| DataStore                          | 완성 (닉네임·포인트·목표·알림·테마·온보딩 완료)                             |
+| 설정 화면                              | 완성 (프로필 섹션, 닉네임 수정, 포인트 표시, 로그인/로그아웃)                    |
+| DataStore                          | 완성 (닉네임·포인트·목표·알림·테마·온보딩 완료·userId)                       |
 | 포인트 적립 시스템                         | 완성 (미션 달성 시 지급, 날짜 중복 방지, 설정 화면 실시간 표시)                  |
 | 리워드 화면                             | 완성 (티져 화면 — 포인트 사용처는 추후 업데이트 예정)                         |
 | 피크타임 알림                            | 완성 (AlarmManager 기반, peakHour 연동)                        |
@@ -462,3 +469,4 @@ ViewModel 테스트는 `core:testing`의 Fake repository와 실제 UseCase 조�
 다음 단계 확장 포인트:
 - 리워드 스토어 / 뱃지 컬렉션 / 레벨 시스템 (`feature:reward`)
 - `activity_classifier.tflite` 모델 파일 배치 후 실기기 HAR 분류 검증
+- Firestore `users` 컬렉션 활용한 소셜 / 리더보드 기능

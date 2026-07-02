@@ -57,13 +57,14 @@ Deep Dive Docs are currently maintained in **Korean**. English versions will be 
 
 | Area | Key Features |
 |---|---|
-| **Onboarding** | Four-step `HorizontalPager` flow for nickname input, Health Connect permissions, goal setup, and notification permissions |
+| **Login** | Google Sign-In via Credential Manager; routes new users to Onboarding and returning users directly to Home (with Firestore settings restore) |
+| **Onboarding** | Five-step `HorizontalPager` flow: Google sign-in (with skip-confirmation dialog), nickname input, Health Connect permissions, goal setup, and notification permissions; detects existing accounts and restores settings from Firestore before navigating to Home |
 | **Home** | Real-time step count, goal progress, streak, weather-based walking card, and weekly report summary |
 | **Mission** | Daily and recovery missions, peak-time-based recommended walking windows, and achievement point rewards |
 | **Weekly Report** | Recent 12-week archive, detailed charts, and `FileProvider`-based image sharing |
 | **Monthly Recap** | Eight story-style slides for monthly step data with auto-play and pause support |
 | **Step History** | Calendar-based daily steps plus detailed activity data such as calories and distance |
-| **Settings** | Profile, target steps, recovery steps, notifications, and light/dark/system theme settings |
+| **Settings** | Profile, target steps, recovery steps, notifications, light/dark/system theme settings, and Google sign-in / sign-out with signed-in account display |
 | **Reward** | Locked teaser screen for future point redemption features |
 | **App Widget** | Jetpack Glance widget with WorkManager-based automatic updates every 15 minutes |
 
@@ -86,6 +87,7 @@ This project follows the structure of **Now in Android (NiA)**.
 | `core:domain` | Use cases | `core:domain` |
 | `core:datastore` | DataSource | `core:datastore` |
 | `core:database` | Room DB, DAO, Entity | `core:database` |
+| `core:auth` | Firebase Auth, Credential Manager | — |
 
 - **`core:model`** contains only pure Kotlin data classes and has no Android dependency.
 - **`core:database`** and **`core:datastore`** expose model types upward through `api(core:model)`.
@@ -112,9 +114,9 @@ Hilt is applied consistently across all layers.
 | `@HiltAndroidApp` | `WalkLogApplication`, the root of the DI graph |
 | `@AndroidEntryPoint` | All Fragments |
 | `@HiltViewModel` | All ViewModels |
-| `@Singleton` | `StepRepositoryImpl`, `HealthConnectStepDataSource`, and more |
-| `@InstallIn(SingletonComponent)` | `DatabaseModule`, `DataModule`, `AnalyticsModule`, and more |
-| Hilt WorkManager | `TodayMissionWidgetWorker` |
+| `@Singleton` | `StepRepositoryImpl`, `HealthConnectStepDataSource`, `FirebaseAuthRepository`, and more |
+| `@InstallIn(SingletonComponent)` | `DatabaseModule`, `DataModule`, `AnalyticsModule`, `AuthBindingModule`, `SyncModule`, and more |
+| Hilt WorkManager | `TodayMissionWidgetWorker`, `UserSettingsSyncWorker` |
 
 ```kotlin
 // Interface binding example (core:analytics)
@@ -344,6 +346,8 @@ ViewModel tests use Fake repositories from `core:testing` with real UseCases by 
 | Persistence | Room 2.8.4, DataStore Preferences |
 | Network | OkHttp (KMA / Open-Meteo — location-based provider selection), in-memory weather cache |
 | On-device AI | LiteRT 1.4.2 (Activity Classifier), NDK/JNI (Walking Insights Engine) |
+| Auth | Firebase Auth, Credential Manager (Google Sign-In) |
+| Cloud Sync | Firebase Firestore (cross-device settings sync via `sync:work` WorkManager) |
 | Widget | Jetpack Glance 1.1.1, WorkManager |
 | Analytics | Firebase Crashlytics, Firebase Analytics |
 | Performance | Baseline Profile, R8 Full Mode |
@@ -430,3 +434,4 @@ When adding a new feature module, declaring only `id("river.android.feature")` a
 ## Next expansion points:
 - Reward store / badge collection / level system (`feature:reward`)
 - Place `activity_classifier.tflite`, then validate HAR classification on a physical device
+- Social / leaderboard features using the existing Firestore `users` collection
