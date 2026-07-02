@@ -27,11 +27,8 @@ import javax.inject.Singleton
 @Singleton
 class HealthConnectStepDataSource @Inject constructor(
     @param:ApplicationContext private val context: Context,
+    private val client: HealthConnectClient,
 ) {
-    private val client: HealthConnectClient by lazy {
-        HealthConnectClient.getOrCreate(context)
-    }
-
     fun isAvailable(): Boolean =
         HealthConnectClient.getSdkStatus(context) == HealthConnectClient.SDK_AVAILABLE
 

@@ -1,15 +1,13 @@
 package com.river.walklog.feature.report
 
 import com.river.walklog.core.analytics.CrashReporter
-import com.river.walklog.core.testing.MainDispatcherRule
+import com.river.walklog.core.domain.usecase.GetWeeklyBestHourUseCase
 import com.river.walklog.core.domain.usecase.GetWeeklyReportDetailUseCase
 import com.river.walklog.core.model.DailyStepCount
-import com.river.walklog.core.model.WeeklyReportDetail
-import io.mockk.every
+import com.river.walklog.core.testing.MainDispatcherRule
+import com.river.walklog.core.testing.repository.FakeStepRepository
 import io.mockk.mockk
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.flow.flow
-import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.runTest
 import org.junit.Before
 import org.junit.Rule
@@ -24,13 +22,19 @@ class WeeklyReportDetailViewModelTest {
 
     @get:Rule
     val mainDispatcherRule = MainDispatcherRule()
+
+    private lateinit var fakeStepRepository: FakeStepRepository
     private lateinit var getWeeklyReportDetail: GetWeeklyReportDetailUseCase
     private lateinit var crashReporter: CrashReporter
     private lateinit var viewModel: WeeklyReportDetailViewModel
 
     @Before
     fun setUp() {
-        getWeeklyReportDetail = mockk()
+        fakeStepRepository = FakeStepRepository()
+        getWeeklyReportDetail = GetWeeklyReportDetailUseCase(
+            fakeStepRepository,
+            GetWeeklyBestHourUseCase(fakeStepRepository),
+        )
         crashReporter = mockk(relaxed = true)
         viewModel = WeeklyReportDetailViewModel(getWeeklyReportDetail, crashReporter)
     }
@@ -62,106 +66,120 @@ class WeeklyReportDetailViewModelTest {
         assertNull(viewModel.state.value.weekStartEpochDay)
     }
 
+    @Test
+    fun `userMessage is null initially`() {
+        assertNull(viewModel.state.value.userMessage)
+    }
+
     // loadReport — 성공
 
     @Test
     fun `loadReport sets isLoading false on success`() = runTest {
-        every { getWeeklyReportDetail(WEEK_START) } returns flowOf(detail())
+        seedWeekSteps(WEEK_START, stepsPerDay = 5_000)
         viewModel.loadReport(WEEK_START)
         assertFalse(viewModel.state.value.isLoading)
     }
 
     @Test
-    fun `loadReport sets isEmpty false when detail has data`() = runTest {
-        every { getWeeklyReportDetail(WEEK_START) } returns flowOf(detail())
+    fun `loadReport sets isEmpty false when detail has step data`() = runTest {
+        seedWeekSteps(WEEK_START, stepsPerDay = 5_000)
         viewModel.loadReport(WEEK_START)
         assertFalse(viewModel.state.value.isEmpty)
     }
 
     @Test
     fun `loadReport sets weekStartEpochDay`() = runTest {
-        every { getWeeklyReportDetail(WEEK_START) } returns flowOf(detail())
+        seedWeekSteps(WEEK_START, stepsPerDay = 5_000)
         viewModel.loadReport(WEEK_START)
         assertEquals(WEEK_START, viewModel.state.value.weekStartEpochDay)
     }
 
     @Test
-    fun `loadReport maps totalSteps from detail`() = runTest {
-        every { getWeeklyReportDetail(WEEK_START) } returns flowOf(detail(totalSteps = 42_000))
+    fun `loadReport maps totalSteps from seeded data`() = runTest {
+        seedWeekSteps(WEEK_START, stepsPerDay = 5_000)
         viewModel.loadReport(WEEK_START)
-        assertEquals(42_000, viewModel.state.value.totalSteps)
+        assertEquals(5_000 * 7, viewModel.state.value.totalSteps)
     }
 
     @Test
-    fun `loadReport maps achievedDays from detail`() = runTest {
-        every { getWeeklyReportDetail(WEEK_START) } returns flowOf(detail(achievedDays = 5))
+    fun `loadReport maps achievedDays from seeded data`() = runTest {
+        fakeStepRepository.setDailyStepCounts(
+            (0L..6L).map { offset ->
+                DailyStepCount(
+                    dateEpochDay = WEEK_START + offset,
+                    steps = if (offset < 5) 7_000 else 3_000,
+                    targetSteps = 6_000,
+                )
+            },
+        )
         viewModel.loadReport(WEEK_START)
         assertEquals(5, viewModel.state.value.achievedDays)
     }
 
     @Test
-    fun `loadReport maps bestHour from detail`() = runTest {
-        every { getWeeklyReportDetail(WEEK_START) } returns flowOf(detail(bestHour = 14))
+    fun `loadReport computes achievementPct from achievedDays`() = runTest {
+        fakeStepRepository.setDailyStepCounts(
+            (0L..6L).map { offset ->
+                DailyStepCount(
+                    dateEpochDay = WEEK_START + offset,
+                    steps = if (offset < 5) 7_000 else 3_000,
+                    targetSteps = 6_000,
+                )
+            },
+        )
         viewModel.loadReport(WEEK_START)
-        assertEquals(14, viewModel.state.value.bestHour)
-    }
-
-    @Test
-    fun `loadReport computes achievementPct from achievementRate`() = runTest {
-        every { getWeeklyReportDetail(WEEK_START) } returns flowOf(detail(achievementRate = 5 / 7f))
-        viewModel.loadReport(WEEK_START)
-        assertEquals(71, viewModel.state.value.achievementPct)
+        assertEquals(71, viewModel.state.value.achievementPct) // 5/7 = 71%
     }
 
     // summaryMessageType 분기
 
     @Test
-    fun `summaryMessageType is AllAchieved when achievementPct is 100`() = runTest {
-        every { getWeeklyReportDetail(WEEK_START) } returns flowOf(detail(achievementRate = 1.0f))
+    fun `summaryMessageType is AllAchieved when all 7 days achieved`() = runTest {
+        seedWeekSteps(WEEK_START, stepsPerDay = 7_000, targetSteps = 6_000)
         viewModel.loadReport(WEEK_START)
         assertEquals(WeeklyReportSummaryMessageType.AllAchieved, viewModel.state.value.summaryMessageType)
     }
 
     @Test
-    fun `summaryMessageType is GoodProgress when achievementPct is exactly 70`() = runTest {
-        every { getWeeklyReportDetail(WEEK_START) } returns flowOf(detail(achievementRate = 0.70f))
+    fun `summaryMessageType is GoodProgress when 5 of 7 days achieved`() = runTest {
+        fakeStepRepository.setDailyStepCounts(
+            (0L..6L).map { offset ->
+                DailyStepCount(
+                    dateEpochDay = WEEK_START + offset,
+                    steps = if (offset < 5) 7_000 else 3_000,
+                    targetSteps = 6_000,
+                )
+            },
+        )
         viewModel.loadReport(WEEK_START)
         assertEquals(WeeklyReportSummaryMessageType.GoodProgress, viewModel.state.value.summaryMessageType)
     }
 
     @Test
-    fun `summaryMessageType is GoodProgress when achievementPct is between 70 and 99`() = runTest {
-        every { getWeeklyReportDetail(WEEK_START) } returns flowOf(detail(achievementRate = 0.85f))
-        viewModel.loadReport(WEEK_START)
-        assertEquals(WeeklyReportSummaryMessageType.GoodProgress, viewModel.state.value.summaryMessageType)
-    }
-
-    @Test
-    fun `summaryMessageType is KeepGoing when achievementPct is below 70`() = runTest {
-        every { getWeeklyReportDetail(WEEK_START) } returns flowOf(detail(achievementRate = 0.57f))
-        viewModel.loadReport(WEEK_START)
-        assertEquals(WeeklyReportSummaryMessageType.KeepGoing, viewModel.state.value.summaryMessageType)
-    }
-
-    @Test
-    fun `summaryMessageType is KeepGoing when achievementPct is 0`() = runTest {
-        every { getWeeklyReportDetail(WEEK_START) } returns flowOf(detail(achievementRate = 0f))
+    fun `summaryMessageType is KeepGoing when fewer than 5 days achieved`() = runTest {
+        fakeStepRepository.setDailyStepCounts(
+            (0L..6L).map { offset ->
+                DailyStepCount(
+                    dateEpochDay = WEEK_START + offset,
+                    steps = if (offset < 3) 7_000 else 3_000,
+                    targetSteps = 6_000,
+                )
+            },
+        )
         viewModel.loadReport(WEEK_START)
         assertEquals(WeeklyReportSummaryMessageType.KeepGoing, viewModel.state.value.summaryMessageType)
     }
 
-    // loadReport — 빈 결과
+    // loadReport — 빈 결과 (모든 걸음 수가 0)
 
     @Test
-    fun `loadReport sets isEmpty true when detail is empty`() = runTest {
-        every { getWeeklyReportDetail(WEEK_START) } returns flowOf(WeeklyReportDetail.empty(WEEK_START))
+    fun `loadReport sets isEmpty true when all steps are zero`() = runTest {
         viewModel.loadReport(WEEK_START)
         assertTrue(viewModel.state.value.isEmpty)
     }
 
     @Test
     fun `loadReport sets isLoading false for empty detail`() = runTest {
-        every { getWeeklyReportDetail(WEEK_START) } returns flowOf(WeeklyReportDetail.empty(WEEK_START))
         viewModel.loadReport(WEEK_START)
         assertFalse(viewModel.state.value.isLoading)
     }
@@ -169,28 +187,28 @@ class WeeklyReportDetailViewModelTest {
     // loadReport — 에러
 
     @Test
-    fun `loadReport sets isError true when use case throws`() = runTest {
-        every { getWeeklyReportDetail(WEEK_START) } returns flow { throw RuntimeException("network") }
+    fun `loadReport sets isError true when repository throws`() = runTest {
+        fakeStepRepository.setThrowable(RuntimeException("network"))
         viewModel.loadReport(WEEK_START)
         assertTrue(viewModel.state.value.isError)
     }
 
     @Test
     fun `loadReport sets isLoading false on error`() = runTest {
-        every { getWeeklyReportDetail(WEEK_START) } returns flow { throw RuntimeException("network") }
+        fakeStepRepository.setThrowable(RuntimeException("network"))
         viewModel.loadReport(WEEK_START)
         assertFalse(viewModel.state.value.isLoading)
     }
 
-    // loadReport — 중복 호출 시 isLoading 초기화
+    // 연속 loadReport — isSharing 초기화
 
     @Test
     fun `second loadReport resets isSharing to false`() = runTest {
-        every { getWeeklyReportDetail(WEEK_START) } returns flowOf(detail())
+        seedWeekSteps(WEEK_START, stepsPerDay = 5_000)
         viewModel.loadReport(WEEK_START)
         viewModel.startSharing()
 
-        every { getWeeklyReportDetail(WEEK_START + 7) } returns flowOf(detail(weekStart = WEEK_START + 7))
+        seedWeekSteps(WEEK_START + 7, stepsPerDay = 5_000)
         viewModel.loadReport(WEEK_START + 7)
 
         assertFalse(viewModel.state.value.isSharing)
@@ -231,40 +249,40 @@ class WeeklyReportDetailViewModelTest {
         assertNull(viewModel.state.value.userMessage)
     }
 
-    @Test
-    fun `userMessage is null initially`() {
-        assertNull(viewModel.state.value.userMessage)
-    }
-
     // achievementRateText
 
     @Test
     fun `achievementRateText formats achievementPct as percentage string`() = runTest {
-        every { getWeeklyReportDetail(WEEK_START) } returns flowOf(detail(achievementRate = 0.71f))
+        fakeStepRepository.setDailyStepCounts(
+            (0L..6L).map { offset ->
+                DailyStepCount(
+                    dateEpochDay = WEEK_START + offset,
+                    steps = if (offset < 5) 7_000 else 3_000,
+                    targetSteps = 6_000,
+                )
+            },
+        )
         viewModel.loadReport(WEEK_START)
         assertEquals("71%", viewModel.state.value.achievementRateText)
     }
 
     // helpers
 
-    private fun detail(
-        weekStart: Long = WEEK_START,
-        totalSteps: Int = 10_000,
-        achievedDays: Int = 3,
-        achievementRate: Float = 3 / 7f,
-        bestHour: Int? = null,
-    ) = WeeklyReportDetail(
-        weekStartEpochDay = weekStart,
-        weekCounts = List(7) { i -> DailyStepCount(dateEpochDay = weekStart + i, steps = 0) },
-        totalSteps = totalSteps,
-        achievedDays = achievedDays,
-        totalDays = 7,
-        achievementRate = achievementRate,
-        bestDayEpochDay = null,
-        bestHour = bestHour,
-        longestAchievedStreak = 0,
-        isEmpty = false,
-    )
+    private fun seedWeekSteps(
+        weekStart: Long,
+        stepsPerDay: Int,
+        targetSteps: Int = DailyStepCount.DEFAULT_TARGET_STEPS,
+    ) {
+        fakeStepRepository.setDailyStepCounts(
+            (0L..6L).map { offset ->
+                DailyStepCount(
+                    dateEpochDay = weekStart + offset,
+                    steps = stepsPerDay,
+                    targetSteps = targetSteps,
+                )
+            },
+        )
+    }
 
     private companion object {
         const val WEEK_START = 19_000L

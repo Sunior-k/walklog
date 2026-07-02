@@ -13,11 +13,14 @@ import com.river.walklog.core.data.repository.WeatherRepository
 import com.river.walklog.core.data.weather.GpsWeatherLocationProvider
 import com.river.walklog.core.data.weather.LocaleWeatherLocationProvider
 import com.river.walklog.core.data.weather.WeatherLocationProvider
+import android.content.Context
+import androidx.health.connect.client.HealthConnectClient
 import com.google.firebase.firestore.FirebaseFirestore
 import dagger.Binds
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
+import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import javax.inject.Singleton
 
@@ -54,6 +57,11 @@ abstract class DataModule {
         @Singleton
         fun provideLocaleWeatherLocationProvider(): LocaleWeatherLocationProvider =
             LocaleWeatherLocationProvider()
+
+        @Provides
+        @Singleton
+        fun provideHealthConnectClient(@ApplicationContext context: Context): HealthConnectClient =
+            HealthConnectClient.getOrCreate(context)
 
         @Provides
         @Singleton

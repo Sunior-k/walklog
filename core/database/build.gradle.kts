@@ -11,6 +11,13 @@ android {
     room {
         schemaDirectory("$projectDir/schemas")
     }
+
+    testOptions {
+        unitTests {
+            isReturnDefaultValues = true
+            isIncludeAndroidResources = true
+        }
+    }
 }
 
 dependencies {
@@ -18,4 +25,11 @@ dependencies {
 
     implementation(libs.androidx.room.ktx)
     ksp(libs.androidx.room.compiler)
+
+    testImplementation(libs.robolectric)
+    testImplementation(libs.junit4)
+    testImplementation(libs.coroutines.test)
+    testImplementation(libs.androidx.junit)
+    testImplementation(libs.androidx.room.testing)
+    testImplementation(projects.core.testing)
 }
