@@ -1,6 +1,7 @@
 package com.river.walklog.feature.onboarding
 
 import com.river.walklog.core.analytics.CrashReporter
+import com.river.walklog.core.domain.usecase.SignInWithGoogleUseCase
 import com.river.walklog.core.testing.MainDispatcherRule
 import com.river.walklog.core.testing.repository.FakeUserSettingsRepository
 import com.river.walklog.core.testing.repository.defaultUserSettings
@@ -21,14 +22,16 @@ class OnboardingViewModelTest {
     @get:Rule
     val mainDispatcherRule = MainDispatcherRule()
     private lateinit var userSettingsRepository: FakeUserSettingsRepository
+    private lateinit var signInWithGoogle: SignInWithGoogleUseCase
     private lateinit var crashReporter: CrashReporter
     private lateinit var viewModel: OnboardingViewModel
 
     @Before
     fun setUp() {
         userSettingsRepository = FakeUserSettingsRepository(defaultUserSettings(isOnboardingCompleted = false))
+        signInWithGoogle = mockk(relaxed = true)
         crashReporter = mockk(relaxed = true)
-        viewModel = OnboardingViewModel(userSettingsRepository, crashReporter)
+        viewModel = OnboardingViewModel(userSettingsRepository, signInWithGoogle, crashReporter)
     }
 
     // 초기 상태
@@ -46,53 +49,47 @@ class OnboardingViewModelTest {
     // 페이지 이동
 
     @Test
-    fun `OnClickNext advances to page 1`() {
-        viewModel.advancePage()
+    fun `confirmSkipSignIn advances from page 0 to page 1`() {
+        viewModel.confirmSkipSignIn()
         assertEquals(1, viewModel.state.value.currentPage)
     }
 
     @Test
-    fun `OnClickNext on page 1 advances to page 2`() {
-        viewModel.advancePage()
+    fun `advancePage on page 1 advances to page 2`() {
+        viewModel.confirmSkipSignIn()
         viewModel.advancePage()
         assertEquals(2, viewModel.state.value.currentPage)
     }
 
     @Test
-    fun `OnClickBack on page 1 returns to page 0`() {
-        viewModel.advancePage()
+    fun `retreatPage on page 1 returns to page 0`() {
+        viewModel.confirmSkipSignIn()
         viewModel.retreatPage()
         assertEquals(0, viewModel.state.value.currentPage)
     }
 
     @Test
-    fun `OnClickBack on page 0 stays at page 0`() {
+    fun `retreatPage on page 0 stays at page 0`() {
         viewModel.retreatPage()
         assertEquals(0, viewModel.state.value.currentPage)
-    }
-
-    @Test
-    fun `OnPermissionResult advances page same as OnClickNext`() {
-        viewModel.advancePage()
-        assertEquals(1, viewModel.state.value.currentPage)
     }
 
     // 상태 업데이트
 
     @Test
-    fun `OnStepGoalChanged updates dailyStepGoal`() {
+    fun `updateStepGoal updates dailyStepGoal`() {
         viewModel.updateStepGoal(8_000)
         assertEquals(8_000, viewModel.state.value.dailyStepGoal)
     }
 
     @Test
-    fun `OnNotificationsToggled updates notificationsEnabled to false`() {
+    fun `updateNotifications sets notificationsEnabled to false`() {
         viewModel.updateNotifications(false)
         assertFalse(viewModel.state.value.notificationsEnabled)
     }
 
     @Test
-    fun `OnNotificationsToggled updates notificationsEnabled to true`() {
+    fun `updateNotifications sets notificationsEnabled to true`() {
         viewModel.updateNotifications(false)
         viewModel.updateNotifications(true)
         assertTrue(viewModel.state.value.notificationsEnabled)
@@ -101,7 +98,7 @@ class OnboardingViewModelTest {
     // 완료
 
     @Test
-    fun `OnClickComplete saves dailyStepGoal to repository`() = runTest {
+    fun `complete saves dailyStepGoal to repository`() = runTest {
         viewModel.updateStepGoal(9_000)
         viewModel.complete()
         advanceUntilIdle()
@@ -110,7 +107,7 @@ class OnboardingViewModelTest {
     }
 
     @Test
-    fun `OnClickComplete saves notificationsEnabled to repository`() = runTest {
+    fun `complete saves notificationsEnabled to repository`() = runTest {
         viewModel.updateNotifications(false)
         viewModel.complete()
         advanceUntilIdle()
@@ -119,7 +116,7 @@ class OnboardingViewModelTest {
     }
 
     @Test
-    fun `OnClickComplete completes onboarding in repository`() = runTest {
+    fun `complete sets isOnboardingCompleted in repository`() = runTest {
         viewModel.complete()
         advanceUntilIdle()
 
@@ -127,7 +124,7 @@ class OnboardingViewModelTest {
     }
 
     @Test
-    fun `OnClickComplete sets navigation destination to Home`() = runTest {
+    fun `complete sets navigation destination to Home`() = runTest {
         viewModel.complete()
         advanceUntilIdle()
 
@@ -135,7 +132,7 @@ class OnboardingViewModelTest {
     }
 
     @Test
-    fun `OnNavigationHandled clears navigation destination`() = runTest {
+    fun `clearNavigationDestination clears destination`() = runTest {
         viewModel.complete()
         advanceUntilIdle()
 
@@ -145,8 +142,9 @@ class OnboardingViewModelTest {
     }
 
     @Test
-    fun `OnClickNext on last page triggers complete`() = runTest {
-        // 페이지 0 → 1 → 2 → 3 → complete (TOTAL_PAGES = 4)
+    fun `advancePage on last page triggers complete`() = runTest {
+        // Page 0(skip) → 1 → 2 → 3 → 4 → complete (TOTAL_PAGES = 5)
+        viewModel.confirmSkipSignIn()
         repeat(4) { viewModel.advancePage() }
         advanceUntilIdle()
 
@@ -155,7 +153,7 @@ class OnboardingViewModelTest {
     }
 
     @Test
-    fun `isCompleting is true after OnClickComplete`() = runTest {
+    fun `isCompleting is true during complete`() = runTest {
         viewModel.complete()
         assertTrue(viewModel.state.value.isCompleting)
     }

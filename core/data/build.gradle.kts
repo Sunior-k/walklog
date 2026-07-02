@@ -20,5 +20,11 @@ dependencies {
     implementation(libs.coroutines.android)
     implementation(libs.androidx.health.connect)
     implementation(libs.play.services.location)
+
+    // Firestore
+    implementation(platform(libs.firebase.bom))
+    implementation(libs.firebase.firestore)
+    implementation(libs.kotlinx.coroutines.play.services)
+
     testImplementation(projects.core.testing)
 }

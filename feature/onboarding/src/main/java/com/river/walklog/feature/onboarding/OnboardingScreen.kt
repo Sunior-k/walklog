@@ -72,15 +72,23 @@ import androidx.health.connect.client.permission.HealthPermission
 import androidx.health.connect.client.records.StepsRecord
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.river.walklog.core.auth.GoogleSignInResult
+import com.river.walklog.core.auth.getGoogleIdToken
 import com.river.walklog.core.designsystem.component.CustomSlider
 import com.river.walklog.core.designsystem.component.NicknameTextField
+import com.river.walklog.core.designsystem.component.WalkLogDialog
 import com.river.walklog.core.designsystem.component.WalkLogLottie
 import com.river.walklog.core.designsystem.foundation.WalkLogColor
 import com.river.walklog.core.designsystem.foundation.WalkLogTheme
 import java.text.NumberFormat
 import com.river.walklog.core.designsystem.R as DesignR
+import kotlinx.coroutines.launch
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.TextButton
+import androidx.compose.runtime.rememberCoroutineScope
 
-private const val TOTAL_PAGES = 4
+
+private const val TOTAL_PAGES = 5
 private const val BACK_PRESS_EXIT_INTERVAL_MILLIS = 2_000L
 
 private data class OnboardingPageConfig(
@@ -99,30 +107,38 @@ private val pageConfigs = listOf(
         lottieResId = DesignR.raw.welcome,
         headlineRes = R.string.onboarding_page0_headline,
         subtitleRes = R.string.onboarding_page0_subtitle,
+        ctaTextRes = R.string.onboarding_cta_google_signup,
+    ),
+    OnboardingPageConfig(
+        illustrationBg = WalkLogColor.PrimaryContainer,
+        accentColor = WalkLogColor.Primary,
+        lottieResId = DesignR.raw.welcome,
+        headlineRes = R.string.onboarding_page1_headline,
+        subtitleRes = R.string.onboarding_page1_subtitle,
         ctaTextRes = R.string.onboarding_cta_next,
     ),
     OnboardingPageConfig(
         illustrationBg = WalkLogColor.PrimaryContainer,
         accentColor = WalkLogColor.Primary,
         lottieResId = DesignR.raw.walking,
-        headlineRes = R.string.onboarding_page1_headline,
-        subtitleRes = R.string.onboarding_page1_subtitle,
+        headlineRes = R.string.onboarding_page2_headline,
+        subtitleRes = R.string.onboarding_page2_subtitle,
         ctaTextRes = R.string.onboarding_cta_permission,
     ),
     OnboardingPageConfig(
         illustrationBg = WalkLogColor.PrimaryLight.copy(alpha = 0.35f),
         accentColor = WalkLogColor.PrimaryDark,
         lottieResId = DesignR.raw.target,
-        headlineRes = R.string.onboarding_page2_headline,
-        subtitleRes = R.string.onboarding_page2_subtitle,
+        headlineRes = R.string.onboarding_page3_headline,
+        subtitleRes = R.string.onboarding_page3_subtitle,
         ctaTextRes = R.string.onboarding_cta_next,
     ),
     OnboardingPageConfig(
         illustrationBg = WalkLogColor.Accent.copy(alpha = 0.15f),
         accentColor = WalkLogColor.Accent,
         lottieResId = DesignR.raw.clock,
-        headlineRes = R.string.onboarding_page3_headline,
-        subtitleRes = R.string.onboarding_page3_subtitle,
+        headlineRes = R.string.onboarding_page4_headline,
+        subtitleRes = R.string.onboarding_page4_subtitle,
         ctaTextRes = R.string.onboarding_cta_start,
     ),
 )
@@ -141,7 +157,9 @@ fun OnboardingRoute(
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val context = LocalContext.current
+    val scope = rememberCoroutineScope()
     val backExitWarningMessage = stringResource(R.string.onboarding_back_exit_warning)
+    val clientId = stringResource(id = R.string.default_web_client_id)
     var lastBackPressTime by rememberSaveable { mutableLongStateOf(0L) }
 
     BackHandler {
@@ -150,29 +168,17 @@ fun OnboardingRoute(
             onExitApp()
         } else {
             lastBackPressTime = now
-            Toast.makeText(
-                context,
-                backExitWarningMessage,
-                Toast.LENGTH_SHORT,
-            ).show()
+            Toast.makeText(context, backExitWarningMessage, Toast.LENGTH_SHORT).show()
         }
     }
 
-    // Health Connect 권한 요청 (READ_STEPS + 백그라운드 읽기)
     val healthPermissionsLauncher = rememberLauncherForActivityResult(
         PermissionController.createRequestPermissionResultContract(),
-    ) { grantedPermissions: Set<String> ->
-        val granted = grantedPermissions.contains(
-            HealthPermission.getReadPermission(StepsRecord::class),
-        )
-        viewModel.advancePage()
-    }
+    ) { _ -> viewModel.advancePage() }
 
     val notificationPermissionLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestPermission(),
-    ) { _ ->
-        viewModel.complete()
-    }
+    ) { _ -> viewModel.complete() }
 
     LaunchedEffect(state.navigationDestination) {
         when (state.navigationDestination) {
@@ -186,10 +192,21 @@ fun OnboardingRoute(
 
     OnboardingScreen(
         state = state,
+        onGoogleSignInClick = {
+            scope.launch {
+                val result = getGoogleIdToken(context, clientId)
+                if (result is GoogleSignInResult.Success) {
+                    viewModel.onGoogleIdTokenReceived(result.idToken)
+                }
+            }
+        },
+        onSkipSignIn = viewModel::requestSkipSignIn,
+        onSkipConfirmed = viewModel::confirmSkipSignIn,
+        onSkipDismissed = viewModel::dismissSkipDialog,
         onClickNext = {
             when (state.currentPage) {
-                0 -> viewModel.advancePage()
-                1 -> {
+                1 -> viewModel.advancePage()
+                2 -> {
                     if (HealthConnectClient.getSdkStatus(context) == HealthConnectClient.SDK_AVAILABLE) {
                         healthPermissionsLauncher.launch(
                             setOf(
@@ -201,8 +218,8 @@ fun OnboardingRoute(
                         viewModel.advancePage()
                     }
                 }
-                2 -> viewModel.advancePage()
-                3 -> {
+                3 -> viewModel.advancePage()
+                4 -> {
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU && state.notificationsEnabled) {
                         notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
                     } else {
@@ -220,6 +237,10 @@ fun OnboardingRoute(
 @Composable
 private fun OnboardingScreen(
     state: OnboardingState,
+    onGoogleSignInClick: () -> Unit,
+    onSkipSignIn: () -> Unit,
+    onSkipConfirmed: () -> Unit,
+    onSkipDismissed: () -> Unit,
     onClickNext: () -> Unit,
     onNicknameChanged: (String) -> Unit,
     onStepGoalChanged: (Int) -> Unit,
@@ -236,8 +257,19 @@ private fun OnboardingScreen(
         pagerState.animateScrollToPage(state.currentPage)
     }
 
+    if (state.showSkipConfirmDialog) {
+        WalkLogDialog(
+            title = stringResource(R.string.onboarding_skip_dialog_title),
+            message = stringResource(R.string.onboarding_skip_dialog_message),
+            confirmText = stringResource(R.string.onboarding_skip_dialog_confirm),
+            dismissText = stringResource(R.string.onboarding_skip_dialog_dismiss),
+            onConfirm = onSkipConfirmed,
+            onDismiss = onSkipDismissed,
+        )
+    }
+
     val isNextEnabled = !state.isCompleting &&
-        (state.currentPage != 0 || state.nickname.isNotBlank())
+        (state.currentPage != 1 || state.nickname.isNotBlank())
 
     Column(
         modifier = modifier
@@ -272,31 +304,79 @@ private fun OnboardingScreen(
                 .padding(bottom = 16.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
-            Button(
-                onClick = onClickNext,
-                enabled = isNextEnabled,
-                shape = RoundedCornerShape(14.dp),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = WalkLogColor.Primary,
-                    contentColor = WalkLogColor.StaticBlack,
-                    disabledContainerColor = WalkLogColor.Primary.copy(alpha = 0.4f),
-                    disabledContentColor = WalkLogColor.StaticBlack.copy(alpha = 0.4f),
-                ),
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(56.dp),
-            ) {
-                if (state.isCompleting) {
-                    CircularProgressIndicator(
-                        modifier = Modifier.size(20.dp),
-                        color = WalkLogColor.StaticBlack,
-                        strokeWidth = 2.dp,
-                    )
+            if (state.currentPage == 0) {
+                if (state.isSignedIn) {
+                    Button(
+                        onClick = { /* 이미 가입됨, advancePage는 ViewModel이 자동 처리 */ },
+                        enabled = false,
+                        shape = RoundedCornerShape(14.dp),
+                        colors = ButtonDefaults.buttonColors(
+                            disabledContainerColor = WalkLogColor.Primary.copy(alpha = 0.6f),
+                            disabledContentColor = WalkLogColor.StaticBlack,
+                        ),
+                        modifier = Modifier.fillMaxWidth().height(56.dp),
+                    ) {
+                        Text(
+                            text = stringResource(R.string.onboarding_signup_signed_in),
+                            style = WalkLogTheme.typography.typography5SB,
+                        )
+                    }
                 } else {
-                    Text(
-                        text = stringResource(pageConfigs[state.currentPage].ctaTextRes),
-                        style = WalkLogTheme.typography.typography5SB,
-                    )
+                    OutlinedButton(
+                        onClick = onGoogleSignInClick,
+                        enabled = !state.isSigningIn,
+                        shape = RoundedCornerShape(14.dp),
+                        modifier = Modifier.fillMaxWidth().height(56.dp),
+                    ) {
+                        if (state.isSigningIn) {
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(20.dp),
+                                strokeWidth = 2.dp,
+                            )
+                        } else {
+                            Text(
+                                text = stringResource(R.string.onboarding_cta_google_signup),
+                                style = WalkLogTheme.typography.typography5SB,
+                            )
+                        }
+                    }
+                    Spacer(Modifier.height(8.dp))
+                    TextButton(
+                        onClick = onSkipSignIn,
+                        modifier = Modifier.fillMaxWidth(),
+                    ) {
+                        Text(
+                            text = stringResource(R.string.onboarding_cta_skip),
+                            style = WalkLogTheme.typography.typography6R,
+                            color = WalkLogColor.TextSecondary,
+                        )
+                    }
+                }
+            } else {
+                Button(
+                    onClick = onClickNext,
+                    enabled = isNextEnabled,
+                    shape = RoundedCornerShape(14.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = WalkLogColor.Primary,
+                        contentColor = WalkLogColor.StaticBlack,
+                        disabledContainerColor = WalkLogColor.Primary.copy(alpha = 0.4f),
+                        disabledContentColor = WalkLogColor.StaticBlack.copy(alpha = 0.4f),
+                    ),
+                    modifier = Modifier.fillMaxWidth().height(56.dp),
+                ) {
+                    if (state.isCompleting) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(20.dp),
+                            color = WalkLogColor.StaticBlack,
+                            strokeWidth = 2.dp,
+                        )
+                    } else {
+                        Text(
+                            text = stringResource(pageConfigs[state.currentPage].ctaTextRes),
+                            style = WalkLogTheme.typography.typography5SB,
+                        )
+                    }
                 }
             }
         }
@@ -326,7 +406,7 @@ private fun OnboardingPage(
         label = "pulse",
     )
 
-    val hideIllustration = page == 0 && WindowInsets.isImeVisible
+    val hideIllustration = page == 1 && WindowInsets.isImeVisible
 
     Column(modifier = modifier.fillMaxSize()) {
         if (!hideIllustration) {
@@ -432,7 +512,7 @@ private fun OnboardingPage(
                     lineHeight = 22.sp,
                 )
 
-                if (page == 0) {
+                if (page == 1) {
                     NicknameTextField(
                         nickname = state.nickname,
                         onNicknameChanged = onNicknameChanged,
@@ -440,7 +520,7 @@ private fun OnboardingPage(
                     )
                 }
 
-                if (page == 2) {
+                if (page == 3) {
                     Spacer(Modifier.height(20.dp))
                     Row(verticalAlignment = Alignment.Bottom) {
                         Text(
@@ -485,7 +565,7 @@ private fun OnboardingPage(
                     }
                 }
 
-                if (page == 3) {
+                if (page == 4) {
                     Spacer(Modifier.height(20.dp))
                     Row(
                         modifier = Modifier
@@ -543,6 +623,10 @@ private fun OnboardingScreenPreview() {
     WalkLogTheme {
         OnboardingScreen(
             state = state,
+            onGoogleSignInClick = {},
+            onSkipSignIn = { state = state.copy(showSkipConfirmDialog = true) },
+            onSkipConfirmed = { state = state.copy(showSkipConfirmDialog = false, currentPage = 1) },
+            onSkipDismissed = { state = state.copy(showSkipConfirmDialog = false) },
             onClickNext = {
                 val next = (state.currentPage + 1) % TOTAL_PAGES
                 state = state.copy(currentPage = next)

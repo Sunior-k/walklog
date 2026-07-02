@@ -4,6 +4,7 @@ import android.app.Application
 import androidx.hilt.work.HiltWorkerFactory
 import androidx.work.Configuration
 import com.google.firebase.crashlytics.FirebaseCrashlytics
+import com.river.walklog.core.data.sync.SyncManager
 import dagger.hilt.android.HiltAndroidApp
 import javax.inject.Inject
 
@@ -13,6 +14,9 @@ class WalkLogApplication : Application(), Configuration.Provider {
     @Inject
     lateinit var workerFactory: HiltWorkerFactory
 
+    @Inject
+    lateinit var syncManager: SyncManager
+
     override val workManagerConfiguration: Configuration
         get() = Configuration.Builder()
             .setWorkerFactory(workerFactory)
@@ -20,6 +24,10 @@ class WalkLogApplication : Application(), Configuration.Provider {
 
     override fun onCreate() {
         super.onCreate()
+        // NiA SyncInitializer와 동일한 역할 — 앱 시작 시 동기화 등록
+        // WorkManager는 Configuration.Provider 패턴으로 첫 사용 시 초기화되므로
+        // requestSync() 이후 실제 Worker 실행은 WorkManager가 준비된 후 이루어짐
+        syncManager.requestSync()
         configureCrashlytics()
     }
 

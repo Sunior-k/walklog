@@ -59,6 +59,7 @@ class UserPreferencesDataSource @Inject constructor(
                 themeMode = prefs[Keys.THEME_MODE].toThemeMode(),
                 lastDailyMissionAwardedDate = prefs[Keys.LAST_DAILY_MISSION_AWARDED_DATE] ?: "",
                 lastRecoveryMissionAwardedDate = prefs[Keys.LAST_RECOVERY_MISSION_AWARDED_DATE] ?: "",
+                userId = prefs[Keys.USER_ID] ?: "",
             )
         }
 
@@ -100,6 +101,22 @@ class UserPreferencesDataSource @Inject constructor(
         dataStore.edit { it[Keys.LAST_RECOVERY_MISSION_AWARDED_DATE] = date }
     }
 
+    suspend fun setUserId(uid: String) {
+        dataStore.edit { it[Keys.USER_ID] = uid }
+    }
+
+    suspend fun applySettings(settings: UserSettings) {
+        dataStore.edit { prefs ->
+            prefs[Keys.NICKNAME] = settings.nickname
+            prefs[Keys.DAILY_STEP_GOAL] = settings.dailyStepGoal
+            prefs[Keys.RECOVERY_MISSION_STEPS] = settings.recoveryMissionSteps
+            prefs[Keys.TOTAL_POINTS] = settings.totalPoints
+            prefs[Keys.LAST_DAILY_MISSION_AWARDED_DATE] = settings.lastDailyMissionAwardedDate
+            prefs[Keys.LAST_RECOVERY_MISSION_AWARDED_DATE] = settings.lastRecoveryMissionAwardedDate
+            if (settings.isOnboardingCompleted) prefs[Keys.IS_ONBOARDING_COMPLETED] = true
+        }
+    }
+
     object Keys {
         val IS_ONBOARDING_COMPLETED = booleanPreferencesKey("is_onboarding_completed")
         val NICKNAME = stringPreferencesKey("nickname")
@@ -110,6 +127,7 @@ class UserPreferencesDataSource @Inject constructor(
         val THEME_MODE = stringPreferencesKey("theme_mode")
         val LAST_DAILY_MISSION_AWARDED_DATE = stringPreferencesKey("last_daily_mission_awarded_date")
         val LAST_RECOVERY_MISSION_AWARDED_DATE = stringPreferencesKey("last_recovery_mission_awarded_date")
+        val USER_ID = stringPreferencesKey("user_id")
     }
 }
 

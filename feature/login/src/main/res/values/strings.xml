@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="login_title">WalkLog</string>
+    <string name="login_subtitle">매일 걸음으로 만드는 건강한 습관</string>
+    <string name="login_google_button">Google로 시작하기</string>
+    <string name="login_error_cancelled">로그인이 취소되었습니다</string>
+    <string name="login_error_failed">로그인에 실패했습니다. 다시 시도해 주세요</string>
+    <!-- google-services 플러그인이 app 모듈에서 실제 값으로 오버라이드함 -->
+    <string name="default_web_client_id" translatable="false"></string>
+</resources>

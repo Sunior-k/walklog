@@ -46,8 +46,12 @@ include(":core:network")
 include(":core:data")
 include(":core:designsystem")
 include(":core:analytics")
+include(":core:auth")
 include(":core:testing")
 include(":core:ui")
+
+// Sync modules
+include(":sync:work")
 
 // Feature modules
 include(":feature:recap")
@@ -56,6 +60,7 @@ include(":feature:mission")
 include(":feature:report")
 include(":feature:widget")
 include(":feature:onboarding")
+include(":feature:login")
 include(":feature:settings")
 include(":feature:history")
 include(":feature:reward")

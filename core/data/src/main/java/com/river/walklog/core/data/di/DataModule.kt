@@ -13,6 +13,7 @@ import com.river.walklog.core.data.repository.WeatherRepository
 import com.river.walklog.core.data.weather.GpsWeatherLocationProvider
 import com.river.walklog.core.data.weather.LocaleWeatherLocationProvider
 import com.river.walklog.core.data.weather.WeatherLocationProvider
+import com.google.firebase.firestore.FirebaseFirestore
 import dagger.Binds
 import dagger.Module
 import dagger.Provides
@@ -53,5 +54,9 @@ abstract class DataModule {
         @Singleton
         fun provideLocaleWeatherLocationProvider(): LocaleWeatherLocationProvider =
             LocaleWeatherLocationProvider()
+
+        @Provides
+        @Singleton
+        fun provideFirebaseFirestore(): FirebaseFirestore = FirebaseFirestore.getInstance()
     }
 }

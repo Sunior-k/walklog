@@ -94,4 +94,22 @@
             app:popUpToInclusive="true" />
     </fragment>
 
+    <!-- ===================== 로그인 (미인증 상태 진입점) ===================== -->
+
+    <fragment
+        android:id="@+id/loginFragment"
+        android:name="com.river.walklog.navigation.LoginFragment"
+        android:label="Login">
+        <action
+            android:id="@+id/action_login_to_onboarding"
+            app:destination="@id/onboardingFragment"
+            app:popUpTo="@id/loginFragment"
+            app:popUpToInclusive="true" />
+        <action
+            android:id="@+id/action_login_to_home"
+            app:destination="@id/homeFragment"
+            app:popUpTo="@id/loginFragment"
+            app:popUpToInclusive="true" />
+    </fragment>
+
 </navigation>

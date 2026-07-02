@@ -15,4 +15,6 @@ interface UserSettingsRepository {
     suspend fun setThemeMode(themeMode: ThemeMode)
     suspend fun setLastDailyMissionAwardedDate(date: String)
     suspend fun setLastRecoveryMissionAwardedDate(date: String)
+    suspend fun setUserId(uid: String)
+    suspend fun sync(): Boolean
 }

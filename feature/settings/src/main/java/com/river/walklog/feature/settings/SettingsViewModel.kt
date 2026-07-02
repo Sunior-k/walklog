@@ -4,7 +4,10 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.river.walklog.core.analytics.CrashKeys
 import com.river.walklog.core.analytics.CrashReporter
+import com.river.walklog.core.auth.AuthRepository
 import com.river.walklog.core.data.repository.UserSettingsRepository
+import com.river.walklog.core.domain.usecase.SignInWithGoogleUseCase
+import com.river.walklog.core.domain.usecase.SignOutUseCase
 import com.river.walklog.core.model.ThemeMode
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -20,6 +23,9 @@ import javax.inject.Inject
 @HiltViewModel
 class SettingsViewModel @Inject constructor(
     private val userSettingsRepository: UserSettingsRepository,
+    private val authRepository: AuthRepository,
+    private val signInWithGoogle: SignInWithGoogleUseCase,
+    private val signOutUseCase: SignOutUseCase,
     private val crashReporter: CrashReporter,
 ) : ViewModel() {
 
@@ -29,6 +35,7 @@ class SettingsViewModel @Inject constructor(
     init {
         crashReporter.setKey(CrashKeys.SCREEN, CrashKeys.Screens.SETTINGS)
         observeSettings()
+        observeAuthState()
     }
 
     private fun observeSettings() {
@@ -51,6 +58,40 @@ class SettingsViewModel @Inject constructor(
                 crashReporter.recordException(e)
             }
             .launchIn(viewModelScope)
+    }
+
+    private fun observeAuthState() {
+        authRepository.currentUser
+            .onEach { user ->
+                _state.update {
+                    it.copy(
+                        isSignedIn = user != null,
+                        userEmail = user?.email ?: "",
+                    )
+                }
+            }
+            .catch { e -> crashReporter.recordException(e) }
+            .launchIn(viewModelScope)
+    }
+
+    fun onGoogleIdTokenReceived(idToken: String) {
+        viewModelScope.launch {
+            signInWithGoogle(idToken)
+                .onFailure { e ->
+                    crashReporter.log("Settings sign-in failed: ${e.message}")
+                    crashReporter.recordException(e)
+                }
+        }
+    }
+
+    fun signOut() {
+        viewModelScope.launch {
+            runCatching { signOutUseCase() }
+                .onFailure { e ->
+                    crashReporter.log("Sign-out failed: ${e.message}")
+                    crashReporter.recordException(e)
+                }
+        }
     }
 
     fun updateNickname(nickname: String) {

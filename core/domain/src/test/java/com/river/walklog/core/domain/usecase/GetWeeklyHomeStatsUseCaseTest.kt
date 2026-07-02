@@ -197,6 +197,7 @@ class GetWeeklyHomeStatsUseCaseTest {
                 themeMode = ThemeMode.SYSTEM,
                 lastDailyMissionAwardedDate = "",
                 lastRecoveryMissionAwardedDate = "",
+                userId = "",
             ),
         )
     }
