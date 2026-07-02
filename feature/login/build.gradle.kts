@@ -6,15 +6,12 @@ plugins {
 }
 
 android {
-    setNamespace("feature.onboarding")
+    setNamespace("feature.login")
 }
 
 dependencies {
-    implementation(projects.core.data)
-    implementation(projects.core.ui)
     implementation(projects.core.auth)
+    implementation(projects.core.data)
     implementation(projects.core.domain)
     implementation(projects.core.analytics)
-    implementation(libs.androidx.health.connect)
-    testImplementation(projects.core.testing)
 }

@@ -15,6 +15,8 @@ android {
 
 dependencies {
     implementation(projects.core.data)
+    implementation(projects.core.auth)
+    implementation(projects.core.domain)
     implementation(projects.core.analytics)
     implementation(libs.androidx.constraintlayout)
     implementation(libs.androidx.fragment.ktx)

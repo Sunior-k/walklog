@@ -54,6 +54,9 @@ android {
 }
 
 dependencies {
+    // Sync modules
+    implementation(projects.sync.work)
+
     // Feature modules
     implementation(projects.feature.recap)
     implementation(projects.feature.home)
@@ -61,6 +64,7 @@ dependencies {
     implementation(projects.feature.report)
     implementation(projects.feature.widget)
     implementation(projects.feature.onboarding)
+    implementation(projects.feature.login)
     implementation(projects.feature.settings)
     implementation(projects.feature.history)
     implementation(projects.feature.reward)
@@ -69,13 +73,14 @@ dependencies {
     implementation(libs.androidx.work.runtime)
     implementation(libs.hilt.work)
 
-    // Firebase
+    // Firebase (Crashlytics, Analytics — BOM은 app에서 선언)
     implementation(platform(libs.firebase.bom))
     implementation(libs.firebase.crashlytics)
     implementation(libs.firebase.analytics)
 
     // Core modules (for DI wiring at app level)
     implementation(projects.core.analytics)
+    implementation(projects.core.auth)
     implementation(projects.core.data)
     implementation(projects.core.designsystem)
 

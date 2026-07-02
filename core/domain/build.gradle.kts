@@ -11,6 +11,7 @@ android {
 }
 
 dependencies {
+    api(projects.core.auth)
     api(projects.core.data)
     api(projects.core.model)
     testImplementation(projects.core.testing)
