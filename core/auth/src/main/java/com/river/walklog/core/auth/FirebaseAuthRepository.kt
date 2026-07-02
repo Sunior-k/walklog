@@ -36,7 +36,7 @@ class FirebaseAuthRepository @Inject constructor(
     }
 }
 
-private fun FirebaseUser.toAuthUser(isNewUser: Boolean) = AuthUser(
+private fun FirebaseUser.toAuthUser(isNewUser: Boolean = false) = AuthUser(
     uid = uid,
     displayName = displayName,
     email = email,
