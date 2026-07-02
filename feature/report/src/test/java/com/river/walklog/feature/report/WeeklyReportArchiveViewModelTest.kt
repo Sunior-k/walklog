@@ -1,21 +1,21 @@
 package com.river.walklog.feature.report
 
 import com.river.walklog.core.analytics.CrashReporter
-import com.river.walklog.core.testing.MainDispatcherRule
 import com.river.walklog.core.domain.usecase.GetWeeklyReportArchiveUseCase
-import com.river.walklog.core.model.WeeklyArchiveSummary
-import io.mockk.every
+import com.river.walklog.core.model.DailyStepCount
+import com.river.walklog.core.testing.MainDispatcherRule
+import com.river.walklog.core.testing.repository.FakeStepRepository
 import io.mockk.mockk
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.flow
-import kotlinx.coroutines.flow.flowOf
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
+import java.time.DayOfWeek
 import java.time.LocalDate
+import java.time.temporal.TemporalAdjusters
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
+import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -23,140 +23,151 @@ class WeeklyReportArchiveViewModelTest {
 
     @get:Rule
     val mainDispatcherRule = MainDispatcherRule()
+
+    private lateinit var fakeStepRepository: FakeStepRepository
     private lateinit var getWeeklyReportArchive: GetWeeklyReportArchiveUseCase
     private lateinit var crashReporter: CrashReporter
 
+    private val currentWeekStart: LocalDate
+        get() = LocalDate.now().with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY))
+
     @Before
     fun setUp() {
-        getWeeklyReportArchive = mockk()
+        fakeStepRepository = FakeStepRepository()
+        getWeeklyReportArchive = GetWeeklyReportArchiveUseCase(fakeStepRepository)
         crashReporter = mockk(relaxed = true)
     }
 
     // 초기 상태
 
     @Test
-    fun `isLoading is true when use case has not yet emitted`() {
-        every { getWeeklyReportArchive() } returns MutableSharedFlow()
-        assertTrue(createViewModel().state.value.isLoading)
-    }
-
-    @Test
-    fun `archiveItems is empty before first emission`() {
-        every { getWeeklyReportArchive() } returns MutableSharedFlow()
-        assertTrue(createViewModel().state.value.archiveItems.isEmpty())
-    }
-
-    @Test
-    fun `isError is false on initial state`() {
-        every { getWeeklyReportArchive() } returns MutableSharedFlow()
-        assertFalse(createViewModel().state.value.isError)
-    }
-
-    // 성공
-
-    @Test
-    fun `isLoading becomes false after successful emission`() {
-        every { getWeeklyReportArchive() } returns flowOf(emptyList())
+    fun `isLoading is false after initial emission`() {
         assertFalse(createViewModel().state.value.isLoading)
     }
 
     @Test
-    fun `isError stays false on successful emission`() {
-        every { getWeeklyReportArchive() } returns flowOf(emptyList())
+    fun `isError is false after initial emission`() {
         assertFalse(createViewModel().state.value.isError)
     }
 
     @Test
-    fun `archiveItems count matches domain item count`() {
-        val items = listOf(archiveItem(weekStart = 19_000L), archiveItem(weekStart = 18_993L))
-        every { getWeeklyReportArchive() } returns flowOf(items)
-        assertEquals(2, createViewModel().state.value.archiveItems.size)
+    fun `archiveItems always includes the current locked week`() {
+        assertTrue(createViewModel().state.value.archiveItems.any { it.isLocked })
+    }
+
+    // 현재 주 (locked) 필드 검증
+
+    @Test
+    fun `current week weekStart equals this Monday`() {
+        val lockedItem = createViewModel().state.value.archiveItems.first { it.isLocked }
+        assertEquals(currentWeekStart, lockedItem.weekStart)
     }
 
     @Test
-    fun `archiveItems are empty when use case emits empty list`() {
-        every { getWeeklyReportArchive() } returns flowOf(emptyList())
-        assertTrue(createViewModel().state.value.archiveItems.isEmpty())
-    }
-
-    // domain → UI 모델 필드 매핑
-
-    @Test
-    fun `weekStartEpochDay is mapped from domain item`() {
-        every { getWeeklyReportArchive() } returns flowOf(listOf(archiveItem(weekStart = 19_000L)))
-        assertEquals(19_000L, createViewModel().state.value.archiveItems[0].weekStartEpochDay)
+    fun `current week weekEnd is 6 days after weekStart`() {
+        val lockedItem = createViewModel().state.value.archiveItems.first { it.isLocked }
+        assertEquals(currentWeekStart.plusDays(6), lockedItem.weekEnd)
     }
 
     @Test
-    fun `isLocked is mapped from domain item`() {
-        every { getWeeklyReportArchive() } returns flowOf(listOf(archiveItem(isLocked = true)))
-        assertTrue(createViewModel().state.value.archiveItems[0].isLocked)
+    fun `current week weekStartEpochDay matches Monday epoch`() {
+        val lockedItem = createViewModel().state.value.archiveItems.first { it.isLocked }
+        assertEquals(currentWeekStart.toEpochDay(), lockedItem.weekStartEpochDay)
+    }
+
+    // 데이터 없는 과거 주는 제외
+
+    @Test
+    fun `past week with zero steps is excluded from archive`() {
+        val items = createViewModel().state.value.archiveItems
+        assertTrue(items.all { it.isLocked || it.totalSteps > 0 })
+    }
+
+    // 과거 주 데이터 포함
+
+    @Test
+    fun `past week with steps appears in archive`() {
+        seedWeekSteps(currentWeekStart.minusWeeks(1), stepsPerDay = 5_000)
+
+        val items = createViewModel().state.value.archiveItems
+        assertNotNull(items.find { !it.isLocked })
     }
 
     @Test
-    fun `totalSteps is mapped from domain item`() {
-        every { getWeeklyReportArchive() } returns flowOf(listOf(archiveItem(totalSteps = 42_000)))
-        assertEquals(42_000, createViewModel().state.value.archiveItems[0].totalSteps)
+    fun `past week totalSteps equals sum of seeded daily steps`() {
+        seedWeekSteps(currentWeekStart.minusWeeks(1), stepsPerDay = 4_000)
+
+        val pastItem = createViewModel().state.value.archiveItems.first { !it.isLocked }
+        assertEquals(4_000 * 7, pastItem.totalSteps)
     }
 
     @Test
-    fun `achievementPct is mapped from domain item`() {
-        every { getWeeklyReportArchive() } returns flowOf(listOf(archiveItem(achievementPct = 85)))
-        assertEquals(85, createViewModel().state.value.archiveItems[0].achievementPct)
-    }
+    fun `achievementPct reflects ratio of achieved days to total days`() {
+        val pastWeekStart = currentWeekStart.minusWeeks(1)
+        fakeStepRepository.setDailyStepCounts(
+            (0L..6L).map { offset ->
+                DailyStepCount(
+                    dateEpochDay = pastWeekStart.toEpochDay() + offset,
+                    steps = if (offset < 5) 7_000 else 3_000,
+                    targetSteps = 6_000,
+                )
+            },
+        )
 
-    @Test
-    fun `achievementRate is mapped from domain item`() {
-        every { getWeeklyReportArchive() } returns flowOf(listOf(archiveItem(achievementRate = 0.85f)))
-        assertEquals(0.85f, createViewModel().state.value.archiveItems[0].achievementRate)
-    }
-
-    @Test
-    fun `unlockDate is mapped from domain item`() {
-        val unlockDate = LocalDate.of(2026, 5, 20)
-        every { getWeeklyReportArchive() } returns flowOf(listOf(archiveItem(unlockDate = unlockDate)))
-        assertEquals(unlockDate, createViewModel().state.value.archiveItems[0].unlockDate)
+        val pastItem = createViewModel().state.value.archiveItems.first { !it.isLocked }
+        assertEquals(71, pastItem.achievementPct) // 5/7 = 71%
     }
 
     @Test
     fun `achievementRateText formats achievementPct as percentage string`() {
-        every { getWeeklyReportArchive() } returns flowOf(listOf(archiveItem(achievementPct = 71)))
-        assertEquals("71%", createViewModel().state.value.archiveItems[0].achievementRateText)
+        val pastWeekStart = currentWeekStart.minusWeeks(1)
+        fakeStepRepository.setDailyStepCounts(
+            (0L..6L).map { offset ->
+                DailyStepCount(
+                    dateEpochDay = pastWeekStart.toEpochDay() + offset,
+                    steps = if (offset < 5) 7_000 else 3_000,
+                    targetSteps = 6_000,
+                )
+            },
+        )
+
+        val pastItem = createViewModel().state.value.archiveItems.first { !it.isLocked }
+        assertEquals("71%", pastItem.achievementRateText)
     }
 
-    // derived UI 프로퍼티
-
     @Test
-    fun `weekStart is derived from weekStartEpochDay`() {
-        val epochDay = LocalDate.of(2026, 5, 11).toEpochDay()
-        every { getWeeklyReportArchive() } returns flowOf(listOf(archiveItem(weekStart = epochDay)))
-        assertEquals(LocalDate.of(2026, 5, 11), createViewModel().state.value.archiveItems[0].weekStart)
-    }
+    fun `two past weeks with steps both appear in archive`() {
+        val week1Start = currentWeekStart.minusWeeks(1)
+        val week2Start = currentWeekStart.minusWeeks(2)
+        fakeStepRepository.setDailyStepCounts(
+            (0L..6L).map { offset ->
+                DailyStepCount(dateEpochDay = week1Start.toEpochDay() + offset, steps = 5_000)
+            } + (0L..6L).map { offset ->
+                DailyStepCount(dateEpochDay = week2Start.toEpochDay() + offset, steps = 3_000)
+            },
+        )
 
-    @Test
-    fun `weekEnd is 6 days after weekStart`() {
-        val monday = LocalDate.of(2026, 5, 11)
-        every { getWeeklyReportArchive() } returns flowOf(listOf(archiveItem(weekStart = monday.toEpochDay())))
-        assertEquals(LocalDate.of(2026, 5, 17), createViewModel().state.value.archiveItems[0].weekEnd)
+        val items = createViewModel().state.value.archiveItems
+        assertEquals(3, items.size) // 2 past weeks + 1 locked current week
     }
 
     // 에러
 
     @Test
-    fun `isError becomes true when use case throws`() {
-        every { getWeeklyReportArchive() } returns flow { throw RuntimeException("network error") }
+    fun `isError becomes true when repository throws`() {
+        fakeStepRepository.setThrowable(RuntimeException("network error"))
         assertTrue(createViewModel().state.value.isError)
     }
 
     @Test
-    fun `isLoading becomes false when use case throws`() {
-        every { getWeeklyReportArchive() } returns flow { throw RuntimeException("network error") }
+    fun `isLoading becomes false when repository throws`() {
+        fakeStepRepository.setThrowable(RuntimeException("network error"))
         assertFalse(createViewModel().state.value.isLoading)
     }
 
     @Test
-    fun `archiveItems stay empty when use case throws`() {
-        every { getWeeklyReportArchive() } returns flow { throw RuntimeException("network error") }
+    fun `archiveItems are empty when repository throws`() {
+        fakeStepRepository.setThrowable(RuntimeException("network error"))
         assertTrue(createViewModel().state.value.archiveItems.isEmpty())
     }
 
@@ -164,21 +175,11 @@ class WeeklyReportArchiveViewModelTest {
 
     private fun createViewModel() = WeeklyReportArchiveViewModel(getWeeklyReportArchive, crashReporter)
 
-    private fun archiveItem(
-        weekStart: Long = 19_000L,
-        isLocked: Boolean = false,
-        totalSteps: Int = 0,
-        achievementPct: Int = 0,
-        achievementRate: Float = 0f,
-        unlockDate: LocalDate = LocalDate.ofEpochDay(weekStart + 7),
-    ) = WeeklyArchiveSummary(
-        weekStartEpochDay = weekStart,
-        isLocked = isLocked,
-        unlockDate = unlockDate,
-        totalSteps = totalSteps,
-        achievedDays = 0,
-        totalDays = 7,
-        achievementPct = achievementPct,
-        achievementRate = achievementRate,
-    )
+    private fun seedWeekSteps(weekStart: LocalDate, stepsPerDay: Int) {
+        fakeStepRepository.setDailyStepCounts(
+            (0L..6L).map { offset ->
+                DailyStepCount(dateEpochDay = weekStart.toEpochDay() + offset, steps = stepsPerDay)
+            },
+        )
+    }
 }
