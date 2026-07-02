@@ -49,6 +49,12 @@ class FakeUserSettingsRepository(
         update { copy(lastRecoveryMissionAwardedDate = date) }
     }
 
+    override suspend fun setUserId(uid: String) {
+        update { copy(userId = uid) }
+    }
+
+    override suspend fun sync(): Boolean = true
+
     fun setSettings(settings: UserSettings) {
         _settings.value = settings
     }
@@ -68,6 +74,7 @@ fun defaultUserSettings(
     themeMode: ThemeMode = ThemeMode.SYSTEM,
     lastDailyMissionAwardedDate: String = "",
     lastRecoveryMissionAwardedDate: String = "",
+    userId: String = "test-user-id",
 ) = UserSettings(
     isOnboardingCompleted = isOnboardingCompleted,
     nickname = nickname,
@@ -78,4 +85,5 @@ fun defaultUserSettings(
     themeMode = themeMode,
     lastDailyMissionAwardedDate = lastDailyMissionAwardedDate,
     lastRecoveryMissionAwardedDate = lastRecoveryMissionAwardedDate,
+    userId = userId,
 )

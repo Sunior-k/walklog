@@ -1,6 +1,8 @@
 package com.river.walklog.core.data.repository
 
 import app.cash.turbine.test
+import com.river.walklog.core.common.dispatcher.WalkLogDispatchers
+import com.river.walklog.core.data.datasource.FirestoreUserSettingsDataSource
 import com.river.walklog.core.datastore.UserPreferencesDataSource
 import com.river.walklog.core.model.ThemeMode
 import com.river.walklog.core.model.UserSettings
@@ -8,6 +10,7 @@ import io.mockk.coJustRun
 import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.runTest
 import org.junit.Before
@@ -17,13 +20,21 @@ import kotlin.test.assertEquals
 class DataStoreUserSettingsRepositoryTest {
 
     private lateinit var dataSource: UserPreferencesDataSource
+    private lateinit var firestoreDataSource: FirestoreUserSettingsDataSource
+    private lateinit var dispatchers: WalkLogDispatchers
     private lateinit var repository: DataStoreUserSettingsRepository
 
     @Before
     fun setUp() {
         dataSource = mockk()
+        firestoreDataSource = mockk()
+        dispatchers = WalkLogDispatchers(
+            main = Dispatchers.Unconfined,
+            io = Dispatchers.Unconfined,
+            default = Dispatchers.Unconfined,
+        )
         every { dataSource.settings } returns flowOf(defaultUserSettings())
-        repository = DataStoreUserSettingsRepository(dataSource)
+        repository = DataStoreUserSettingsRepository(dataSource, firestoreDataSource, dispatchers)
     }
 
     // settings
@@ -40,9 +51,10 @@ class DataStoreUserSettingsRepositoryTest {
             themeMode = ThemeMode.SYSTEM,
             lastDailyMissionAwardedDate = "",
             lastRecoveryMissionAwardedDate = "",
+            userId = "",
         )
         every { dataSource.settings } returns flowOf(expected)
-        val repo = DataStoreUserSettingsRepository(dataSource)
+        val repo = DataStoreUserSettingsRepository(dataSource, firestoreDataSource, dispatchers)
 
         repo.settings.test {
             assertEquals(expected, awaitItem())
@@ -144,4 +156,5 @@ private fun defaultUserSettings() = UserSettings(
     themeMode = ThemeMode.SYSTEM,
     lastDailyMissionAwardedDate = "",
     lastRecoveryMissionAwardedDate = "",
+    userId = "",
 )

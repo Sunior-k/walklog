@@ -151,6 +151,7 @@ class AwardMissionPointsUseCaseTest {
                 themeMode = ThemeMode.SYSTEM,
                 lastDailyMissionAwardedDate = lastDailyMissionAwardedDate,
                 lastRecoveryMissionAwardedDate = lastRecoveryMissionAwardedDate,
+                userId = "",
             ),
         )
     }

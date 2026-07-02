@@ -1,6 +1,9 @@
 package com.river.walklog.feature.settings
 
 import com.river.walklog.core.analytics.CrashReporter
+import com.river.walklog.core.auth.AuthRepository
+import com.river.walklog.core.domain.usecase.SignInWithGoogleUseCase
+import com.river.walklog.core.domain.usecase.SignOutUseCase
 import com.river.walklog.core.model.ThemeMode
 import com.river.walklog.core.model.UserSettings
 import com.river.walklog.core.testing.MainDispatcherRule
@@ -23,11 +26,17 @@ class SettingsViewModelTest {
     @get:Rule
     val mainDispatcherRule = MainDispatcherRule()
     private lateinit var repository: FakeUserSettingsRepository
+    private lateinit var authRepository: AuthRepository
+    private lateinit var signInWithGoogle: SignInWithGoogleUseCase
+    private lateinit var signOutUseCase: SignOutUseCase
     private lateinit var crashReporter: CrashReporter
 
     @Before
     fun setUp() {
         repository = FakeUserSettingsRepository()
+        authRepository = mockk(relaxed = true)
+        signInWithGoogle = mockk(relaxed = true)
+        signOutUseCase = mockk(relaxed = true)
         crashReporter = mockk(relaxed = true)
     }
 
@@ -46,9 +55,10 @@ class SettingsViewModelTest {
                 themeMode = ThemeMode.DARK,
                 lastDailyMissionAwardedDate = "",
                 lastRecoveryMissionAwardedDate = "",
+                userId = "",
             ),
         )
-        val viewModel = SettingsViewModel(repository, crashReporter)
+        val viewModel = SettingsViewModel(repository, authRepository, signInWithGoogle, signOutUseCase, crashReporter)
 
         assertEquals(8_000, viewModel.state.value.dailyStepGoal)
         assertFalse(viewModel.state.value.notificationsEnabled)
@@ -58,7 +68,7 @@ class SettingsViewModelTest {
 
     @Test
     fun `isLoading becomes false after settings emit`() {
-        val viewModel = SettingsViewModel(repository, crashReporter)
+        val viewModel = SettingsViewModel(repository, authRepository, signInWithGoogle, signOutUseCase, crashReporter)
 
         assertFalse(viewModel.state.value.isLoading)
     }
@@ -67,7 +77,7 @@ class SettingsViewModelTest {
 
     @Test
     fun `OnStepGoalChanged calls setDailyStepGoal`() = runTest {
-        val viewModel = SettingsViewModel(repository, crashReporter)
+        val viewModel = SettingsViewModel(repository, authRepository, signInWithGoogle, signOutUseCase, crashReporter)
 
         viewModel.updateStepGoal(12_000)
         advanceUntilIdle()
@@ -79,7 +89,7 @@ class SettingsViewModelTest {
 
     @Test
     fun `OnNotificationsToggled calls setNotificationsEnabled with false`() = runTest {
-        val viewModel = SettingsViewModel(repository, crashReporter)
+        val viewModel = SettingsViewModel(repository, authRepository, signInWithGoogle, signOutUseCase, crashReporter)
 
         viewModel.updateNotifications(false)
         advanceUntilIdle()
@@ -90,7 +100,7 @@ class SettingsViewModelTest {
     @Test
     fun `OnNotificationsToggled calls setNotificationsEnabled with true`() = runTest {
         repository.setSettings(defaultUserSettings(notificationsEnabled = false))
-        val viewModel = SettingsViewModel(repository, crashReporter)
+        val viewModel = SettingsViewModel(repository, authRepository, signInWithGoogle, signOutUseCase, crashReporter)
 
         viewModel.updateNotifications(true)
         advanceUntilIdle()
@@ -102,7 +112,7 @@ class SettingsViewModelTest {
 
     @Test
     fun `OnRecoveryStepsChanged calls setRecoveryMissionSteps`() = runTest {
-        val viewModel = SettingsViewModel(repository, crashReporter)
+        val viewModel = SettingsViewModel(repository, authRepository, signInWithGoogle, signOutUseCase, crashReporter)
 
         viewModel.updateRecoverySteps(4_000)
         advanceUntilIdle()
@@ -114,7 +124,7 @@ class SettingsViewModelTest {
 
     @Test
     fun `OnThemeModeChanged with LIGHT calls setThemeMode`() = runTest {
-        val viewModel = SettingsViewModel(repository, crashReporter)
+        val viewModel = SettingsViewModel(repository, authRepository, signInWithGoogle, signOutUseCase, crashReporter)
 
         viewModel.updateThemeMode(ThemeMode.LIGHT)
         advanceUntilIdle()
@@ -124,7 +134,7 @@ class SettingsViewModelTest {
 
     @Test
     fun `OnThemeModeChanged with DARK calls setThemeMode`() = runTest {
-        val viewModel = SettingsViewModel(repository, crashReporter)
+        val viewModel = SettingsViewModel(repository, authRepository, signInWithGoogle, signOutUseCase, crashReporter)
 
         viewModel.updateThemeMode(ThemeMode.DARK)
         advanceUntilIdle()
@@ -134,7 +144,7 @@ class SettingsViewModelTest {
 
     @Test
     fun `OnThemeModeChanged with SYSTEM calls setThemeMode`() = runTest {
-        val viewModel = SettingsViewModel(repository, crashReporter)
+        val viewModel = SettingsViewModel(repository, authRepository, signInWithGoogle, signOutUseCase, crashReporter)
 
         viewModel.updateThemeMode(ThemeMode.SYSTEM)
         advanceUntilIdle()

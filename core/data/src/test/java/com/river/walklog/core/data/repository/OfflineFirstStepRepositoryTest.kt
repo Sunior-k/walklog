@@ -215,4 +215,5 @@ private fun defaultUserSettings() = UserSettings(
     themeMode = ThemeMode.SYSTEM,
     lastDailyMissionAwardedDate = "",
     lastRecoveryMissionAwardedDate = "",
+    userId = "",
 )
