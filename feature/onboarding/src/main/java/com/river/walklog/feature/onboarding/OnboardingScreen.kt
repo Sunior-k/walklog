@@ -62,10 +62,8 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.health.connect.client.HealthConnectClient
 import androidx.health.connect.client.PermissionController
 import androidx.health.connect.client.permission.HealthPermission
@@ -509,7 +507,6 @@ private fun OnboardingPage(
                     text = stringResource(config.subtitleRes),
                     style = WalkLogTheme.typography.typography6R,
                     color = WalkLogColor.TextSecondary,
-                    lineHeight = 22.sp,
                 )
 
                 if (page == 1) {
@@ -525,8 +522,7 @@ private fun OnboardingPage(
                     Row(verticalAlignment = Alignment.Bottom) {
                         Text(
                             text = numberFormat.format(state.dailyStepGoal),
-                            fontSize = 40.sp,
-                            fontWeight = FontWeight.Bold,
+                            style = WalkLogTheme.typography.typography1B,
                             color = WalkLogColor.Primary,
                         )
                         Spacer(Modifier.width(6.dp))

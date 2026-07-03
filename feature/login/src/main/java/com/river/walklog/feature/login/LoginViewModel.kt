@@ -2,6 +2,7 @@ package com.river.walklog.feature.login
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.river.walklog.core.analytics.CrashKeys
 import com.river.walklog.core.analytics.CrashReporter
 import com.river.walklog.core.data.repository.UserSettingsRepository
 import com.river.walklog.core.domain.usecase.SignInWithGoogleUseCase
@@ -23,6 +24,10 @@ class LoginViewModel @Inject constructor(
 
     private val _state = MutableStateFlow(LoginState())
     val state: StateFlow<LoginState> = _state.asStateFlow()
+
+    init {
+        crashReporter.setKey(CrashKeys.SCREEN, CrashKeys.Screens.LOGIN)
+    }
 
     fun onGoogleIdTokenReceived(idToken: String) {
         if (_state.value.isLoading) return

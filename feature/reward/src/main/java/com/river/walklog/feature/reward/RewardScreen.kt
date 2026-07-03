@@ -51,6 +51,13 @@ import com.river.walklog.core.designsystem.foundation.WalkLogTheme
 import kotlin.math.cos
 import kotlin.math.sin
 
+// RewardScreen 전용 팔레트 — WalkLogColor에 없는 어두운 네이비/다크 브라운 계열
+private val RewardBgTop = Color(0xFF0C1A47)
+private val RewardBgMid = Color(0xFF080F2A)
+private val RewardBgBot = Color(0xFF040810)
+private val RewardCircleDark = Color(0xFF2C1F00)
+private val RewardCircleDarker = Color(0xFF0F0A00)
+
 @Composable
 fun RewardRoute(
     viewModel: RewardViewModel = hiltViewModel(),
@@ -97,9 +104,9 @@ internal fun RewardScreen(state: RewardState) {
             .background(
                 Brush.verticalGradient(
                     listOf(
-                        Color(0xFF0C1A47),
-                        Color(0xFF080F2A),
-                        Color(0xFF040810),
+                        RewardBgTop,
+                        RewardBgMid,
+                        RewardBgBot,
                     ),
                 ),
             ),
@@ -136,8 +143,8 @@ internal fun RewardScreen(state: RewardState) {
                     drawCircle(
                         brush = Brush.radialGradient(
                             colors = listOf(
-                                Color(0xFFF5C400).copy(alpha = 0.22f * glowScale),
-                                Color(0xFFF5C400).copy(alpha = 0.06f),
+                                WalkLogColor.Primary.copy(alpha = 0.22f * glowScale),
+                                WalkLogColor.Primary.copy(alpha = 0.06f),
                                 Color.Transparent,
                             ),
                             radius = glowRadius,
@@ -155,7 +162,7 @@ internal fun RewardScreen(state: RewardState) {
                         val dotX = center.x + (orbitRadius * cos(angle)).toFloat()
                         val dotY = center.y + (orbitRadius * sin(angle)).toFloat()
                         drawCircle(
-                            color = Color(0xFFF5C400).copy(alpha = if (i % 3 == 0) 0.55f else 0.15f),
+                            color = WalkLogColor.Primary.copy(alpha = if (i % 3 == 0) 0.55f else 0.15f),
                             radius = if (i % 3 == 0) 2.2.dp.toPx() else 1.2.dp.toPx(),
                             center = Offset(dotX, dotY),
                         )
@@ -169,8 +176,8 @@ internal fun RewardScreen(state: RewardState) {
                         drawCircle(
                             brush = Brush.radialGradient(
                                 colors = listOf(
-                                    Color(0xFFF5C400),
-                                    Color(0xFFF5C400).copy(alpha = 0f),
+                                    WalkLogColor.Primary,
+                                    WalkLogColor.Primary.copy(alpha = 0f),
                                 ),
                                 center = Offset(px, py),
                                 radius = 6.dp.toPx(),
@@ -187,16 +194,16 @@ internal fun RewardScreen(state: RewardState) {
                         .clip(CircleShape)
                         .background(
                             Brush.radialGradient(
-                                listOf(Color(0xFF2C1F00), Color(0xFF0F0A00)),
+                                listOf(RewardCircleDark, RewardCircleDarker),
                             ),
                         )
                         .border(
                             width = 1.5.dp,
                             brush = Brush.sweepGradient(
                                 listOf(
-                                    Color(0xFFF5C400).copy(alpha = 0.8f),
-                                    Color(0xFFFFE066).copy(alpha = 0.3f),
-                                    Color(0xFFF5C400).copy(alpha = 0.8f),
+                                    WalkLogColor.Primary.copy(alpha = 0.8f),
+                                    WalkLogColor.PrimaryLight.copy(alpha = 0.3f),
+                                    WalkLogColor.Primary.copy(alpha = 0.8f),
                                 ),
                             ),
                             shape = CircleShape,
@@ -216,8 +223,7 @@ internal fun RewardScreen(state: RewardState) {
             // 제목
             Text(
                 text = "REWARD",
-                fontWeight = FontWeight.Black,
-                fontSize = 38.sp,
+                style = WalkLogTheme.typography.typography1B.copy(fontWeight = FontWeight.Black),
                 letterSpacing = 10.sp,
                 color = WalkLogColor.Primary,
             )
@@ -392,8 +398,8 @@ private fun RewardFeatureCard(
             .background(
                 Brush.linearGradient(
                     listOf(
-                        Color(0xFFFFFFFF).copy(alpha = 0.07f),
-                        Color(0xFFFFFFFF).copy(alpha = 0.03f),
+                        WalkLogColor.StaticWhite.copy(alpha = 0.07f),
+                        WalkLogColor.StaticWhite.copy(alpha = 0.03f),
                     ),
                 ),
             )
@@ -413,7 +419,7 @@ private fun RewardFeatureCard(
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(
                     text = feature.emoji,
-                    fontSize = 26.sp,
+                    style = WalkLogTheme.typography.typography2R,
                 )
                 Spacer(Modifier.weight(1f))
                 // 잠금 배지
@@ -426,7 +432,7 @@ private fun RewardFeatureCard(
                 ) {
                     Text(
                         text = "🔒",
-                        fontSize = 9.sp,
+                        style = WalkLogTheme.typography.subTypography13R,
                     )
                 }
             }

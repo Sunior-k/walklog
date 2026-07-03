@@ -26,6 +26,7 @@ object CrashKeys {
         const val MISSION_DETAIL = "mission_detail"
         const val RECAP = "recap"
         const val ONBOARDING = "onboarding"
+        const val LOGIN = "login"
         const val SETTINGS = "settings"
         const val HISTORY = "history"
         const val REWARD = "reward"
