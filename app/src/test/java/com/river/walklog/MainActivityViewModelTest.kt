@@ -1,11 +1,13 @@
 package com.river.walklog
 
 import app.cash.turbine.test
+import com.river.walklog.core.analytics.CrashReporter
 import com.river.walklog.core.testing.MainDispatcherRule
 import com.river.walklog.core.testing.repository.FakeAuthRepository
 import com.river.walklog.core.testing.repository.FakeUserSettingsRepository
 import com.river.walklog.core.testing.repository.defaultAuthUser
 import com.river.walklog.core.testing.repository.defaultUserSettings
+import io.mockk.mockk
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.runTest
 import org.junit.Before
@@ -13,7 +15,6 @@ import org.junit.Rule
 import org.junit.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertIs
-import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -24,13 +25,15 @@ class MainActivityViewModelTest {
 
     private lateinit var userSettingsRepository: FakeUserSettingsRepository
     private lateinit var authRepository: FakeAuthRepository
+    private lateinit var crashReporter: CrashReporter
     private lateinit var viewModel: MainActivityViewModel
 
     @Before
     fun setUp() {
         userSettingsRepository = FakeUserSettingsRepository()
         authRepository = FakeAuthRepository()
-        viewModel = MainActivityViewModel(userSettingsRepository, authRepository)
+        crashReporter = mockk(relaxed = true)
+        viewModel = MainActivityViewModel(userSettingsRepository, authRepository, crashReporter)
     }
 
     // uiState
