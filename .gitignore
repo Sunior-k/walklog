@@ -186,5 +186,6 @@ fabric.properties
 
 # Claude Code 로컬 설정
 .claude/
+CLAUDE.md
 
 # End of https://www.toptal.com/developers/gitignore/api/android,kotlin,androidstudio
