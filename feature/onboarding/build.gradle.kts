@@ -2,7 +2,7 @@ import com.river.walklog.setNamespace
 
 plugins {
     id("river.android.feature")
-    id("river.android.test")
+    id("river.android.uitest")
 }
 
 android {
