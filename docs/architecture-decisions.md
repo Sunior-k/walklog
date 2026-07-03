@@ -580,6 +580,61 @@ LiteRT 모델 파일(`.tflite`)은 별도 변환 및 배포 관리가 필요합�
 
 ---
 
+## ADR-15. Health Connect Android 14+ 매니페스트 요구사항
+
+### 결정
+
+HC 권한 다이얼로그가 표시되려면 `AndroidManifest.xml`에 **두 가지** `activity-alias`를 모두 선언해야 합니다.
+
+### 이유
+
+Android 14(API 34)부터 HC는 앱이 권한 사용 현황 화면을 제공할 수 있는지 확인합니다. `VIEW_PERMISSION_USAGE` + `HEALTH_PERMISSIONS` alias가 없으면 HC가 해당 앱에 대해 권한 다이얼로그를 표시하지 않습니다.
+
+```xml
+<!-- 1. 개인정보 처리방침 진입점 (모든 HC 버전 필수) -->
+<activity-alias
+    android:name=".HealthConnectPrivacyRationaleActivity"
+    android:exported="true"
+    android:targetActivity=".MainActivity">
+    <intent-filter>
+        <action android:name="androidx.health.ACTION_SHOW_PERMISSIONS_RATIONALE" />
+    </intent-filter>
+</activity-alias>
+
+<!-- 2. 권한 사용 현황 진입점 (Android 14+ HC 권한 다이얼로그 표시에 필수) -->
+<activity-alias
+    android:name=".HealthConnectPermissionUsageActivity"
+    android:exported="true"
+    android:permission="android.permission.START_VIEW_PERMISSION_USAGE"
+    android:targetActivity=".MainActivity">
+    <intent-filter>
+        <action android:name="android.intent.action.VIEW_PERMISSION_USAGE" />
+        <category android:name="android.intent.category.HEALTH_PERMISSIONS" />
+    </intent-filter>
+</activity-alias>
+```
+
+`android:permission="android.permission.START_VIEW_PERMISSION_USAGE"` 속성은 이 인텐트를 시스템만 발송할 수 있도록 제한합니다 — 임의 앱이 이 화면을 직접 시작하는 것을 방지합니다.
+
+### `<queries>` 섹션
+
+HC 패키지 가시성(Android 11+ 패키지 쿼리 제한)을 위해 `<queries>`에도 두 인텐트를 선언해야 합니다.
+
+```xml
+<queries>
+    <package android:name="com.google.android.apps.healthdata" />
+    <intent>
+        <action android:name="androidx.health.ACTION_SHOW_PERMISSIONS_RATIONALE" />
+    </intent>
+    <intent>
+        <action android:name="android.intent.action.VIEW_PERMISSION_USAGE" />
+        <category android:name="android.intent.category.HEALTH_PERMISSIONS" />
+    </intent>
+</queries>
+```
+
+---
+
 ## ADR-16. core:auth 분리 — Firebase Auth + Credential Manager
 
 ### 결정
@@ -704,60 +759,3 @@ DataStore는 기기 로컬 저장소이므로 재설치 시 데이터가 소실�
 - 로그인하지 않은 사용자(`userId == ""`)는 sync를 건너뜀 — 로컬 전용으로 동작
 - 오프라인이면 WorkManager가 네트워크 연결 시점에 자동 재시도
 - Firestore 쓰기 비용이 발생하지만, 설정 문서는 1개이므로 MAU 규모에서 무시할 수준
-
----
-
-## ADR-15. Health Connect Android 14+ 매니페스트 요구사항
-
-### 결정
-
-HC 권한 다이얼로그가 표시되려면 `AndroidManifest.xml`에 **두 가지** `activity-alias`를 모두 선언해야 합니다.
-
-### 이유
-
-Android 14(API 34)부터 HC는 앱이 권한 사용 현황 화면을 제공할 수 있는지 확인합니다. `VIEW_PERMISSION_USAGE` + `HEALTH_PERMISSIONS` alias가 없으면 HC가 해당 앱에 대해 권한 다이얼로그를 표시하지 않습니다.
-
-```xml
-<!-- 1. 개인정보 처리방침 진입점 (모든 HC 버전 필수) -->
-<activity-alias
-    android:name=".HealthConnectPrivacyRationaleActivity"
-    android:exported="true"
-    android:targetActivity=".MainActivity">
-    <intent-filter>
-        <action android:name="androidx.health.ACTION_SHOW_PERMISSIONS_RATIONALE" />
-    </intent-filter>
-</activity-alias>
-
-<!-- 2. 권한 사용 현황 진입점 (Android 14+ HC 권한 다이얼로그 표시에 필수) -->
-<activity-alias
-    android:name=".HealthConnectPermissionUsageActivity"
-    android:exported="true"
-    android:permission="android.permission.START_VIEW_PERMISSION_USAGE"
-    android:targetActivity=".MainActivity">
-    <intent-filter>
-        <action android:name="android.intent.action.VIEW_PERMISSION_USAGE" />
-        <category android:name="android.intent.category.HEALTH_PERMISSIONS" />
-    </intent-filter>
-</activity-alias>
-```
-
-`android:permission="android.permission.START_VIEW_PERMISSION_USAGE"` 속성은 이 인텐트를 시스템만 발송할 수 있도록 제한합니다 — 임의 앱이 이 화면을 직접 시작하는 것을 방지합니다.
-
-### `<queries>` 섹션
-
-HC 패키지 가시성(Android 11+ 패키지 쿼리 제한)을 위해 `<queries>`에도 두 인텐트를 선언해야 합니다.
-
-```xml
-<queries>
-    <package android:name="com.google.android.apps.healthdata" />
-    <intent>
-        <action android:name="androidx.health.ACTION_SHOW_PERMISSIONS_RATIONALE" />
-    </intent>
-    <intent>
-        <action android:name="android.intent.action.VIEW_PERMISSION_USAGE" />
-        <category android:name="android.intent.category.HEALTH_PERMISSIONS" />
-    </intent>
-</queries>
-```
-
----

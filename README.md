@@ -183,6 +183,9 @@ interface CrashReporter {
 
 ```kotlin
 object CrashKeys {
+    const val VERSION_NAME = "version_name"
+    const val VERSION_CODE = "version_code"
+
     const val SCREEN = "screen"
     const val SENSOR_STATUS = "sensor_status"
     const val CURRENT_STEPS = "current_steps"
@@ -193,12 +196,21 @@ object CrashKeys {
     object Screens {
         const val HOME = "home"
         const val WEEKLY_REPORT = "weekly_report"
+        const val WEEKLY_REPORT_ARCHIVE = "weekly_report_archive"
         const val MISSION_DETAIL = "mission_detail"
         const val RECAP = "recap"
-        const val FORECAST = "forecast"
         const val ONBOARDING = "onboarding"
         const val SETTINGS = "settings"
         const val HISTORY = "history"
+        const val REWARD = "reward"
+    }
+
+    object SensorValues {
+        const val LOADING = "loading"
+        const val AVAILABLE = "available"
+        const val UNAVAILABLE = "unavailable"
+        const val PERMISSION_REQUIRED = "permission_required"
+        const val PERMISSION_DENIED = "permission_denied"
     }
 }
 ```
@@ -363,12 +375,14 @@ ViewModel tests use Fake repositories from `core:testing` with real UseCases by 
 | Plugin ID | Applied To | Includes |
 |---|---|---|
 | `river.android.application` | `:app` | compileSdk 36, minSdk 28, Kotlin Android, Hilt |
-| `river.android.library` | Most `core:*` modules | compileSdk 36, minSdk 28, Kotlin Android, Hilt included automatically |
+| `river.android.library` | Most `core:*` modules | compileSdk 36, minSdk 28, Kotlin Android |
 | `river.android.feature` | `feature:*` | Library base + Hilt + Compose + HiltNavigation |
 | `river.android.compose` | Compose modules | Compose BOM, tooling, compiler plugin |
+| `river.android.hilt` | Android modules using Hilt | Hilt plugin + kapt/KSP setup |
 | `river.android.test` | Unit test modules | JUnit4, MockK, Turbine, Coroutines Test |
 | `river.android.uitest` | Compose UI tests | Robolectric, Compose UI Test, MockK |
-| `river.kotlin.library` | Pure Kotlin modules such as `core:domain` | JVM target, Kotlin only |
+| `river.kotlin.library` | Pure Kotlin modules such as `core:model`, `core:domain` | JVM target, Kotlin only |
+| `river.kotlin.hilt` | Pure Kotlin modules using Hilt | Kotlin library base + Hilt |
 | `river.kotlin.test` | Pure Kotlin tests | JUnit, Kotlin Test, Coroutines Test |
 
 When adding a new feature module, declaring only `id("river.android.feature")` automatically applies Hilt, Compose, and test settings.
@@ -432,6 +446,6 @@ When adding a new feature module, declaring only `id("river.android.feature")` a
 ---
 
 ## Next expansion points:
-- Reward store / badge collection / level system (`feature:reward`)
-- Place `activity_classifier.tflite`, then validate HAR classification on a physical device
+- Reward store, badge collection, and level system — `feature:reward` exists as a teaser screen; point redemption UI is the next step
+- Place `activity_classifier.tflite` under `core/native/src/main/assets/`, then validate HAR classification on a physical device
 - Social / leaderboard features using the existing Firestore `users` collection

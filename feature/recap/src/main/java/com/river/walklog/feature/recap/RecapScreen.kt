@@ -68,7 +68,7 @@ import kotlin.math.abs
 import com.river.walklog.feature.recap.R as RecapR
 
 @Composable
-fun RecapScreen(
+internal fun RecapScreen(
     state: RecapState,
     onClose: () -> Unit,
     initialPage: Int = 0,

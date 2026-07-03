@@ -186,6 +186,9 @@ interface CrashReporter {
 
 ```kotlin
 object CrashKeys {
+    const val VERSION_NAME = "version_name"
+    const val VERSION_CODE = "version_code"
+
     const val SCREEN = "screen"
     const val SENSOR_STATUS = "sensor_status"
     const val CURRENT_STEPS = "current_steps"
@@ -196,12 +199,21 @@ object CrashKeys {
     object Screens {
         const val HOME = "home"
         const val WEEKLY_REPORT = "weekly_report"
+        const val WEEKLY_REPORT_ARCHIVE = "weekly_report_archive"
         const val MISSION_DETAIL = "mission_detail"
         const val RECAP = "recap"
-        const val FORECAST = "forecast"
         const val ONBOARDING = "onboarding"
         const val SETTINGS = "settings"
         const val HISTORY = "history"
+        const val REWARD = "reward"
+    }
+
+    object SensorValues {
+        const val LOADING = "loading"
+        const val AVAILABLE = "available"
+        const val UNAVAILABLE = "unavailable"
+        const val PERMISSION_REQUIRED = "permission_required"
+        const val PERMISSION_DENIED = "permission_denied"
     }
 }
 ```
@@ -369,12 +381,14 @@ ViewModel 테스트는 `core:testing`의 Fake repository와 실제 UseCase 조�
 | Plugin ID | 적용 대상 | 포함 내용 |
 |---|---|---|
 | `river.android.application` | `:app` | compileSdk 36, minSdk 28, Kotlin Android, Hilt |
-| `river.android.library` | `core:*` 대부분 | compileSdk 36, minSdk 28, Kotlin Android, Hilt 자동 포함 |
+| `river.android.library` | `core:*` 대부분 | compileSdk 36, minSdk 28, Kotlin Android |
 | `river.android.feature` | `feature:*` | library 기반 + Hilt + Compose + HiltNavigation |
 | `river.android.compose` | Compose 사용 모듈 | Compose BOM, tooling, compiler plugin |
+| `river.android.hilt` | Hilt 사용 Android 모듈 | Hilt 플러그인 + KSP 설정 |
 | `river.android.test` | 단위 테스트 모듈 | JUnit4, MockK, Turbine, Coroutines Test |
 | `river.android.uitest` | Compose UI 테스트 | Robolectric, Compose UI Test, MockK |
-| `river.kotlin.library` | `core:domain` 등 순수 Kotlin | JVM 타겟, Kotlin only |
+| `river.kotlin.library` | `core:model`, `core:domain` 등 순수 Kotlin | JVM 타겟, Kotlin only |
+| `river.kotlin.hilt` | Hilt 사용 순수 Kotlin 모듈 | Kotlin library 기반 + Hilt |
 | `river.kotlin.test` | 순수 Kotlin 테스트 | JUnit, Kotlin Test, Coroutines Test |
 
 신규 feature 모듈 추가 시 `id("river.android.feature")` 한 줄만 선언하면 Hilt·Compose·테스트 설정이 모두 자동 적용됩니다.
@@ -467,6 +481,6 @@ ViewModel 테스트는 `core:testing`의 Fake repository와 실제 UseCase 조�
 | 닉네임                                | 완성 (온보딩 입력 → DataStore → 홈 인사 + 설정 수정)                   |
 
 다음 단계 확장 포인트:
-- 리워드 스토어 / 뱃지 컬렉션 / 레벨 시스템 (`feature:reward`)
-- `activity_classifier.tflite` 모델 파일 배치 후 실기기 HAR 분류 검증
+- 리워드 스토어 / 뱃지 컬렉션 / 레벨 시스템 — `feature:reward`는 티저 화면으로 구현됨, 포인트 사용처 UI가 다음 단계
+- `activity_classifier.tflite` 파일을 `core/native/src/main/assets/` 에 배치한 뒤 실기기 HAR 분류 검증
 - Firestore `users` 컬렉션 활용한 소셜 / 리더보드 기능

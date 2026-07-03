@@ -2,6 +2,7 @@ package com.river.walklog
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.river.walklog.core.analytics.CrashReporter
 import com.river.walklog.core.auth.AuthRepository
 import com.river.walklog.core.data.repository.UserSettingsRepository
 import com.river.walklog.core.model.UserSettings
@@ -11,6 +12,7 @@ import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
+import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
@@ -22,6 +24,7 @@ import javax.inject.Inject
 class MainActivityViewModel @Inject constructor(
     userSettingsRepository: UserSettingsRepository,
     authRepository: AuthRepository,
+    private val crashReporter: CrashReporter,
 ) : ViewModel() {
 
     val uiState: StateFlow<MainActivityUiState> =
@@ -45,6 +48,7 @@ class MainActivityViewModel @Inject constructor(
                     _signOutEvent.tryEmit(Unit)
                 }
             }
+            .catch { e -> crashReporter.log("mainActivityViewModel: $e"); crashReporter.recordException(e) }
             .launchIn(viewModelScope)
     }
 }

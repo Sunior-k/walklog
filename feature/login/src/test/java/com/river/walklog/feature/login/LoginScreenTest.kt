@@ -59,7 +59,7 @@ class LoginScreenTest {
     ) {
         composeTestRule.setContent {
             WalkLogTheme {
-                LoginContent(
+                LoginScreen(
                     state = state,
                     onGoogleSignInClick = onGoogleSignInClick,
                     onErrorShown = onErrorShown,

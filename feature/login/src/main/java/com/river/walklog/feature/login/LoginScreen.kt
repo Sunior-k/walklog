@@ -11,7 +11,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Snackbar
 import androidx.compose.material3.SnackbarHost
@@ -27,12 +26,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.river.walklog.core.auth.GoogleSignInResult
 import com.river.walklog.core.auth.getGoogleIdToken
+import com.river.walklog.core.designsystem.foundation.WalkLogColor
+import com.river.walklog.core.designsystem.foundation.WalkLogTheme
 import com.river.walklog.core.designsystem.R as DesignR
 import kotlinx.coroutines.launch
 
@@ -61,7 +61,7 @@ fun LoginRoute(
         }
     }
 
-    LoginContent(
+    LoginScreen(
         state = state,
         onGoogleSignInClick = {
             scope.launch {
@@ -77,7 +77,7 @@ fun LoginRoute(
 }
 
 @Composable
-internal fun LoginContent(
+internal fun LoginScreen(
     state: LoginState,
     onGoogleSignInClick: () -> Unit,
     onErrorShown: () -> Unit,
@@ -104,19 +104,18 @@ internal fun LoginContent(
                 painter = painterResource(id = DesignR.drawable.ic_footprint),
                 contentDescription = null,
                 modifier = Modifier.size(80.dp),
-                tint = MaterialTheme.colorScheme.primary,
+                tint = WalkLogColor.Primary,
             )
             Spacer(modifier = Modifier.height(24.dp))
             Text(
                 text = stringResource(id = R.string.login_title),
-                style = MaterialTheme.typography.headlineMedium,
-                fontWeight = FontWeight.Bold,
+                style = WalkLogTheme.typography.subTypography2B,
             )
             Spacer(modifier = Modifier.height(8.dp))
             Text(
                 text = stringResource(id = R.string.login_subtitle),
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                style = WalkLogTheme.typography.subTypography11R,
+                color = WalkLogTheme.colors.onSurfaceVariant,
             )
             Spacer(modifier = Modifier.height(64.dp))
             if (state.isLoading) {
@@ -130,7 +129,7 @@ internal fun LoginContent(
                 ) {
                     Text(
                         text = stringResource(id = R.string.login_google_button),
-                        style = MaterialTheme.typography.labelLarge,
+                        style = WalkLogTheme.typography.subTypography11M,
                     )
                 }
             }
