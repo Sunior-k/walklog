@@ -107,6 +107,16 @@ class RecapScreenTest {
             .assertIsDisplayed()
     }
 
+    // 오류 상태
+
+    @Test
+    fun errorState_showsErrorMessage() {
+        setContent(state = RecapState(isLoading = false, recap = null, isError = true))
+        composeTestRule
+            .onNodeWithText(activity.getString(R.string.recap_error))
+            .assertIsDisplayed()
+    }
+
     // 닫기 버튼 이벤트
 
     @Test
@@ -127,15 +137,116 @@ class RecapScreenTest {
         assertTrue(closed)
     }
 
+    // 슬라이드 1 — 총 걸음 수
+
+    @Test
+    fun slide1_showsTotalStepsLabel() {
+        setContent(
+            state = RecapState(isLoading = false, recap = monthlyRecap(month = 5)),
+            initialPage = 1,
+        )
+        composeTestRule
+            .onNodeWithText(
+                activity.getString(R.string.recap_total_steps_label, monthLabel(2025, 5)),
+                substring = true,
+            )
+            .assertIsDisplayed()
+    }
+
+    // 슬라이드 2 — 평균 걸음 수
+
+    @Test
+    fun slide2_showsAverageStepsLabel() {
+        setContent(
+            state = RecapState(isLoading = false, recap = monthlyRecap()),
+            initialPage = 2,
+        )
+        composeTestRule
+            .onNodeWithText(activity.getString(R.string.recap_avg_steps_label))
+            .assertIsDisplayed()
+    }
+
+    // 슬라이드 3 — 칼로리
+
+    @Test
+    fun slide3_showsCaloriesLabel() {
+        setContent(
+            state = RecapState(isLoading = false, recap = monthlyRecap(month = 6)),
+            initialPage = 3,
+        )
+        composeTestRule
+            .onNodeWithText(
+                activity.getString(R.string.recap_calories_label, monthLabel(2025, 6)),
+                substring = true,
+            )
+            .assertIsDisplayed()
+    }
+
+    // 슬라이드 4 — 달성일
+
+    @Test
+    fun slide4_showsAchievementLabel() {
+        setContent(
+            state = RecapState(isLoading = false, recap = monthlyRecap()),
+            initialPage = 4,
+        )
+        composeTestRule
+            .onNodeWithText(activity.getString(R.string.recap_achievement_label))
+            .assertIsDisplayed()
+    }
+
+    // 슬라이드 5 — 베스트 데이
+
+    @Test
+    fun slide5_showsBestDayLabel() {
+        setContent(
+            state = RecapState(isLoading = false, recap = monthlyRecap()),
+            initialPage = 5,
+        )
+        composeTestRule
+            .onNodeWithText(activity.getString(R.string.recap_best_day_label))
+            .assertIsDisplayed()
+    }
+
+    // 슬라이드 6 — 연속 달성
+
+    @Test
+    fun slide6_showsStreakLabel() {
+        setContent(
+            state = RecapState(isLoading = false, recap = monthlyRecap()),
+            initialPage = 6,
+        )
+        composeTestRule
+            .onNodeWithText(activity.getString(R.string.recap_streak_label))
+            .assertIsDisplayed()
+    }
+
+    // 슬라이드 7 — 페르소나
+
+    @Test
+    fun slide7_showsPersonaLabel() {
+        setContent(
+            state = RecapState(isLoading = false, recap = monthlyRecap(month = 7)),
+            initialPage = 7,
+        )
+        composeTestRule
+            .onNodeWithText(
+                activity.getString(R.string.recap_persona_label, monthLabel(2025, 7)),
+                substring = true,
+            )
+            .assertIsDisplayed()
+    }
+
     // helper
 
     private fun setContent(
         state: RecapState,
         onClose: () -> Unit = {},
+        initialPage: Int = 0,
     ) {
         composeTestRule.setContent {
             WalkLogTheme {
-                RecapScreen(state = state, onClose = onClose, autoAdvance = false)
+                RecapScreen(state = state, onClose = onClose, initialPage = initialPage, autoAdvance = false)
             }
         }
     }

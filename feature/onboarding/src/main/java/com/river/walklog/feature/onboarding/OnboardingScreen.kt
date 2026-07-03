@@ -235,7 +235,7 @@ fun OnboardingRoute(
 }
 
 @Composable
-private fun OnboardingScreen(
+internal fun OnboardingScreen(
     state: OnboardingState,
     onGoogleSignInClick: () -> Unit,
     onSkipSignIn: () -> Unit,

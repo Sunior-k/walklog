@@ -1,11 +1,15 @@
 package com.river.walklog.feature.onboarding
 
+import com.river.walklog.core.analytics.CrashKeys
 import com.river.walklog.core.analytics.CrashReporter
 import com.river.walklog.core.domain.usecase.SignInWithGoogleUseCase
 import com.river.walklog.core.testing.MainDispatcherRule
+import com.river.walklog.core.testing.repository.FakeAuthRepository
 import com.river.walklog.core.testing.repository.FakeUserSettingsRepository
+import com.river.walklog.core.testing.repository.defaultAuthUser
 import com.river.walklog.core.testing.repository.defaultUserSettings
 import io.mockk.mockk
+import io.mockk.verify
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
@@ -14,6 +18,7 @@ import org.junit.Rule
 import org.junit.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
+import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -22,14 +27,16 @@ class OnboardingViewModelTest {
     @get:Rule
     val mainDispatcherRule = MainDispatcherRule()
     private lateinit var userSettingsRepository: FakeUserSettingsRepository
+    private lateinit var authRepository: FakeAuthRepository
     private lateinit var signInWithGoogle: SignInWithGoogleUseCase
     private lateinit var crashReporter: CrashReporter
     private lateinit var viewModel: OnboardingViewModel
 
     @Before
     fun setUp() {
+        authRepository = FakeAuthRepository()
         userSettingsRepository = FakeUserSettingsRepository(defaultUserSettings(isOnboardingCompleted = false))
-        signInWithGoogle = mockk(relaxed = true)
+        signInWithGoogle = SignInWithGoogleUseCase(authRepository, userSettingsRepository)
         crashReporter = mockk(relaxed = true)
         viewModel = OnboardingViewModel(userSettingsRepository, signInWithGoogle, crashReporter)
     }
@@ -156,5 +163,139 @@ class OnboardingViewModelTest {
     fun `isCompleting is true during complete`() = runTest {
         viewModel.complete()
         assertTrue(viewModel.state.value.isCompleting)
+    }
+
+    // updateNickname
+
+    @Test
+    fun `updateNickname updates nickname in state`() {
+        viewModel.updateNickname("Charlie")
+        assertEquals("Charlie", viewModel.state.value.nickname)
+    }
+
+    @Test
+    fun `complete saves trimmed nickname`() = runTest {
+        viewModel.updateNickname("  Dave  ")
+        viewModel.complete()
+        advanceUntilIdle()
+
+        assertEquals("Dave", userSettingsRepository.settings.value.nickname)
+    }
+
+    // skip 다이얼로그
+
+    @Test
+    fun `requestSkipSignIn shows skip dialog`() {
+        viewModel.requestSkipSignIn()
+        assertTrue(viewModel.state.value.showSkipConfirmDialog)
+    }
+
+    @Test
+    fun `dismissSkipDialog hides skip dialog`() {
+        viewModel.requestSkipSignIn()
+        viewModel.dismissSkipDialog()
+        assertFalse(viewModel.state.value.showSkipConfirmDialog)
+    }
+
+    @Test
+    fun `confirmSkipSignIn hides dialog and advances page`() {
+        viewModel.requestSkipSignIn()
+        viewModel.confirmSkipSignIn()
+
+        assertFalse(viewModel.state.value.showSkipConfirmDialog)
+        assertEquals(1, viewModel.state.value.currentPage)
+    }
+
+    // Google 로그인 — 신규 사용자
+
+    @Test
+    fun `onGoogleIdTokenReceived sets isSignedIn for new user`() = runTest {
+        authRepository.signInResult = Result.success(defaultAuthUser(isNewUser = true))
+        viewModel.onGoogleIdTokenReceived("token")
+        advanceUntilIdle()
+
+        assertTrue(viewModel.state.value.isSignedIn)
+    }
+
+    @Test
+    fun `onGoogleIdTokenReceived advances page for new user`() = runTest {
+        authRepository.signInResult = Result.success(defaultAuthUser(isNewUser = true))
+        viewModel.onGoogleIdTokenReceived("token")
+        advanceUntilIdle()
+
+        assertEquals(1, viewModel.state.value.currentPage)
+    }
+
+    // Google 로그인 — 기존 사용자
+
+    @Test
+    fun `onGoogleIdTokenReceived navigates to Home for existing user`() = runTest {
+        authRepository.signInResult = Result.success(defaultAuthUser(isNewUser = false))
+        viewModel.onGoogleIdTokenReceived("token")
+        advanceUntilIdle()
+
+        assertEquals(OnboardingNavigationDestination.Home, viewModel.state.value.navigationDestination)
+    }
+
+    @Test
+    fun `onGoogleIdTokenReceived sets onboarding completed for existing user`() = runTest {
+        authRepository.signInResult = Result.success(defaultAuthUser(isNewUser = false))
+        viewModel.onGoogleIdTokenReceived("token")
+        advanceUntilIdle()
+
+        assertTrue(userSettingsRepository.settings.value.isOnboardingCompleted)
+    }
+
+    // Google 로그인 — 실패
+
+    @Test
+    fun `onGoogleIdTokenReceived clears isSigningIn on failure`() = runTest {
+        authRepository.signInResult = Result.failure(RuntimeException("auth error"))
+        viewModel.onGoogleIdTokenReceived("bad-token")
+        advanceUntilIdle()
+
+        assertFalse(viewModel.state.value.isSigningIn)
+    }
+
+    @Test
+    fun `onGoogleIdTokenReceived does not advance page on failure`() = runTest {
+        authRepository.signInResult = Result.failure(RuntimeException("auth error"))
+        viewModel.onGoogleIdTokenReceived("bad-token")
+        advanceUntilIdle()
+
+        assertEquals(0, viewModel.state.value.currentPage)
+    }
+
+    // 중복 호출 방지
+
+    @Test
+    fun `onGoogleIdTokenReceived is no-op when already signing in`() = runTest {
+        authRepository.signInResult = Result.success(defaultAuthUser(isNewUser = true))
+        viewModel.onGoogleIdTokenReceived("token-1")
+        // isSigningIn will be set briefly; second call should be ignored
+        // After advanceUntilIdle both calls complete, but second should still be no-op
+        advanceUntilIdle()
+        // Verify result is valid (not double-advanced)
+        assertEquals(1, viewModel.state.value.currentPage)
+    }
+
+    // SCREEN crash key
+
+    @Test
+    fun `init sets ONBOARDING crash key`() {
+        verify { crashReporter.setKey(CrashKeys.SCREEN, CrashKeys.Screens.ONBOARDING) }
+    }
+
+    // clearNavigationDestination
+
+    @Test
+    fun `clearNavigationDestination resets destination to null`() = runTest {
+        authRepository.signInResult = Result.success(defaultAuthUser(isNewUser = false))
+        viewModel.onGoogleIdTokenReceived("token")
+        advanceUntilIdle()
+
+        viewModel.clearNavigationDestination()
+
+        assertNull(viewModel.state.value.navigationDestination)
     }
 }

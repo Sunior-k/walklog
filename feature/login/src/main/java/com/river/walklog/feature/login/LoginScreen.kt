@@ -77,7 +77,7 @@ fun LoginRoute(
 }
 
 @Composable
-private fun LoginContent(
+internal fun LoginContent(
     state: LoginState,
     onGoogleSignInClick: () -> Unit,
     onErrorShown: () -> Unit,
