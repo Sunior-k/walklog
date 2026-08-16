@@ -1,6 +1,7 @@
 package com.river.walklog.core.testing.repository
 
 import com.river.walklog.core.data.repository.UserSettingsRepository
+import com.river.walklog.core.model.PremiumVisualMode
 import com.river.walklog.core.model.ThemeMode
 import com.river.walklog.core.model.UserSettings
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -37,6 +38,12 @@ class FakeUserSettingsRepository(
         update { copy(totalPoints = totalPoints + delta) }
     }
 
+    override suspend fun trySpendPoints(amount: Int): Boolean {
+        if (_settings.value.totalPoints < amount) return false
+        update { copy(totalPoints = totalPoints - amount) }
+        return true
+    }
+
     override suspend fun setThemeMode(themeMode: ThemeMode) {
         update { copy(themeMode = themeMode) }
     }
@@ -49,8 +56,28 @@ class FakeUserSettingsRepository(
         update { copy(lastRecoveryMissionAwardedDate = date) }
     }
 
+    override suspend fun tryMarkDailyMissionAwarded(date: String): Boolean {
+        if (_settings.value.lastDailyMissionAwardedDate == date) return false
+        update { copy(lastDailyMissionAwardedDate = date) }
+        return true
+    }
+
+    override suspend fun tryMarkRecoveryMissionAwarded(date: String): Boolean {
+        if (_settings.value.lastRecoveryMissionAwardedDate == date) return false
+        update { copy(lastRecoveryMissionAwardedDate = date) }
+        return true
+    }
+
     override suspend fun setUserId(uid: String) {
         update { copy(userId = uid) }
+    }
+
+    override suspend fun setActiveThemePack(active: Boolean) {
+        update { copy(isPremiumThemeActive = active) }
+    }
+
+    override suspend fun setPremiumVisualMode(mode: PremiumVisualMode) {
+        update { copy(premiumVisualMode = mode) }
     }
 
     override suspend fun sync(): Boolean = true
@@ -75,6 +102,8 @@ fun defaultUserSettings(
     lastDailyMissionAwardedDate: String = "",
     lastRecoveryMissionAwardedDate: String = "",
     userId: String = "test-user-id",
+    isPremiumThemeActive: Boolean = false,
+    premiumVisualMode: PremiumVisualMode = PremiumVisualMode.NIGHT,
 ) = UserSettings(
     isOnboardingCompleted = isOnboardingCompleted,
     nickname = nickname,
@@ -86,4 +115,6 @@ fun defaultUserSettings(
     lastDailyMissionAwardedDate = lastDailyMissionAwardedDate,
     lastRecoveryMissionAwardedDate = lastRecoveryMissionAwardedDate,
     userId = userId,
+    isPremiumThemeActive = isPremiumThemeActive,
+    premiumVisualMode = premiumVisualMode,
 )

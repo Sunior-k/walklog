@@ -23,5 +23,7 @@ class FirestoreUserSettings {
     var onboardingCompleted: Boolean = false
     var lastDailyMissionAwardedDate: String = ""
     var lastRecoveryMissionAwardedDate: String = ""
+    var premiumThemeActive: Boolean = false
+    var premiumVisualMode: String = ""
     var updatedAt: Long = 0L
 }
