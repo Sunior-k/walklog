@@ -5,6 +5,8 @@ import androidx.lifecycle.viewModelScope
 import com.river.walklog.core.analytics.CrashReporter
 import com.river.walklog.core.auth.AuthRepository
 import com.river.walklog.core.data.repository.UserSettingsRepository
+import com.river.walklog.core.domain.usecase.GetPremiumVisualModeUseCase
+import com.river.walklog.core.model.PremiumVisualMode
 import com.river.walklog.core.model.UserSettings
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -13,6 +15,8 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
@@ -25,6 +29,7 @@ class MainActivityViewModel @Inject constructor(
     userSettingsRepository: UserSettingsRepository,
     authRepository: AuthRepository,
     private val crashReporter: CrashReporter,
+    getPremiumVisualModeUseCase: GetPremiumVisualModeUseCase,
 ) : ViewModel() {
 
     val uiState: StateFlow<MainActivityUiState> =
@@ -38,6 +43,14 @@ class MainActivityViewModel @Inject constructor(
 
     private val _signOutEvent = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
     val signOutEvent: SharedFlow<Unit> = _signOutEvent.asSharedFlow()
+
+    /** null이면 프리미엄 비활성 — 바텀 내비게이션은 이 값에 따라 런타임 재색칠된다. */
+    val premiumNavMode: StateFlow<PremiumVisualMode?> = combine(
+        userSettingsRepository.settings.map { it.isPremiumThemeActive }.distinctUntilChanged(),
+        getPremiumVisualModeUseCase(),
+    ) { active, mode -> if (active) mode else null }
+        .catch { e -> crashReporter.log("mainActivityViewModel.premiumNavMode: $e"); crashReporter.recordException(e) }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
 
     init {
         // 앱 실행 중 Firebase Auth 세션이 만료되거나 로그아웃되면 로그인 화면으로 이동

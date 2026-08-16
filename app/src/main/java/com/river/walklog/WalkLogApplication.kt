@@ -3,8 +3,11 @@ package com.river.walklog
 import android.app.Application
 import androidx.hilt.work.HiltWorkerFactory
 import androidx.work.Configuration
+import com.callstack.reactnativebrownfield.ReactNativeBrownfield
+import com.facebook.react.PackageList
 import com.google.firebase.crashlytics.FirebaseCrashlytics
 import com.river.walklog.core.data.sync.SyncManager
+import com.river.walklog.reactbridge.RewardBridgePackage
 import dagger.hilt.android.HiltAndroidApp
 import javax.inject.Inject
 
@@ -29,6 +32,16 @@ class WalkLogApplication : Application(), Configuration.Provider {
         // requestSync() 이후 실제 Worker 실행은 WorkManager가 준비된 후 이루어짐
         syncManager.requestSync()
         configureCrashlytics()
+        initializeReactNativeBrownfield()
+    }
+
+    /**
+     * RewardBridgePackage가 core:domain UseCase에 접근해야 하므로, AAR 내부가 아니라
+     * 앱 모듈에서 직접 패키지 목록에 추가한다.
+     */
+    private fun initializeReactNativeBrownfield() {
+        val packages = PackageList(this).packages + RewardBridgePackage()
+        ReactNativeBrownfield.initialize(this, packages)
     }
 
     /**
