@@ -13,6 +13,7 @@ import com.river.walklog.core.model.DailyStepCount
 import com.river.walklog.core.model.WeatherSummary
 import com.river.walklog.core.testing.MainDispatcherRule
 import com.river.walklog.core.testing.repository.FakeActivityStateRepository
+import com.river.walklog.core.testing.repository.FakePointsLedgerRepository
 import com.river.walklog.core.testing.repository.FakeStepRepository
 import com.river.walklog.core.testing.repository.FakeUserSettingsRepository
 import com.river.walklog.core.testing.repository.FakeWalkingInsightsRepository
@@ -74,7 +75,7 @@ class HomeViewModelTest {
         getStreak = GetCurrentStreakUseCase(stepRepository)
         getWalkingInsights = GetWalkingInsightsUseCase(stepRepository, walkingInsightsRepository)
         observeActivityState = ObserveActivityStateUseCase(activityStateRepository)
-        awardMissionPoints = AwardMissionPointsUseCase(userSettingsRepository)
+        awardMissionPoints = AwardMissionPointsUseCase(userSettingsRepository, FakePointsLedgerRepository())
         crashReporter = mockk(relaxed = true)
         walkingReminderScheduler = mockk(relaxed = true)
         defaultSetup()
