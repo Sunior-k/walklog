@@ -50,6 +50,9 @@
 
     <!-- Home UI -->
     <string name="home_greeting">%1$s님, 오늘도 걸어볼까요?</string>
+    <string name="home_gold_badge_chip">🥇 골드 워커</string>
+    <string name="home_gold_badge_chip_cd">골드 워커 뱃지 보유 중 · 뱃지 컬렉션으로 이동</string>
+    <string name="home_premium_chip_label">PREMIUM</string>
     <string name="home_goal_achieved">오늘 목표를 달성했어요</string>
     <string name="home_steps_remaining">%1$d보 남았어요</string>
     <string name="home_progress_detail">%1$d%% 완료 · 목표 %2$d 보</string>
