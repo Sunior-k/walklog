@@ -9,6 +9,7 @@ import androidx.datastore.preferences.core.emptyPreferences
 import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
+import com.river.walklog.core.model.PremiumVisualMode
 import com.river.walklog.core.model.ThemeMode
 import com.river.walklog.core.model.UserSettings
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -60,6 +61,8 @@ class UserPreferencesDataSource @Inject constructor(
                 lastDailyMissionAwardedDate = prefs[Keys.LAST_DAILY_MISSION_AWARDED_DATE] ?: "",
                 lastRecoveryMissionAwardedDate = prefs[Keys.LAST_RECOVERY_MISSION_AWARDED_DATE] ?: "",
                 userId = prefs[Keys.USER_ID] ?: "",
+                isPremiumThemeActive = prefs[Keys.IS_PREMIUM_THEME_ACTIVE] ?: false,
+                premiumVisualMode = prefs[Keys.PREMIUM_VISUAL_MODE].toPremiumVisualMode(),
             )
         }
 
@@ -89,6 +92,22 @@ class UserPreferencesDataSource @Inject constructor(
         }
     }
 
+    /**
+     * DataStore의 `edit` 트랜잭션은 내부적으로 직렬화되므로, 같은 블록 안에서 잔액을 읽고
+     * 차감하면 동시 호출 간 이중 지출(double-spend)이 발생하지 않는다.
+     */
+    suspend fun trySpendPoints(amount: Int): Boolean {
+        var success = false
+        dataStore.edit { prefs ->
+            val current = prefs[Keys.TOTAL_POINTS] ?: 0
+            if (current >= amount) {
+                prefs[Keys.TOTAL_POINTS] = current - amount
+                success = true
+            }
+        }
+        return success
+    }
+
     suspend fun setThemeMode(themeMode: ThemeMode) {
         dataStore.edit { it[Keys.THEME_MODE] = themeMode.name }
     }
@@ -101,8 +120,38 @@ class UserPreferencesDataSource @Inject constructor(
         dataStore.edit { it[Keys.LAST_RECOVERY_MISSION_AWARDED_DATE] = date }
     }
 
+    suspend fun tryMarkDailyMissionAwarded(date: String): Boolean {
+        var success = false
+        dataStore.edit { prefs ->
+            if (prefs[Keys.LAST_DAILY_MISSION_AWARDED_DATE] != date) {
+                prefs[Keys.LAST_DAILY_MISSION_AWARDED_DATE] = date
+                success = true
+            }
+        }
+        return success
+    }
+
+    suspend fun tryMarkRecoveryMissionAwarded(date: String): Boolean {
+        var success = false
+        dataStore.edit { prefs ->
+            if (prefs[Keys.LAST_RECOVERY_MISSION_AWARDED_DATE] != date) {
+                prefs[Keys.LAST_RECOVERY_MISSION_AWARDED_DATE] = date
+                success = true
+            }
+        }
+        return success
+    }
+
     suspend fun setUserId(uid: String) {
         dataStore.edit { it[Keys.USER_ID] = uid }
+    }
+
+    suspend fun setActiveThemePack(active: Boolean) {
+        dataStore.edit { it[Keys.IS_PREMIUM_THEME_ACTIVE] = active }
+    }
+
+    suspend fun setPremiumVisualMode(mode: PremiumVisualMode) {
+        dataStore.edit { it[Keys.PREMIUM_VISUAL_MODE] = mode.name }
     }
 
     suspend fun applySettings(settings: UserSettings) {
@@ -114,6 +163,8 @@ class UserPreferencesDataSource @Inject constructor(
             prefs[Keys.LAST_DAILY_MISSION_AWARDED_DATE] = settings.lastDailyMissionAwardedDate
             prefs[Keys.LAST_RECOVERY_MISSION_AWARDED_DATE] = settings.lastRecoveryMissionAwardedDate
             if (settings.isOnboardingCompleted) prefs[Keys.IS_ONBOARDING_COMPLETED] = true
+            if (settings.isPremiumThemeActive) prefs[Keys.IS_PREMIUM_THEME_ACTIVE] = true
+            prefs[Keys.PREMIUM_VISUAL_MODE] = settings.premiumVisualMode.name
         }
     }
 
@@ -128,6 +179,8 @@ class UserPreferencesDataSource @Inject constructor(
         val LAST_DAILY_MISSION_AWARDED_DATE = stringPreferencesKey("last_daily_mission_awarded_date")
         val LAST_RECOVERY_MISSION_AWARDED_DATE = stringPreferencesKey("last_recovery_mission_awarded_date")
         val USER_ID = stringPreferencesKey("user_id")
+        val IS_PREMIUM_THEME_ACTIVE = booleanPreferencesKey("is_premium_theme_active")
+        val PREMIUM_VISUAL_MODE = stringPreferencesKey("premium_visual_mode")
     }
 }
 
@@ -135,3 +188,8 @@ fun String?.toThemeMode(): ThemeMode =
     this
         ?.let { runCatching { ThemeMode.valueOf(it) }.getOrNull() }
         ?: ThemeMode.SYSTEM
+
+fun String?.toPremiumVisualMode(): PremiumVisualMode =
+    this
+        ?.let { runCatching { PremiumVisualMode.valueOf(it) }.getOrNull() }
+        ?: PremiumVisualMode.NIGHT
