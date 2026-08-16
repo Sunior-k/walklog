@@ -1,0 +1,7 @@
+{
+  "$schema": "https://oss.callstack.com/react-native-brownfield/schema.json",
+  "android": {
+    "moduleName": "reactnativeapp",
+    "variant": "Release"
+  }
+}
