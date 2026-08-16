@@ -10,6 +10,7 @@ android {
 }
 
 dependencies {
+    api(projects.core.model)
     implementation(libs.coil.compose)
     implementation(libs.coil.network)
     implementation(libs.coil.svg)

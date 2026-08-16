@@ -30,6 +30,9 @@ object CrashKeys {
         const val SETTINGS = "settings"
         const val HISTORY = "history"
         const val REWARD = "reward"
+        const val POINTS_HISTORY = "points_history"
+        const val BADGE_COLLECTION = "badge_collection"
+        const val PREMIUM_THEME_SETTINGS = "premium_theme_settings"
     }
 
     object SensorValues {
