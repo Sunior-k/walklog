@@ -9,6 +9,8 @@ class FakeAuthRepository : AuthRepository {
 
     private val _currentUser = MutableStateFlow<AuthUser?>(null)
     override val currentUser: Flow<AuthUser?> = _currentUser
+    override val currentUserIdOrNull: String?
+        get() = _currentUser.value?.uid
 
     var signInResult: Result<AuthUser> = Result.success(defaultAuthUser())
     var signedOut: Boolean = false
