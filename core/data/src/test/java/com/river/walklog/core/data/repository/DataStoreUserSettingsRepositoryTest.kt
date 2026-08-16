@@ -2,8 +2,10 @@ package com.river.walklog.core.data.repository
 
 import app.cash.turbine.test
 import com.river.walklog.core.common.dispatcher.WalkLogDispatchers
+import com.river.walklog.core.data.datasource.FirestoreUserSettings
 import com.river.walklog.core.data.datasource.FirestoreUserSettingsDataSource
 import com.river.walklog.core.datastore.UserPreferencesDataSource
+import com.river.walklog.core.model.PremiumVisualMode
 import com.river.walklog.core.model.ThemeMode
 import com.river.walklog.core.model.UserSettings
 import io.mockk.coJustRun
@@ -143,6 +145,48 @@ class DataStoreUserSettingsRepositoryTest {
         repository.setLastRecoveryMissionAwardedDate("2026-05-13")
 
         coVerify(exactly = 1) { dataSource.setLastRecoveryMissionAwardedDate("2026-05-13") }
+    }
+
+    // mergeUserSettings
+
+    @Test
+    fun `mergeUserSettings activates premium theme when only remote has it active`() {
+        val local = defaultUserSettings().copy(isPremiumThemeActive = false)
+        val remote = FirestoreUserSettings().apply { premiumThemeActive = true }
+
+        val merged = mergeUserSettings(local, remote)
+
+        assertEquals(true, merged.isPremiumThemeActive)
+    }
+
+    @Test
+    fun `mergeUserSettings keeps premium theme active when only local has it active`() {
+        val local = defaultUserSettings().copy(isPremiumThemeActive = true)
+        val remote = FirestoreUserSettings().apply { premiumThemeActive = false }
+
+        val merged = mergeUserSettings(local, remote)
+
+        assertEquals(true, merged.isPremiumThemeActive)
+    }
+
+    @Test
+    fun `mergeUserSettings uses remote premiumVisualMode when not blank`() {
+        val local = defaultUserSettings().copy(premiumVisualMode = PremiumVisualMode.NIGHT)
+        val remote = FirestoreUserSettings().apply { premiumVisualMode = "DAY_CLEAR" }
+
+        val merged = mergeUserSettings(local, remote)
+
+        assertEquals(PremiumVisualMode.DAY_CLEAR, merged.premiumVisualMode)
+    }
+
+    @Test
+    fun `mergeUserSettings keeps local premiumVisualMode when remote is blank`() {
+        val local = defaultUserSettings().copy(premiumVisualMode = PremiumVisualMode.DAY_WET)
+        val remote = FirestoreUserSettings().apply { premiumVisualMode = "" }
+
+        val merged = mergeUserSettings(local, remote)
+
+        assertEquals(PremiumVisualMode.DAY_WET, merged.premiumVisualMode)
     }
 }
 

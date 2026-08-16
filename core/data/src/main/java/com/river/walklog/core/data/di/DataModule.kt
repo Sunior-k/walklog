@@ -6,6 +6,16 @@ import com.river.walklog.core.data.repository.DefaultWalkingInsightsRepository
 import com.river.walklog.core.data.repository.DefaultWeatherRepository
 import com.river.walklog.core.data.repository.OfflineFirstStepRepository
 import com.river.walklog.core.data.repository.ActivityStateRepository
+import com.river.walklog.core.data.repository.CouponRepository
+import com.river.walklog.core.data.repository.FirestoreCouponRepository
+import com.river.walklog.core.data.repository.FirestorePromoCodeRepository
+import com.river.walklog.core.data.repository.FirestoreRewardCatalogRepository
+import com.river.walklog.core.data.repository.PointsLedgerRepository
+import com.river.walklog.core.data.repository.PromoCodeRepository
+import com.river.walklog.core.data.repository.RewardCatalogRepository
+import com.river.walklog.core.data.repository.RewardRedemptionRepository
+import com.river.walklog.core.data.repository.RoomPointsLedgerRepository
+import com.river.walklog.core.data.repository.RoomRewardRedemptionRepository
 import com.river.walklog.core.data.repository.StepRepository
 import com.river.walklog.core.data.repository.UserSettingsRepository
 import com.river.walklog.core.data.repository.WalkingInsightsRepository
@@ -51,6 +61,26 @@ abstract class DataModule {
     @Binds
     @Singleton
     abstract fun bindWeatherLocationProvider(impl: GpsWeatherLocationProvider): WeatherLocationProvider
+
+    @Binds
+    @Singleton
+    abstract fun bindRewardRedemptionRepository(impl: RoomRewardRedemptionRepository): RewardRedemptionRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindPointsLedgerRepository(impl: RoomPointsLedgerRepository): PointsLedgerRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindCouponRepository(impl: FirestoreCouponRepository): CouponRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindRewardCatalogRepository(impl: FirestoreRewardCatalogRepository): RewardCatalogRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindPromoCodeRepository(impl: FirestorePromoCodeRepository): PromoCodeRepository
 
     companion object {
         @Provides
