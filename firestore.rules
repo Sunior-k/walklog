@@ -1,0 +1,77 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // 사용자 설정 백업/복원 (core/data/.../FirestoreUserSettingsDataSource.kt)
+    match /users/{userId}/data/{document=**} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+
+    // 리워드 스토어 쿠폰 — 문서 ID가 곧 쿠폰 코드라 같은 코드로의 중복 create가
+    // Firestore 자체에서 막힘. Cloud Functions가 없어 서버 서명 발급은 아니지만,
+    // "본인 소유로만 생성/조회, ISSUED -> USED 단방향 전이만 허용"으로 위조·중복
+    // 등록·타인 코드 가로채기를 막는다.
+    match /couponRedemptions/{code} {
+      allow read: if request.auth != null && resource.data.userId == request.auth.uid;
+
+      allow create: if request.auth != null
+        && request.resource.data.userId == request.auth.uid
+        && request.resource.data.status == 'ISSUED'
+        && request.resource.data.keys().hasAll(['userId', 'rewardId', 'pointsCost', 'status', 'createdAt'])
+        && request.resource.data.rewardId is string
+        && request.resource.data.pointsCost is number;
+
+      allow update: if request.auth != null
+        && resource.data.userId == request.auth.uid
+        && request.resource.data.userId == resource.data.userId
+        && request.resource.data.rewardId == resource.data.rewardId
+        && request.resource.data.pointsCost == resource.data.pointsCost
+        && request.resource.data.createdAt == resource.data.createdAt
+        && resource.data.status == 'ISSUED'
+        && request.resource.data.status == 'USED';
+
+      allow delete: if false;
+    }
+
+    // 리워드 스토어 상품 목록 — 가격/판매 여부를 앱 업데이트 없이 바꿀 수 있도록 Firestore로
+    // 관리한다. Cloud Functions/Admin SDK가 없어 write는 클라이언트에서 전부 막고, 관리자가
+    // Firebase 콘솔에서 문서를 직접 추가·수정(콘솔 접근은 이 규칙을 우회하는 관리자 권한이라
+    // 영향 없음). 가격은 로그인 여부와 무관하게 누구나 봐야 하므로 read는 공개.
+    match /rewardCatalog/{itemId} {
+      allow read: if true;
+      allow write: if false;
+    }
+
+    // 이벤트/프로모션 코드 등록 — 외부(마케팅·이벤트)에서 받은 코드를 사용자가 직접 입력해
+    // 포인트를 받는다. 문서는 관리자가 Firebase 콘솔에서 직접 생성(create/delete 전부 차단).
+    // redemptionCount만 클라이언트 트랜잭션으로 +1 증가 가능하고, 그 외 필드는 고정 —
+    // 활성 상태·한도·만료 시각을 서버(rules) 단에서도 강제해 위조 증가·만료된 코드 재사용을 막는다.
+    // "이미 등록했는지" 여부는 users/{uid}/data/promoCodeRedemptions/... 경로에 기록되고,
+    // 위 users 규칙으로 이미 보호된다.
+    match /promoCodes/{code} {
+      // get()만 허용 — 코드를 정확히 아는 사용자만 조회 가능(list를 열어두면 로그인한
+      // 누구나 컬렉션 전체를 열람해 아직 배포되지 않은/한정 수량 코드를 선점할 수 있다).
+      // 클라이언트(FirestorePromoCodeDataSource.redeem)는 document(code)로만 조회하므로
+      // 기능에는 영향 없음.
+      allow get: if request.auth != null;
+      allow list: if false;
+
+      allow update: if request.auth != null
+        && resource.data.isActive == true
+        && request.resource.data.redemptionCount == resource.data.redemptionCount + 1
+        && request.resource.data.pointsReward == resource.data.pointsReward
+        && request.resource.data.isActive == resource.data.isActive
+        && request.resource.data.maxRedemptions == resource.data.maxRedemptions
+        && request.resource.data.expiresAtEpochMillis == resource.data.expiresAtEpochMillis
+        && (resource.data.maxRedemptions <= 0 || resource.data.redemptionCount < resource.data.maxRedemptions)
+        && (resource.data.expiresAtEpochMillis <= 0
+          || request.time.toMillis() < resource.data.expiresAtEpochMillis);
+
+      allow create, delete: if false;
+    }
+
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
