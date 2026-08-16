@@ -11,4 +11,6 @@ data class UserSettings(
     val lastDailyMissionAwardedDate: String,
     val lastRecoveryMissionAwardedDate: String,
     val userId: String,
+    val isPremiumThemeActive: Boolean = false,
+    val premiumVisualMode: PremiumVisualMode = PremiumVisualMode.NIGHT,
 )
