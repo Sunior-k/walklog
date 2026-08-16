@@ -355,6 +355,7 @@
 
                         <!-- 칼로리 카드 -->
                         <LinearLayout
+                            android:id="@+id/card_metric_calories"
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
                             android:layout_weight="1"
@@ -369,6 +370,7 @@
                                 android:orientation="horizontal">
 
                                 <ImageView
+                                    android:id="@+id/iv_metric_calories_icon"
                                     android:layout_width="15dp"
                                     android:layout_height="15dp"
                                     android:contentDescription="@null"
@@ -376,6 +378,7 @@
                                     android:tint="@color/walklog_primary_dark" />
 
                                 <TextView
+                                    android:id="@+id/tv_metric_calories_label"
                                     android:layout_width="wrap_content"
                                     android:layout_height="wrap_content"
                                     android:layout_marginStart="5dp"
@@ -402,6 +405,7 @@
 
                         <!-- 거리 카드 -->
                         <LinearLayout
+                            android:id="@+id/card_metric_distance"
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
                             android:layout_weight="1"
@@ -416,6 +420,7 @@
                                 android:orientation="horizontal">
 
                                 <ImageView
+                                    android:id="@+id/iv_metric_distance_icon"
                                     android:layout_width="15dp"
                                     android:layout_height="15dp"
                                     android:contentDescription="@null"
@@ -423,6 +428,7 @@
                                     android:tint="@color/walklog_secondary" />
 
                                 <TextView
+                                    android:id="@+id/tv_metric_distance_label"
                                     android:layout_width="wrap_content"
                                     android:layout_height="wrap_content"
                                     android:layout_marginStart="5dp"
@@ -502,6 +508,7 @@
                             android:orientation="horizontal">
 
                             <LinearLayout
+                                android:id="@+id/insight_metric_steps_card"
                                 android:layout_width="0dp"
                                 android:layout_height="wrap_content"
                                 android:layout_weight="1"
@@ -533,6 +540,7 @@
                                 android:layout_height="0dp" />
 
                             <LinearLayout
+                                android:id="@+id/insight_metric_goal_card"
                                 android:layout_width="0dp"
                                 android:layout_height="wrap_content"
                                 android:layout_weight="1"
@@ -576,6 +584,7 @@
                         tools:visibility="visible">
 
                         <TextView
+                            android:id="@+id/tv_timeline_title"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:text="@string/history_timeline_title"
@@ -734,6 +743,7 @@
                     tools:visibility="gone">
 
                     <FrameLayout
+                        android:id="@+id/empty_icon_circle"
                         android:layout_width="64dp"
                         android:layout_height="64dp"
                         android:background="@drawable/bg_empty_icon_circle">
