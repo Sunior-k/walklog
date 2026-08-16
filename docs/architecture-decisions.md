@@ -759,3 +759,244 @@ DataStore는 기기 로컬 저장소이므로 재설치 시 데이터가 소실�
 - 로그인하지 않은 사용자(`userId == ""`)는 sync를 건너뜀 — 로컬 전용으로 동작
 - 오프라인이면 WorkManager가 네트워크 연결 시점에 자동 재시도
 - Firestore 쓰기 비용이 발생하지만, 설정 문서는 1개이므로 MAU 규모에서 무시할 수준
+
+---
+
+## ADR-18. React Native Brownfield — 리워드 스토어
+
+### 결정
+
+리워드 스토어 화면 하나를 위해 앱 전체를 React Native로 전환하지 않고, [Toss SLASH23 발표](https://toss.tech)의 브라운필드 패턴을 참고해 **기존 네이티브 앱에 React Native 화면 한 개를 임베드**했습니다. RN 프로젝트는 별도 Gradle/Node 루트(`reward-store-rn/`)에서 독립적으로 개발하고, `@callstack/react-native-brownfield`로 패키징한 Fat AAR을 `app` 모듈이 소비합니다.
+
+```
+reward-store-rn/  (독립 Node/Gradle 루트, RN 0.86.2)
+    ↓ brownfield package:android + publish:android
+com.river.walklog:reactnativeapp:0.0.1-local  (mavenLocal AAR)
+    ↓ consumed by
+app/build.gradle.kts
+    ↓
+ReactNativeBrownfield.initialize(application, listOf(RewardBridgePackage()))
+    ↓
+RewardStoreFragment → ReactNativeFragment("RewardStoreApp")
+```
+
+### 이유
+
+전체 네이티브 재작성 없이 RN 생태계(빠른 반복, 크로스플랫폼 컴포넌트)를 실험적으로 도입할 수 있는 최소 단위가 화면 하나였습니다. 앱 전체를 RN으로 옮기면 기존 Compose 디자인시스템·Health Connect·NDK 엔진 통합을 모두 다시 만들어야 하지만, 브라운필드 방식은 기존 아키텍처를 건드리지 않고 한 화면만 교체할 수 있습니다.
+
+### 네이티브 ↔ RN 통신 — RewardBridgeModule
+
+RN 쪽은 네이티브 도메인 로직에 직접 접근할 수 없으므로, Hilt `@EntryPoint`로 UseCase들을 RN의 `NativeModule`(`RewardBridgeModule`)에 노출합니다.
+
+```kotlin
+@EntryPoint
+@InstallIn(SingletonComponent::class)
+interface RewardBridgeEntryPoint {
+    fun getPointsBalanceUseCase(): GetPointsBalanceUseCase
+    fun redeemRewardUseCase(): RedeemRewardUseCase
+    fun getIssuedCouponsUseCase(): GetIssuedCouponsUseCase
+    fun markCouponUsedUseCase(): MarkCouponUsedUseCase
+    fun getActiveThemeUseCase(): GetActiveThemeUseCase
+    fun getRewardCatalogUseCase(): GetRewardCatalogUseCase
+    fun redeemPromoCodeUseCase(): RedeemPromoCodeUseCase
+    fun authRepository(): AuthRepository
+}
+```
+
+`RewardBridgeModule`은 이 EntryPoint를 `EntryPointAccessors.fromApplication()`으로 얻어 각 `@ReactMethod`에서 UseCase를 호출하고, 결과를 `Promise`로 RN에 반환합니다. RN이 로그인 화면으로 이동해야 할 때는 `reactApplicationContext.currentActivity as? MainActivity`로 캐스팅해 `MainActivity.navigateToLogin()`(내부적으로 `findNavController().navigate(R.id.loginFragment)`)을 직접 호출합니다.
+
+### RewardStoreViewHost — RN 루트 View 재사용
+
+`ReactNativeBrownfield.createView()`는 화면에 진입할 때마다 시스템 back 콜백(`OnBackPressedCallback`)을 새로 등록하고 절대 remove하지 않는 라이브러리 버그가 있습니다. 화면을 나갔다가 다시 들어올 때마다 죽은 콜백이 디스패처에 쌓이고, 두 번째 진입부터 시스템 back이 먹히지 않게 됩니다. `RewardStoreViewHost`가 RN 루트 View를 앱 생애주기 동안 단 하나만 만들어 캐싱하고, `RewardStoreFragment`는 이 View를 컨테이너에 붙였다 뗐다만 하는 방식으로 이 누수를 원천 차단합니다. RN 쪽 컴포넌트는 View 재사용으로 다시 마운트되지 않으므로, 화면 재진입 시 잔액/쿠폰/로그인 상태를 다시 조회하도록 네이티브 → JS `postMessage({"type": "SCREEN_FOCUSED"})` 신호를 별도로 보냅니다.
+
+### RN ↔ 네이티브 디자인시스템 정합
+
+RN은 Kotlin 모듈(`core:designsystem`)을 직접 참조할 수 없으므로, `reward-store-rn/src/theme/walklogColors.ts`에 실제 hex 값을 수동으로 미러링합니다. `rewardCatalog.ts`의 `RewardCatalogIds`가 `core/model/RewardCatalogIds.kt`와 동일한 패턴으로 수동 동기화되는 것과 같은 방식입니다. RN은 `getThemeState()` 브릿지로 현재 라이트/다크/프리미엄 상태를 읽어 세 팔레트 중 하나를 선택해 렌더링합니다.
+
+### RN 프로젝트 구조
+
+```
+reward-store-rn/
+  App.tsx                        조립 루트 — useRewardStore() + 하위 컴포넌트 배치만
+  src/
+    hooks/useRewardStore.ts      상태·이펙트·브릿지 호출 전부
+    components/                  SignInBanner, RewardCard, CouponSection,
+                                  CouponDetailModal, PromoCodeModal
+    styles/createStyles.ts       WalkLogPalette → StyleSheet
+    nativeModules/RewardBridge.ts  네이티브 브릿지 타입/시그니처
+    theme/walklogColors.ts       디자인 토큰 미러링
+    data/rewardCatalog.ts        오프라인 폴백 카탈로그
+```
+
+초기에는 `App.tsx` 한 파일에 상태·이펙트·5개 하위 컴포넌트·스타일이 모두 들어 있었습니다. 기능이 늘어날수록(코드 등록, 동적 카탈로그 등) 한 파일에서 관련 없는 변경들이 서로 충돌하기 쉬워져, 상태/이펙트를 `useRewardStore` 훅으로, 각 UI 조각을 개별 컴포넌트 파일로, 스타일을 별도 모듈로 분리했습니다.
+
+### 트레이드오프
+
+- **AAR이 `mavenLocal()`에만 게시됨** — CI나 새로 클론한 환경에서는 `reward-store-rn/`에서 `npx brownfield package:android && publish:android`를 먼저 실행해야 `app` 모듈이 빌드됨. 저장소에 AAR을 커밋하거나 사내 Maven 레포로 옮기는 작업이 남아있음
+- **AAR을 항상 Release variant로 패키징** — JS 번들이 AAR 안에 내장되므로 `app` 모듈의 debug/release 빌드 타입과 무관하게 Metro 없이 동작함. `app/src/debug/res/xml/network_security_config.xml`의 Metro cleartext 허용 설정은 Debug variant로 다시 패키징해 핫 리로드로 개발할 때만 쓰는 예비용이며, 기본 워크플로우에서는 사용하지 않음
+- **디자인 토큰 수동 동기화** — Kotlin 쪽 색상이 바뀌면 `walklogColors.ts`도 사람이 직접 맞춰야 함(공유 스키마 수단 없음)
+- Hermes 버전은 하드코딩하지 않고 `com.facebook.react:hermes-android` 좌표를 RNGP가 자동 치환하도록 두고, `app` 모듈(비-RNGP 프로젝트)에서는 `resolutionStrategy.dependencySubstitution`으로 명시적 버전을 매핑
+
+---
+
+## ADR-19. Firestore 기반 쿠폰 발급/사용 — 서버 없는 환경의 위조 방지
+
+### 결정
+
+아메리카노 쿠폰 교환을 로컬 Room이 아니라 **Firestore**(`couponRedemptions/{code}`)에 저장하도록 결정했습니다. Cloud Functions는 두지 않고, 클라이언트가 직접 문서를 생성/수정하되 **Security Rules**로 위조·중복 발급·소유권 침해를 막습니다.
+
+```
+IssueCouponUseCase / GetIssuedCouponsUseCase / MarkCouponUsedUseCase  (core:domain)
+    ↓
+CouponRepository  (interface, core:data)
+    ↓ binds
+FirestoreCouponRepository  (impl)
+    ↓
+FirestoreCouponDataSource
+    ↓ 문서 ID = 쿠폰 코드
+couponRedemptions/{code}  { userId, rewardId, pointsCost, status, createdAt, usedAt }
+```
+
+### 이유
+
+로컬 Room에만 코드를 저장하면 앱을 지우거나 기기를 바꾸면 쿠폰이 사라지고, 같은 코드를 여러 기기에 복제해 중복 사용하는 것도 막을 방법이 없습니다. Firestore로 옮기면 기기 독립적으로 코드가 유지되고, 문서 ID를 코드 자체로 쓰면 **Firestore가 동일 ID의 중복 `create`를 원천적으로 거부**하는 성질을 그대로 활용할 수 있습니다.
+
+코드 생성은 클라이언트에서 하지만(`"WALK-" + 6자리 랜덤`), 발급 시 충돌(같은 코드가 이미 존재)하면 최대 5회까지 새 코드로 재시도합니다.
+
+```kotlin
+// FirestoreCouponDataSource.kt
+suspend fun issueCoupon(userId: String, rewardId: String, pointsCost: Int): Coupon {
+    repeat(MAX_CODE_ATTEMPTS) {
+        val code = "WALK-${randomCode()}"
+        runCatching { firestore.runTransaction { ... }.await() }
+            .onSuccess { return it }
+        // 충돌(이미 존재하는 코드)이면 다음 시도로
+    }
+    error("코드 발급 실패")
+}
+```
+
+보안 규칙 상세는 [보안 설계 문서 7장](security.md#7-firestore-security-rules--쿠폰-위조중복-등록-방지)에 정리했습니다.
+
+### 트레이드오프
+
+- Cloud Functions가 없어 **서버 서명 발급이 아님** — Security Rules는 "인증된 소유자만, 정해진 필드로, ISSUED→USED 단방향으로만" 강제할 뿐, 포인트 차감과 쿠폰 발급이 하나의 원자적 트랜잭션으로 묶여있지 않음
+- 로그인하지 않은 사용자는 `RedeemRewardUseCase`가 Firestore 호출 전에 `RedeemResult.SignInRequired`로 걸러냄 — 게스트는 쿠폰 상품을 볼 수는 있지만 교환은 로그인 후에만 가능
+- `firestore.rules`는 저장소에 파일로만 존재하고, 실제 배포는 `firebase deploy --only firestore:rules`를 별도로 실행해야 함(CI에 자동화되어 있지 않음)
+
+---
+
+## ADR-20. RedeemRewardUseCase 결과 타입 — sealed interface로 표현한 3가지 분기
+
+### 결정
+
+리워드 교환 결과를 `Boolean`(성공/실패) 대신 **`sealed interface RedeemResult`** 로 표현했습니다.
+
+```kotlin
+sealed interface RedeemResult {
+    data object Success : RedeemResult
+    data object InsufficientBalance : RedeemResult
+    data object SignInRequired : RedeemResult
+}
+```
+
+### 이유
+
+교환이 실패하는 이유는 "포인트 부족"과 "로그인 필요" 두 가지로 서로 다른 UI 반응(전자는 알럿, 후자는 로그인 화면 유도)이 필요합니다. `Boolean`이나 `Result<Unit>`으로는 이 둘을 구분할 수 없어 호출부(RN 브릿지, `RewardBridgeModule.redeemReward`)가 실패 사유를 알 수 없었습니다. `sealed interface`로 표현하면 `when` 분기에서 컴파일러가 누락을 잡아주고, RN 쪽에는 문자열 상태(`"SUCCESS" | "INSUFFICIENT_BALANCE" | "SIGN_IN_REQUIRED"`)로 직렬화해 전달합니다.
+
+이 UseCase는 상품 종류별 부수 효과(쿠폰 발급/뱃지 기록/기부 합산/테마 활성화)도 함께 실행합니다 — `RewardCatalogIds`로 분기하는 단일 UseCase에 몰아둔 이유는 "포인트 차감 → 부수 효과 → 기록"이 하나의 흐름으로 실패 없이 순서대로 일어나야 하기 때문입니다(Cloud Functions 트랜잭션이 없는 대신 클라이언트에서 순서를 보장).
+
+### 트레이드오프
+
+- 신규 상품 타입이 늘어날수록 `RedeemRewardUseCase` 내부의 `if (rewardId == ...)` 분기가 함께 늘어남 — 상품이 크게 늘어나면 전략 패턴(`RewardEffectHandler` 같은 인터페이스)으로 리팩터링이 필요할 수 있음
+- `RedeemResult`는 `core:domain`에만 존재하므로 RN(TypeScript) 쪽은 문자열 리터럴 유니온(`RedeemResult` in `RewardBridge.ts`)으로 별도 정의 — Kotlin `sealed interface`가 바뀌면 TS 쪽도 수동으로 맞춰야 함
+
+---
+
+## ADR-21. 리워드 적립/보유 내역의 Firestore 백업 — 재설치 시 데이터 유실 방지
+
+### 결정
+
+걸음 목표 달성 포인트 적립(`PointsLedgerEntry`)과 리워드 교환 기록(`RewardRedemption`, 뱃지·테마 팩 소유 여부의 근거)은 기존엔 Room에만 저장되어 있었습니다. 앱 재설치나 기기 변경 후 재로그인하면 이 데이터가 영구히 사라지는 문제가 있어, 쿠폰(ADR-19)과 동일하게 **Firestore를 백업 대상으로 추가**했습니다. 단, 오프라인 우선 동작은 유지해야 하므로 Firestore를 진실의 원천으로 바꾸지는 않고, Room을 그대로 두고 **양방향 push/pull 동기화**를 추가하는 방식을 택했습니다.
+
+```
+RoomRewardRedemptionRepository : RewardRedemptionRepository, Syncable
+    ↓ recordRedemption() 시
+Room INSERT (항상) → 로그인 상태면 Firestore에도 업로드 → 발급된 문서 ID를 remoteId 컬럼에 기록
+    ↓ sync() 시 (AppDataSyncWorker가 호출)
+1. remoteId가 null인 로컬 행을 Firestore로 push
+2. Firestore에만 있고 로컬에 없는 문서를 pull (remoteId 집합으로 중복 제거)
+```
+
+`PointsLedgerEntity`/`RewardRedemptionEntity`에 nullable `remoteId: String?` 컬럼을 추가해(Room 스키마 v3→v4 마이그레이션) "아직 Firestore에 올리지 않음(null)"과 "이미 백업됨"을 구분합니다.
+
+### 이유
+
+- Room을 진실의 원천으로 유지해야 오프라인 상태에서도 즉시 적립/기록이 가능함 — Firestore를 유일한 저장소로 바꾸면 매 걸음 목표 달성마다 네트워크 왕복이 필요해짐
+- 게스트(로그인하지 않은 사용자)는 Firestore에 쓸 수 없으므로(Security Rules가 `request.auth != null` 요구) 업로드를 조건부로 건너뛰고, 로컬 기록만 남김 — 이후 로그인하면 다음 `sync()`에서 push됨
+- `Syncable`을 레포지토리 인터페이스 자체(`RewardRedemptionRepository`)에 넣지 않고 구현체에만 붙인 이유는 `DataStoreUserSettingsRepository`가 이미 쓰던 것과 같은 패턴(`as? Syncable` 캐스팅)을 그대로 따른 것 — 인터페이스를 core:domain의 Fake로도 구현해야 하는데, 도메인 계층은 "동기화된다"는 사실 자체를 알 필요가 없음
+
+### 트레이드오프
+
+- push/pull이 원자적 트랜잭션이 아니라, 동시에 여러 기기에서 같은 계정으로 오프라인 기록을 쌓다가 동기화하면 중복 없이 합쳐지긴 하지만 순서는 보장되지 않음(정렬은 UI 레이어에서 `createdAtEpochMillis` 기준으로 처리)
+- `AppDataSyncWorker`는 앱 시작 시 1회만 실행(`WorkManager` `ExistingWorkPolicy.KEEP`) — 앱을 켜둔 채로 오래 사용하는 동안 발생한 기록은 다음 재시작 전까지 백업되지 않음
+
+---
+
+## ADR-22. Firestore 기반 동적 리워드 카탈로그 — 앱 업데이트 없는 가격 관리
+
+### 결정
+
+리워드 스토어 상품(뱃지/쿠폰/기부/테마 팩)의 가격과 판매 여부를 RN 코드에 하드코딩하지 않고 **Firestore `rewardCatalog` 컬렉션**에서 읽어오도록 했습니다. 클라이언트 쓰기는 Security Rules로 전부 막고(`allow write: if false`), 관리자가 Firebase 콘솔에서 문서를 직접 수정합니다.
+
+```
+Firebase 콘솔에서 rewardCatalog/{itemId} 문서 수정
+    ↓
+GetRewardCatalogUseCase (core:domain) — isActive 필터링
+    ↓
+RewardBridgeModule.getRewardCatalog() — RN이 화면 진입마다 호출
+    ↓
+reward-store-rn: fallbackRewardCatalog(오프라인 폴백) 대신 서버 값으로 교체
+```
+
+### 이유
+
+가격 변경이나 상품 판매 중단을 앱 업데이트 없이 즉시 반영하고 싶다는 요구가 있었습니다. Cloud Functions/Admin SDK가 없는 환경이라 "읽기는 누구나, 쓰기는 전부 차단 + 콘솔에서만 수정"이 realistic한 범위였습니다.
+
+`FirestoreRewardCatalogDataSource.observeCatalog()`는 처음엔 `addSnapshotListener`로 구현했으나, 호출부(`RewardBridgeModule.getRewardCatalog()`)가 매번 `.first()`로 한 번만 소비하는 구조라 문제가 있었습니다. Firestore 로컬 캐시가 있으면 리스너의 첫 콜백이 콘솔 수정 이전의 **캐시된 값**으로 먼저 도착하고, `.first()`가 그 값으로 바로 완료되며 리스너를 해지해버려 — 서버의 최신 값은 영영 도착하지 못하는 레이스가 있었습니다. 매 호출마다 한 번씩 `get()`으로 새로 받아오는 방식(기본 Source: 온라인이면 서버, 오프라인이면 캐시로 자동 폴백)으로 바꿔 해결했습니다.
+
+### 트레이드오프
+
+- 스토어 화면에 진입할 때마다 네트워크 호출이 발생함 — 상품 개수가 적어(4개) 비용은 무시할 수준이지만, 카탈로그가 커지면 캐싱 전략이 필요할 수 있음
+- 콘솔에서 필드 타입을 잘못 바꾸면(예: 숫자를 문자열로) 매핑이 조용히 기본값으로 fallback됨(`getLong(...) ?: 0L`) — 관리자 실수를 앱이 감지하지 못함
+
+---
+
+## ADR-23. 이벤트/프로모션 코드 등록 — 외부 코드 입력과 리워드 스토어 교환의 분리
+
+### 결정
+
+리워드 스토어에서 포인트로 상품을 교환하는 기존 흐름(`RedeemRewardUseCase`)과는 별개로, 마케팅/이벤트에서 외부로 배포한 코드를 사용자가 직접 입력해 포인트를 받는 기능을 추가했습니다. `promoCodes/{code}` 컬렉션에 문서를 관리자가 콘솔에서 직접 생성하고, 클라이언트는 Firestore 트랜잭션으로 `redemptionCount`만 증가시킵니다.
+
+```kotlin
+sealed interface PromoCodeRedeemResult {
+    data class Success(val pointsAwarded: Int) : PromoCodeRedeemResult
+    data object AlreadyRedeemed : PromoCodeRedeemResult
+    data object InvalidCode : PromoCodeRedeemResult
+    data object SignInRequired : PromoCodeRedeemResult
+    data object UnknownError : PromoCodeRedeemResult
+}
+```
+
+중복 등록 여부는 `users/{uid}/data/promoCodeRedemptions/entries/{code}` 문서의 존재 여부로 판단하며(이미 로그인 사용자 소유 경로라 기존 규칙으로 보호됨), Firestore 트랜잭션 안에서 "이미 등록했는지 확인 → 코드 유효성(활성/한도/만료) 확인 → 두 문서를 함께 갱신"을 원자적으로 처리합니다.
+
+### 이유
+
+기존 쿠폰(ADR-19)은 스토어에서 포인트를 써서 발급받는 것이라 발급 시점에 이미 `userId`를 알고 있지만, 프로모션 코드는 외부에서 받은 코드를 사용자가 스스로 입력하는 것이라 "이 코드가 유효한가"와 "이 사용자가 이미 썼는가"를 둘 다 서버 쪽(Security Rules + 트랜잭션)에서 검증해야 위조·중복 등록을 막을 수 있습니다. `RedeemRewardUseCase`에 분기를 추가하는 대신 별도 UseCase(`RedeemPromoCodeUseCase`)로 둔 이유는 두 흐름이 "무엇을 검증하는가"부터 다르기 때문입니다(포인트 잔액 vs. 코드 자체의 유효성).
+
+Security Rules에서 `redemptionCount`가 정확히 1만큼 증가했는지, 다른 필드(`pointsReward`, `isActive`, `maxRedemptions`, `expiresAtEpochMillis`)는 그대로인지를 모두 강제해 클라이언트가 임의로 포인트를 부풀리거나 만료된 코드를 재사용하는 것을 막습니다.
+
+### 트레이드오프
+
+- 코드 발급(문서 생성)은 전부 관리자가 Firebase 콘솔에서 수동으로 해야 함 — 대량 발급이나 코드별 발급 자동화가 필요해지면 별도 어드민 도구가 필요함
+- 만료 시각 비교는 `request.time.toMillis() < resource.data.expiresAtEpochMillis`처럼 Security Rules 문법(`timestamp.fromMillis`가 아니라 `request.time`을 밀리초로 변환하는 방향)에 맞춰야 함 — 처음 작성 시 이 부분에서 배포 경고가 났었음
