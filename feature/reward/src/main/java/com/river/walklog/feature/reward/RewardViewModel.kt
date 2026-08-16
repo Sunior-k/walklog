@@ -7,6 +7,7 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
 import javax.inject.Inject
 
 @HiltViewModel
@@ -19,5 +20,21 @@ class RewardViewModel @Inject constructor(
 
     init {
         crashReporter.setKey(CrashKeys.SCREEN, CrashKeys.Screens.REWARD)
+    }
+
+    fun onStoreCardClicked() {
+        _state.update { it.copy(navigationDestination = RewardDest.Store) }
+    }
+
+    fun onPointsHistoryCardClicked() {
+        _state.update { it.copy(navigationDestination = RewardDest.PointsHistory) }
+    }
+
+    fun onBadgeCollectionCardClicked() {
+        _state.update { it.copy(navigationDestination = RewardDest.BadgeCollection) }
+    }
+
+    fun clearNavigationDestination() {
+        _state.update { it.copy(navigationDestination = null) }
     }
 }

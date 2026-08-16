@@ -27,7 +27,9 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Text
+import androidx.compose.foundation.clickable
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -37,37 +39,72 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.river.walklog.core.designsystem.component.preview.BasePreview
+import com.river.walklog.core.designsystem.component.preview.walklogPreview
 import com.river.walklog.core.designsystem.foundation.WalkLogColor
 import com.river.walklog.core.designsystem.foundation.WalkLogTheme
 import kotlin.math.cos
 import kotlin.math.sin
 
 // RewardScreen 전용 팔레트 — WalkLogColor에 없는 어두운 네이비/다크 브라운 계열
-private val RewardBgTop = Color(0xFF0C1A47)
-private val RewardBgMid = Color(0xFF080F2A)
-private val RewardBgBot = Color(0xFF040810)
-private val RewardCircleDark = Color(0xFF2C1F00)
-private val RewardCircleDarker = Color(0xFF0F0A00)
+private val RewardBgTop = WalkLogColor.RewardBackgroundTop
+private val RewardBgMid = WalkLogColor.RewardBackgroundMid
+private val RewardBgBot = WalkLogColor.RewardBackgroundBottom
+private val RewardCircleDark = WalkLogColor.RewardCircleDark
+private val RewardCircleDarker = WalkLogColor.RewardCircleDarker
 
 @Composable
 fun RewardRoute(
+    onNavigateToStore: () -> Unit,
+    onNavigateToPointsHistory: () -> Unit,
+    onNavigateToBadgeCollection: () -> Unit,
     viewModel: RewardViewModel = hiltViewModel(),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
-    RewardScreen(state = state)
+
+    LaunchedEffect(state.navigationDestination) {
+        when (state.navigationDestination) {
+            RewardDest.Store -> {
+                onNavigateToStore()
+                viewModel.clearNavigationDestination()
+            }
+            RewardDest.PointsHistory -> {
+                onNavigateToPointsHistory()
+                viewModel.clearNavigationDestination()
+            }
+            RewardDest.BadgeCollection -> {
+                onNavigateToBadgeCollection()
+                viewModel.clearNavigationDestination()
+            }
+            null -> Unit
+        }
+    }
+
+    RewardScreen(
+        state = state,
+        onStoreClick = viewModel::onStoreCardClicked,
+        onPointsHistoryClick = viewModel::onPointsHistoryCardClicked,
+        onBadgeCollectionClick = viewModel::onBadgeCollectionCardClicked,
+    )
 }
 
 @Composable
-internal fun RewardScreen(state: RewardState) {
+internal fun RewardScreen(
+    state: RewardState,
+    onStoreClick: () -> Unit,
+    onPointsHistoryClick: () -> Unit,
+    onBadgeCollectionClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
     val infiniteTransition = rememberInfiniteTransition(label = "reward")
 
     val glowScale by infiniteTransition.animateFloat(
@@ -99,7 +136,7 @@ internal fun RewardScreen(state: RewardState) {
     )
 
     Box(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxSize()
             .background(
                 Brush.verticalGradient(
@@ -213,7 +250,7 @@ internal fun RewardScreen(state: RewardState) {
                 ) {
                     Image(
                         imageVector = ImageVector.vectorResource(com.river.walklog.feature.reward.R.drawable.ic_crown),
-                        contentDescription = "Crown Icon",
+                        contentDescription = stringResource(R.string.reward_crown_icon_cd),
                     )
                 }
             }
@@ -222,7 +259,7 @@ internal fun RewardScreen(state: RewardState) {
 
             // 제목
             Text(
-                text = "REWARD",
+                text = stringResource(R.string.reward_title),
                 style = WalkLogTheme.typography.typography1B.copy(fontWeight = FontWeight.Black),
                 letterSpacing = 10.sp,
                 color = WalkLogColor.Primary,
@@ -317,16 +354,25 @@ internal fun RewardScreen(state: RewardState) {
                     emoji = "🏅",
                     title = stringResource(R.string.reward_feature1_title),
                     subtitle = stringResource(R.string.reward_feature1_subtitle),
+                    locked = false,
+                    onClick = onPointsHistoryClick,
+                    testTag = RewardTestTags.POINTS_HISTORY_CARD,
                 ),
                 RewardFeatureItem(
                     emoji = "🎖",
                     title = stringResource(R.string.reward_feature2_title),
                     subtitle = stringResource(R.string.reward_feature2_subtitle),
+                    locked = false,
+                    onClick = onBadgeCollectionClick,
+                    testTag = RewardTestTags.BADGE_COLLECTION_CARD,
                 ),
                 RewardFeatureItem(
                     emoji = "🏪",
                     title = stringResource(R.string.reward_feature3_title),
                     subtitle = stringResource(R.string.reward_feature3_subtitle),
+                    locked = false,
+                    onClick = onStoreClick,
+                    testTag = RewardTestTags.STORE_CARD,
                 ),
                 RewardFeatureItem(
                     emoji = "🎁",
@@ -385,6 +431,9 @@ private data class RewardFeatureItem(
     val emoji: String,
     val title: String,
     val subtitle: String,
+    val locked: Boolean = true,
+    val onClick: (() -> Unit)? = null,
+    val testTag: String? = null,
 )
 
 @Composable
@@ -413,6 +462,15 @@ private fun RewardFeatureCard(
                 ),
                 shape = RoundedCornerShape(18.dp),
             )
+            .then(
+                if (feature.onClick != null) {
+                    Modifier
+                        .let { m -> feature.testTag?.let { m.testTag(it) } ?: m }
+                        .clickable(onClick = feature.onClick)
+                } else {
+                    Modifier
+                },
+            )
             .padding(18.dp),
     ) {
         Column {
@@ -422,18 +480,19 @@ private fun RewardFeatureCard(
                     style = WalkLogTheme.typography.typography2R,
                 )
                 Spacer(Modifier.weight(1f))
-                // 잠금 배지
-                Box(
-                    modifier = Modifier
-                        .size(22.dp)
-                        .clip(CircleShape)
-                        .background(WalkLogColor.StaticWhite.copy(alpha = 0.08f)),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    Text(
-                        text = "🔒",
-                        style = WalkLogTheme.typography.subTypography13R,
-                    )
+                if (feature.locked) {
+                    Box(
+                        modifier = Modifier
+                            .size(22.dp)
+                            .clip(CircleShape)
+                            .background(WalkLogColor.StaticWhite.copy(alpha = 0.08f)),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        Text(
+                            text = "🔒",
+                            style = WalkLogTheme.typography.subTypography13R,
+                        )
+                    }
                 }
             }
             Spacer(Modifier.height(12.dp))
@@ -483,17 +542,22 @@ private fun DrawScope.drawStarField() {
         val alpha = if ((fx * 10).toInt() % 3 == 0) 0.4f else 0.18f
         val radius = if ((fy * 10).toInt() % 4 == 0) 1.8.dp.toPx() else 1.dp.toPx()
         drawCircle(
-            color = Color.White.copy(alpha = alpha),
+            color = WalkLogColor.StaticWhite.copy(alpha = alpha),
             radius = radius,
             center = Offset(size.width * fx, size.height * fy),
         )
     }
 }
 
-@Preview(showBackground = true)
+@walklogPreview
 @Composable
 private fun RewardScreenPreview() {
-    WalkLogTheme {
-        RewardScreen(state = RewardState())
+    BasePreview {
+        RewardScreen(
+            state = RewardState(),
+            onStoreClick = {},
+            onPointsHistoryClick = {},
+            onBadgeCollectionClick = {},
+        )
     }
 }
