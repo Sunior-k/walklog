@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- WalkLogColor.PrimaryDark(#E0B000) → Primary(#F5C400) → PrimaryLight(#FFE066) 그라디언트와 동일하게 유지할 것 -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android">
+    <corners android:radius="999dp" />
+    <gradient
+        android:angle="0"
+        android:centerColor="#F5C400"
+        android:endColor="#FFE066"
+        android:startColor="#E0B000"
+        android:type="linear" />
+</shape>

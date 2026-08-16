@@ -6,6 +6,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.SeekBar
+import androidx.core.content.ContextCompat
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.isVisible
@@ -15,15 +16,22 @@ import androidx.fragment.app.viewModels
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
+import androidx.navigation.fragment.findNavController
 import com.google.android.gms.oss.licenses.OssLicensesMenuActivity
 import com.river.walklog.core.auth.GoogleSignInResult
 import com.river.walklog.core.auth.getGoogleIdToken
+import com.river.walklog.core.designsystem.foundation.PremiumFlatPalette
+import com.river.walklog.core.designsystem.foundation.setPremiumCardColor
+import com.river.walklog.core.model.PremiumVisualMode
 import com.river.walklog.core.model.ThemeMode
+import com.river.walklog.core.ui.ThemeViewModel
 import com.river.walklog.feature.settings.databinding.FragmentSettingsBinding
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
 import java.text.NumberFormat
+import com.river.walklog.core.designsystem.R as DesignR
 
 @AndroidEntryPoint
 class SettingsFragment : Fragment() {
@@ -32,6 +40,7 @@ class SettingsFragment : Fragment() {
     private val binding get() = _binding!!
 
     private val viewModel: SettingsViewModel by viewModels()
+    private val themeViewModel: ThemeViewModel by viewModels()
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -47,6 +56,7 @@ class SettingsFragment : Fragment() {
         applyStatusBarInsets()
         setupListeners()
         observeState()
+        observePremiumTheme()
     }
 
     private fun applyStatusBarInsets() {
@@ -77,6 +87,10 @@ class SettingsFragment : Fragment() {
         switchNotifications.setOnCheckedChangeListener { _, isChecked ->
             viewModel.updateNotifications(isChecked)
         }
+        switchPremiumTheme.setOnCheckedChangeListener { _, isChecked ->
+            viewModel.togglePremiumTheme(isChecked)
+        }
+        premiumThemeCustomizeRow.setOnClickListener { navigateToPremiumThemeSettings() }
         radioThemeSystem.setOnClickListener { updateThemeMode(ThemeMode.SYSTEM) }
         radioThemeLight.setOnClickListener { updateThemeMode(ThemeMode.LIGHT) }
         radioThemeDark.setOnClickListener { updateThemeMode(ThemeMode.DARK) }
@@ -127,6 +141,19 @@ class SettingsFragment : Fragment() {
         radioThemeLight.isChecked = state.themeMode == ThemeMode.LIGHT
         radioThemeDark.isChecked = state.themeMode == ThemeMode.DARK
 
+        if (switchPremiumTheme.isChecked != state.isPremiumThemeActive) {
+            switchPremiumTheme.isChecked = state.isPremiumThemeActive
+        }
+        tvPremiumThemeChip.isVisible = state.isPremiumThemeOwned
+        premiumThemeCustomizeRow.isVisible = state.isPremiumThemeOwned
+        tvPremiumThemeDescription.text = getString(
+            if (state.isPremiumThemeOwned) {
+                R.string.settings_premium_theme_description_owned
+            } else {
+                R.string.settings_premium_theme_description_locked
+            },
+        )
+
         val isEnabled = !state.isLoading
         seekDailyStepGoal.isEnabled = isEnabled
         seekRecoveryMissionSteps.isEnabled = isEnabled
@@ -134,10 +161,91 @@ class SettingsFragment : Fragment() {
         radioThemeSystem.isEnabled = isEnabled
         radioThemeLight.isEnabled = isEnabled
         radioThemeDark.isEnabled = isEnabled
+        switchPremiumTheme.isEnabled = isEnabled && state.isPremiumThemeOwned
     }
 
     private fun updateThemeMode(themeMode: ThemeMode) {
         viewModel.updateThemeMode(themeMode)
+    }
+
+    private fun observePremiumTheme() {
+        viewLifecycleOwner.lifecycleScope.launch {
+            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                combine(themeViewModel.isPremiumTheme, themeViewModel.premiumVisualMode) { active, mode ->
+                    if (active) mode else null
+                }.collectLatest { mode -> applyPremiumTheme(mode) }
+            }
+        }
+    }
+
+    private fun applyPremiumTheme(mode: PremiumVisualMode?) = with(binding) {
+        val ctx = requireContext()
+        val defaultBackground = ContextCompat.getColor(ctx, DesignR.color.walklog_background)
+        val defaultCard = ContextCompat.getColor(ctx, DesignR.color.walklog_gray_50)
+        val defaultOnBackground = ContextCompat.getColor(ctx, DesignR.color.walklog_text_primary)
+        val defaultOnBackgroundMuted = ContextCompat.getColor(ctx, DesignR.color.walklog_text_secondary)
+        val defaultOnCard = ContextCompat.getColor(ctx, DesignR.color.walklog_text_primary)
+        val defaultOnCardMuted = ContextCompat.getColor(ctx, DesignR.color.walklog_text_secondary)
+        val palette = mode?.let { PremiumFlatPalette.forMode(it) }
+        val isNight = mode == PremiumVisualMode.NIGHT
+        val cardColor = palette?.cardBackground ?: defaultCard
+
+        root.setBackgroundColor(palette?.background ?: defaultBackground)
+        listOf(
+            profileCard,
+            googleAccountCard,
+            dailyStepGoalCard,
+            recoveryMissionCard,
+            notificationsCard,
+            themeCard,
+            premiumThemeCard,
+            premiumThemeCustomizeRow,
+            layoutOssLicenses,
+        ).forEach { it.setPremiumCardColor(cardColor) }
+
+        // 화면 제목·버전 정보는 카드로 감싸이지 않고 배경 위에 바로 놓여 있다.
+        val onBackground = palette?.onBackground ?: defaultOnBackground
+        val onBackgroundMuted = palette?.onBackgroundMuted ?: defaultOnBackgroundMuted
+        tvTitle.setTextColor(onBackground)
+        tvAppVersion.setTextColor(onBackgroundMuted)
+
+        // 카드 위 주요 텍스트 — NIGHT는 카드 자체가 어두워지므로 밝은 색으로 뒤집혀야 한다.
+        val onCard = palette?.onCard ?: defaultOnCard
+        val onCardMuted = palette?.onCardMuted ?: defaultOnCardMuted
+        tvNickname.setTextColor(onCard)
+        tvGoogleEmail.setTextColor(onCard)
+        tvDailyStepGoalTitle.setTextColor(onCard)
+        tvRecoveryMissionTitle.setTextColor(onCard)
+        tvNotificationsTitle.setTextColor(onCard)
+        tvThemeTitle.setTextColor(onCard)
+        listOf(radioThemeSystem, radioThemeLight, radioThemeDark).forEach { it.setTextColor(onCard) }
+        tvPremiumThemeTitle.setTextColor(onCard)
+        tvPremiumThemeCustomizeTitle.setTextColor(onCard)
+        ivPremiumThemeCustomizeArrow.setColorFilter(onCardMuted)
+        tvOssLicensesTitle.setTextColor(onCard)
+        ivOssLicensesArrow.setColorFilter(onCardMuted)
+        // 회복 미션 걸음 수(블루 강조)는 NIGHT의 남색 카드 위에서 대비가 약해지므로 밝은 색으로 대체한다.
+        tvRecoveryMissionSteps.setTextColor(
+            if (isNight) onCard else ContextCompat.getColor(ctx, DesignR.color.walklog_secondary),
+        )
+
+        // 아바타·포인트 배지는 원래 옅은 골드 배경 + 진한 텍스트라, NIGHT의 어두운 카드 위에서는
+        // 그대로 두면 밝은 상자가 튀어 보인다. NIGHT에서는 반투명 골드 배경으로 낮춘다.
+        val defaultBadgeBg = ContextCompat.getColor(ctx, DesignR.color.walklog_primary_container)
+        val badgeBg = if (isNight) withAlpha(ContextCompat.getColor(ctx, DesignR.color.walklog_primary), 56) else defaultBadgeBg
+        tvAvatar.setPremiumCardColor(badgeBg)
+        tvPointsBadge.setPremiumCardColor(badgeBg)
+    }
+
+    private fun withAlpha(color: Int, alpha: Int): Int = (color and 0x00FFFFFF) or (alpha shl 24)
+
+    private fun navigateToPremiumThemeSettings() {
+        val actionId = resources.getIdentifier(
+            "action_settings_to_premiumThemeSettings",
+            "id",
+            requireContext().packageName,
+        )
+        if (actionId != 0) findNavController().navigate(actionId)
     }
 
     private fun showNicknameEditDialog() {

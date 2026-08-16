@@ -16,6 +16,11 @@
     <string name="settings_section_theme">테마</string>
     <string name="settings_theme_title">화면 테마</string>
     <string name="settings_theme_description">앱 화면 색상을 선택해요</string>
+    <string name="settings_section_premium_theme">프리미엄 테마</string>
+    <string name="settings_premium_theme_title">프리미엄 테마 사용</string>
+    <string name="settings_premium_theme_description_locked">리워드 스토어에서 테마 팩을 교환하면 사용할 수 있어요</string>
+    <string name="settings_premium_theme_description_owned">골드 프리미엄 테마를 앱 전체에 적용해요</string>
+    <string name="settings_premium_chip_label">PREMIUM</string>
     <string name="settings_theme_system">시스템 설정</string>
     <string name="settings_theme_light">라이트</string>
     <string name="settings_theme_dark">다크</string>
@@ -33,4 +38,16 @@
     <string name="nickname_edit_description">영어, 한국어만 입력할 수 있어요</string>
     <string name="nickname_edit_placeholder">닉네임을 입력해주세요</string>
     <string name="nickname_edit_save">저장하기</string>
+
+    <string name="settings_premium_theme_customize">테마 꾸미기</string>
+
+    <string name="premium_theme_settings_title">테마 설정</string>
+    <string name="premium_theme_settings_back_cd">뒤로가기</string>
+    <string name="premium_theme_settings_description">프리미엄 테마의 배경 효과를 골라보세요. 바로 적용돼요</string>
+    <string name="premium_theme_mode_night_title">유성우</string>
+    <string name="premium_theme_mode_night_description">반짝이는 밤하늘과 흐르는 별똥별</string>
+    <string name="premium_theme_mode_day_clear_title">맑은 태양</string>
+    <string name="premium_theme_mode_day_clear_description">따스한 햇살이 비추는 맑은 하늘</string>
+    <string name="premium_theme_mode_day_wet_title">비 오는 날</string>
+    <string name="premium_theme_mode_day_wet_description">구름과 빗줄기, 가끔 치는 번개</string>
 </resources>

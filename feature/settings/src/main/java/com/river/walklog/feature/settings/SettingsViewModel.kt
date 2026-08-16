@@ -6,8 +6,10 @@ import com.river.walklog.core.analytics.CrashKeys
 import com.river.walklog.core.analytics.CrashReporter
 import com.river.walklog.core.auth.AuthRepository
 import com.river.walklog.core.data.repository.UserSettingsRepository
+import com.river.walklog.core.domain.usecase.GetRewardRedemptionsUseCase
 import com.river.walklog.core.domain.usecase.SignInWithGoogleUseCase
 import com.river.walklog.core.domain.usecase.SignOutUseCase
+import com.river.walklog.core.model.RewardCatalogIds
 import com.river.walklog.core.model.ThemeMode
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -26,6 +28,7 @@ class SettingsViewModel @Inject constructor(
     private val authRepository: AuthRepository,
     private val signInWithGoogle: SignInWithGoogleUseCase,
     private val signOutUseCase: SignOutUseCase,
+    private val getRewardRedemptionsUseCase: GetRewardRedemptionsUseCase,
     private val crashReporter: CrashReporter,
 ) : ViewModel() {
 
@@ -36,6 +39,7 @@ class SettingsViewModel @Inject constructor(
         crashReporter.setKey(CrashKeys.SCREEN, CrashKeys.Screens.SETTINGS)
         observeSettings()
         observeAuthState()
+        observePremiumThemeOwnership()
     }
 
     private fun observeSettings() {
@@ -49,12 +53,25 @@ class SettingsViewModel @Inject constructor(
                         notificationsEnabled = settings.notificationsEnabled,
                         recoveryMissionSteps = settings.recoveryMissionSteps,
                         themeMode = settings.themeMode,
+                        isPremiumThemeActive = settings.isPremiumThemeActive,
                         isLoading = false,
                     )
                 }
             }
             .catch { e ->
                 crashReporter.log("Settings load failed: ${e.message}")
+                crashReporter.recordException(e)
+            }
+            .launchIn(viewModelScope)
+    }
+
+    private fun observePremiumThemeOwnership() {
+        getRewardRedemptionsUseCase(RewardCatalogIds.THEME_PACK)
+            .onEach { redemptions ->
+                _state.update { it.copy(isPremiumThemeOwned = redemptions.isNotEmpty()) }
+            }
+            .catch { e ->
+                crashReporter.log("settingsViewModel: premium theme ownership query failed: $e")
                 crashReporter.recordException(e)
             }
             .launchIn(viewModelScope)
@@ -139,6 +156,17 @@ class SettingsViewModel @Inject constructor(
             runCatching { userSettingsRepository.setThemeMode(themeMode) }
                 .onFailure { e ->
                     crashReporter.log("Theme mode update failed: ${e.message}")
+                    crashReporter.recordException(e)
+                }
+        }
+    }
+
+    fun togglePremiumTheme(enabled: Boolean) {
+        if (!_state.value.isPremiumThemeOwned) return
+        viewModelScope.launch {
+            runCatching { userSettingsRepository.setActiveThemePack(enabled) }
+                .onFailure { e ->
+                    crashReporter.log("Premium theme toggle failed: ${e.message}")
                     crashReporter.recordException(e)
                 }
         }

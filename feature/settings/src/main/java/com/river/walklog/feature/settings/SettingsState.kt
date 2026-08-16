@@ -14,4 +14,6 @@ data class SettingsState(
     val isLoading: Boolean = true,
     val isSignedIn: Boolean = false,
     val userEmail: String = "",
+    val isPremiumThemeOwned: Boolean = false,
+    val isPremiumThemeActive: Boolean = false,
 )
