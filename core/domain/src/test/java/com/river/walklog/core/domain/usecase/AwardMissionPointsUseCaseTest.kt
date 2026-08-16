@@ -1,36 +1,49 @@
 package com.river.walklog.core.domain.usecase
 
-import com.river.walklog.core.data.repository.UserSettingsRepository
 import com.river.walklog.core.model.MissionType
-import com.river.walklog.core.model.ThemeMode
-import com.river.walklog.core.model.UserSettings
-import io.mockk.coJustRun
-import io.mockk.coVerify
-import io.mockk.every
-import io.mockk.mockk
-import kotlinx.coroutines.flow.flowOf
+import com.river.walklog.core.testing.repository.FakePointsLedgerRepository
+import com.river.walklog.core.testing.repository.FakeUserSettingsRepository
+import com.river.walklog.core.testing.repository.defaultUserSettings
 import kotlinx.coroutines.test.runTest
 import org.junit.Before
 import org.junit.Test
 import java.time.LocalDate
+import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
 class AwardMissionPointsUseCaseTest {
 
-    private lateinit var userSettingsRepository: UserSettingsRepository
+    private lateinit var userSettingsRepository: FakeUserSettingsRepository
+    private lateinit var pointsLedgerRepository: FakePointsLedgerRepository
     private lateinit var useCase: AwardMissionPointsUseCase
 
     @Before
     fun setUp() {
-        userSettingsRepository = mockk()
-        useCase = AwardMissionPointsUseCase(userSettingsRepository)
-        coJustRun { userSettingsRepository.addPoints(any()) }
-        coJustRun { userSettingsRepository.setLastDailyMissionAwardedDate(any()) }
-        coJustRun { userSettingsRepository.setLastRecoveryMissionAwardedDate(any()) }
+        userSettingsRepository = FakeUserSettingsRepository()
+        pointsLedgerRepository = FakePointsLedgerRepository()
+        useCase = AwardMissionPointsUseCase(userSettingsRepository, pointsLedgerRepository)
     }
 
-    // DAILY
+    @Test
+    fun `DAILY - award records points ledger entry`() = runTest {
+        stubSettings(lastDailyMissionAwardedDate = "")
+
+        useCase(MissionType.DAILY, 50)
+
+        val entry = pointsLedgerRepository.entries.value.single()
+        assertEquals(50, entry.deltaPoints)
+        assertEquals(MissionType.DAILY.name, entry.reason)
+    }
+
+    @Test
+    fun `DAILY - already awarded skips ledger record`() = runTest {
+        stubSettings(lastDailyMissionAwardedDate = LocalDate.now().toString())
+
+        useCase(MissionType.DAILY, 20)
+
+        assertTrue(pointsLedgerRepository.entries.value.isEmpty())
+    }
 
     @Test
     fun `DAILY - not yet awarded today returns true`() = runTest {
@@ -54,12 +67,12 @@ class AwardMissionPointsUseCaseTest {
     }
 
     @Test
-    fun `DAILY - award calls addPoints with provided points`() = runTest {
+    fun `DAILY - award adds provided points to balance`() = runTest {
         stubSettings(lastDailyMissionAwardedDate = "")
 
         useCase(MissionType.DAILY, 50)
 
-        coVerify(exactly = 1) { userSettingsRepository.addPoints(50) }
+        assertEquals(50, userSettingsRepository.settings.value.totalPoints)
     }
 
     @Test
@@ -69,7 +82,7 @@ class AwardMissionPointsUseCaseTest {
 
         useCase(MissionType.DAILY, 20)
 
-        coVerify(exactly = 1) { userSettingsRepository.setLastDailyMissionAwardedDate(today) }
+        assertEquals(today, userSettingsRepository.settings.value.lastDailyMissionAwardedDate)
     }
 
     @Test
@@ -78,19 +91,20 @@ class AwardMissionPointsUseCaseTest {
 
         useCase(MissionType.DAILY, 20)
 
-        coVerify(exactly = 0) { userSettingsRepository.addPoints(any()) }
+        assertEquals(0, userSettingsRepository.settings.value.totalPoints)
     }
 
     @Test
-    fun `DAILY - already awarded skips setLastDailyMissionAwardedDate`() = runTest {
-        stubSettings(lastDailyMissionAwardedDate = LocalDate.now().toString())
+    fun `DAILY - concurrent calls only award once`() = runTest {
+        stubSettings(lastDailyMissionAwardedDate = "")
 
-        useCase(MissionType.DAILY, 20)
+        val first = useCase(MissionType.DAILY, 20)
+        val second = useCase(MissionType.DAILY, 20)
 
-        coVerify(exactly = 0) { userSettingsRepository.setLastDailyMissionAwardedDate(any()) }
+        assertTrue(first)
+        assertFalse(second)
+        assertEquals(20, userSettingsRepository.settings.value.totalPoints)
     }
-
-    // RECOVERY
 
     @Test
     fun `RECOVERY - not yet awarded today returns true`() = runTest {
@@ -107,12 +121,12 @@ class AwardMissionPointsUseCaseTest {
     }
 
     @Test
-    fun `RECOVERY - award calls addPoints with provided points`() = runTest {
+    fun `RECOVERY - award adds provided points to balance`() = runTest {
         stubSettings(lastRecoveryMissionAwardedDate = "")
 
         useCase(MissionType.RECOVERY, 10)
 
-        coVerify(exactly = 1) { userSettingsRepository.addPoints(10) }
+        assertEquals(10, userSettingsRepository.settings.value.totalPoints)
     }
 
     @Test
@@ -122,7 +136,7 @@ class AwardMissionPointsUseCaseTest {
 
         useCase(MissionType.RECOVERY, 10)
 
-        coVerify(exactly = 1) { userSettingsRepository.setLastRecoveryMissionAwardedDate(today) }
+        assertEquals(today, userSettingsRepository.settings.value.lastRecoveryMissionAwardedDate)
     }
 
     @Test
@@ -131,27 +145,17 @@ class AwardMissionPointsUseCaseTest {
 
         useCase(MissionType.RECOVERY, 10)
 
-        coVerify(exactly = 0) { userSettingsRepository.setLastDailyMissionAwardedDate(any()) }
+        assertEquals("", userSettingsRepository.settings.value.lastDailyMissionAwardedDate)
     }
-
-    // helper
 
     private fun stubSettings(
         lastDailyMissionAwardedDate: String = "",
         lastRecoveryMissionAwardedDate: String = "",
     ) {
-        every { userSettingsRepository.settings } returns flowOf(
-            UserSettings(
-                isOnboardingCompleted = false,
-                nickname = "",
-                totalPoints = 0,
-                dailyStepGoal = 10_000,
-                notificationsEnabled = true,
-                recoveryMissionSteps = 6_000,
-                themeMode = ThemeMode.SYSTEM,
+        userSettingsRepository.setSettings(
+            defaultUserSettings(
                 lastDailyMissionAwardedDate = lastDailyMissionAwardedDate,
                 lastRecoveryMissionAwardedDate = lastRecoveryMissionAwardedDate,
-                userId = "",
             ),
         )
     }

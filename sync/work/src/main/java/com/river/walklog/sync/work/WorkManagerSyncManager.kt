@@ -18,9 +18,9 @@ class WorkManagerSyncManager @Inject constructor(
 
     override fun requestSync() {
         WorkManager.getInstance(context).enqueueUniqueWork(
-            UserSettingsSyncWorker.WORK_NAME,
+            AppDataSyncWorker.WORK_NAME,
             ExistingWorkPolicy.KEEP,
-            OneTimeWorkRequestBuilder<UserSettingsSyncWorker>()
+            OneTimeWorkRequestBuilder<AppDataSyncWorker>()
                 .setConstraints(
                     Constraints.Builder()
                         .setRequiredNetworkType(NetworkType.CONNECTED)
