@@ -18,6 +18,7 @@ import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.unit.Density
 import androidx.core.view.WindowCompat
+import com.river.walklog.core.model.PremiumVisualMode
 
 private val LightColorScheme = lightColorScheme(
     primary = WalkLogColor.Primary,
@@ -80,22 +81,130 @@ private val DarkColorScheme = darkColorScheme(
     inverseOnSurface = WalkLogColor.Gray900,
 )
 
+/**
+ * 리워드 스토어 "테마 팩" 교환 시 활성화되는 프리미엄 팔레트 3종.
+ * 시스템 라이트/다크 모드와 무관하게, 현재 시간대·날씨([PremiumVisualMode])에 따라 선택된다.
+ * NIGHT는 항상 다크(별/유성우와 어울리는 남색+골드), DAY_CLEAR/DAY_WET은 라이트 팔레트다.
+ */
+private val PremiumNightColorScheme = darkColorScheme(
+    primary = WalkLogColor.Primary,
+    onPrimary = WalkLogColor.StaticBlack,
+    primaryContainer = WalkLogColor.PrimaryDark,
+    onPrimaryContainer = WalkLogColor.PrimaryLight,
+    secondary = WalkLogColor.PrimaryLight,
+    onSecondary = WalkLogColor.StaticBlack,
+    secondaryContainer = WalkLogColor.PrimaryContainerDark,
+    onSecondaryContainer = WalkLogColor.PrimaryLight,
+    tertiary = WalkLogColor.Success,
+    onTertiary = WalkLogColor.StaticBlack,
+    tertiaryContainer = WalkLogColor.SuccessDark,
+    onTertiaryContainer = WalkLogColor.SuccessContainer,
+    error = WalkLogColor.Error,
+    onError = WalkLogColor.StaticWhite,
+    errorContainer = WalkLogColor.ErrorDark,
+    onErrorContainer = WalkLogColor.ErrorContainer,
+    background = WalkLogColor.PremiumBackground,
+    onBackground = WalkLogColor.StaticWhite,
+    surface = WalkLogColor.PremiumSurface,
+    onSurface = WalkLogColor.StaticWhite,
+    surfaceVariant = WalkLogColor.PremiumSurfaceVariant,
+    onSurfaceVariant = WalkLogColor.Gray300,
+    outline = WalkLogColor.PrimaryDark,
+    outlineVariant = WalkLogColor.PremiumOutlineVariant,
+    scrim = WalkLogColor.StaticBlack,
+    inverseSurface = WalkLogColor.Gray100,
+    inverseOnSurface = WalkLogColor.Gray900,
+)
+
+private val PremiumDayClearColorScheme = lightColorScheme(
+    primary = WalkLogColor.PrimaryDark,
+    onPrimary = WalkLogColor.StaticWhite,
+    primaryContainer = WalkLogColor.PrimaryContainer,
+    onPrimaryContainer = WalkLogColor.PrimaryContainerDark,
+    secondary = WalkLogColor.Accent,
+    onSecondary = WalkLogColor.StaticWhite,
+    secondaryContainer = WalkLogColor.PremiumDayClearSurfaceVariant,
+    onSecondaryContainer = WalkLogColor.Gray900,
+    tertiary = WalkLogColor.Success,
+    onTertiary = WalkLogColor.StaticWhite,
+    tertiaryContainer = WalkLogColor.SuccessContainer,
+    onTertiaryContainer = WalkLogColor.SuccessDark,
+    error = WalkLogColor.Error,
+    onError = WalkLogColor.StaticWhite,
+    errorContainer = WalkLogColor.ErrorContainer,
+    onErrorContainer = WalkLogColor.ErrorDark,
+    background = WalkLogColor.PremiumDayClearBackground,
+    onBackground = WalkLogColor.Gray900,
+    surface = WalkLogColor.PremiumDayClearSurface,
+    onSurface = WalkLogColor.Gray900,
+    surfaceVariant = WalkLogColor.PremiumDayClearSurfaceVariant,
+    onSurfaceVariant = WalkLogColor.Gray700,
+    outline = WalkLogColor.PremiumDayClearOutlineVariant,
+    outlineVariant = WalkLogColor.PremiumDayClearSurfaceVariant,
+    scrim = WalkLogColor.StaticBlack,
+    inverseSurface = WalkLogColor.Gray900,
+    inverseOnSurface = WalkLogColor.StaticWhite,
+)
+
+private val PremiumDayWetColorScheme = lightColorScheme(
+    primary = WalkLogColor.Secondary,
+    onPrimary = WalkLogColor.StaticWhite,
+    primaryContainer = WalkLogColor.SecondaryContainer,
+    onPrimaryContainer = WalkLogColor.StaticWhite,
+    secondary = WalkLogColor.PrimaryDark,
+    onSecondary = WalkLogColor.StaticWhite,
+    secondaryContainer = WalkLogColor.PremiumDayWetSurfaceVariant,
+    onSecondaryContainer = WalkLogColor.Gray900,
+    tertiary = WalkLogColor.Success,
+    onTertiary = WalkLogColor.StaticWhite,
+    tertiaryContainer = WalkLogColor.SuccessContainer,
+    onTertiaryContainer = WalkLogColor.SuccessDark,
+    error = WalkLogColor.Error,
+    onError = WalkLogColor.StaticWhite,
+    errorContainer = WalkLogColor.ErrorContainer,
+    onErrorContainer = WalkLogColor.ErrorDark,
+    background = WalkLogColor.PremiumDayWetBackground,
+    onBackground = WalkLogColor.Gray900,
+    surface = WalkLogColor.PremiumDayWetSurface,
+    onSurface = WalkLogColor.Gray900,
+    surfaceVariant = WalkLogColor.PremiumDayWetSurfaceVariant,
+    onSurfaceVariant = WalkLogColor.Gray700,
+    outline = WalkLogColor.PremiumDayWetOutlineVariant,
+    outlineVariant = WalkLogColor.PremiumDayWetSurfaceVariant,
+    scrim = WalkLogColor.StaticBlack,
+    inverseSurface = WalkLogColor.Gray900,
+    inverseOnSurface = WalkLogColor.StaticWhite,
+)
+
 val LocalColors = staticCompositionLocalOf<ColorScheme> { LightColorScheme }
 val LocalTypography = staticCompositionLocalOf { Typography }
 val LocalDarkTheme = staticCompositionLocalOf { true }
+val LocalIsPremiumTheme = staticCompositionLocalOf { false }
+val LocalPremiumVisualMode = staticCompositionLocalOf { PremiumVisualMode.NIGHT }
 
 @Composable
 fun WalkLogTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
+    isPremiumTheme: Boolean = false,
+    premiumVisualMode: PremiumVisualMode = PremiumVisualMode.NIGHT,
     content: @Composable () -> Unit,
 ) {
-    val colors = if (darkTheme) DarkColorScheme else LightColorScheme
+    val colors = when {
+        isPremiumTheme -> when (premiumVisualMode) {
+            PremiumVisualMode.NIGHT -> PremiumNightColorScheme
+            PremiumVisualMode.DAY_CLEAR -> PremiumDayClearColorScheme
+            PremiumVisualMode.DAY_WET -> PremiumDayWetColorScheme
+        }
+        darkTheme -> DarkColorScheme
+        else -> LightColorScheme
+    }
     val locale = LocalConfiguration.current.locales[0]
     val fontScale = when (locale.language) {
         "en", "ja" -> 0.9f
         else -> 1.0f
     }
     val scaledTypography = remember(fontScale) { Typography.scale(fontScale) }
+    val useDarkSystemBars = if (isPremiumTheme) premiumVisualMode == PremiumVisualMode.NIGHT else darkTheme
 
     if (!LocalInspectionMode.current) {
         val view = LocalView.current
@@ -109,15 +218,17 @@ fun WalkLogTheme(
                 window.navigationBarColor = colors.background.toArgb()
             }
             val insets = WindowCompat.getInsetsController(window, view)
-            insets.isAppearanceLightStatusBars = !darkTheme
-            insets.isAppearanceLightNavigationBars = !darkTheme
+            insets.isAppearanceLightStatusBars = !useDarkSystemBars
+            insets.isAppearanceLightNavigationBars = !useDarkSystemBars
         }
     }
 
     CompositionLocalProvider(
         LocalColors provides colors,
         LocalTypography provides scaledTypography,
-        LocalDarkTheme provides darkTheme,
+        LocalDarkTheme provides useDarkSystemBars,
+        LocalIsPremiumTheme provides isPremiumTheme,
+        LocalPremiumVisualMode provides premiumVisualMode,
         LocalDensity provides Density(LocalDensity.current.density, 1f),
     ) {
         content()
@@ -131,4 +242,8 @@ object WalkLogTheme {
         @Composable get() = LocalTypography.current
     val isDark: Boolean
         @Composable get() = LocalDarkTheme.current
+    val isPremium: Boolean
+        @Composable get() = LocalIsPremiumTheme.current
+    val premiumVisualMode: PremiumVisualMode
+        @Composable get() = LocalPremiumVisualMode.current
 }

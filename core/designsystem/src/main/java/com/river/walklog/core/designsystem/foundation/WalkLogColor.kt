@@ -52,6 +52,37 @@ object WalkLogColor {
 
     val PrimaryContainerDark = Color(0xFF3D3000)
 
+    // Premium Theme — Night (프리미엄 + 밤 시간대: 별/유성우와 어울리는 남색+골드)
+    val PremiumBackground = Color(0xFF0C1A47)
+    val PremiumSurface = Color(0xFF13224F)
+    val PremiumSurfaceVariant = Color(0xFF1B2C5C)
+    val PremiumOutlineVariant = Color(0xFF2E4380)
+
+    // Premium Theme — Day Clear (프리미엄 + 낮/맑음: 태양과 어울리는 크림/골드)
+    val PremiumDayClearBackground = Color(0xFFFFF6E3)
+    val PremiumDayClearSurface = Color(0xFFFFFFFF)
+    val PremiumDayClearSurfaceVariant = Color(0xFFFFF0CC)
+    val PremiumDayClearOutlineVariant = Color(0xFFF0D999)
+
+    // Premium Theme — Day Wet (프리미엄 + 낮/비·눈·흐림: 빗줄기와 어울리는 페일 블루)
+    val PremiumDayWetBackground = Color(0xFFEAF1F8)
+    val PremiumDayWetSurface = Color(0xFFFFFFFF)
+    val PremiumDayWetSurfaceVariant = Color(0xFFDCE7F2)
+    val PremiumDayWetOutlineVariant = Color(0xFFB7CBE0)
+
+    // Premium Theme — 배경 효과 전용 (PremiumWeatherEffects: 태양/번개)
+    val PremiumSunColor = Color(0xFFFFC94D)
+    val PremiumSunCoreStart = Color(0xFFFFDE7A)
+    val PremiumSunCoreEnd = Color(0xFFFFB74D)
+    val PremiumLightningBolt = Color(0xFFFFF6D8)
+
+    // Reward Screen — 다크 네이비/브라운 배경 그라디언트 (프리미엄 테마와 무관한 고정 디자인)
+    val RewardBackgroundTop = Color(0xFF0C1A47)
+    val RewardBackgroundMid = Color(0xFF080F2A)
+    val RewardBackgroundBottom = Color(0xFF040810)
+    val RewardCircleDark = Color(0xFF2C1F00)
+    val RewardCircleDarker = Color(0xFF0F0A00)
+
     // Static
     val StaticBlack = Color(0xFF000000)
     val StaticWhite = Color(0xFFFFFFFF)
