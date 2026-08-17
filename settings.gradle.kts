@@ -25,6 +25,10 @@ dependencyResolutionManagement {
             }
         }
         mavenCentral()
+        // reward-store-rn의 브라운필드 RN AAR(com.river.walklog:reactnativeapp)을 소비하기 위함.
+        // `cd reward-store-rn && npx brownfield package:android && npx brownfield publish:android`로
+        // ~/.m2/repository에 게시됨.
+        mavenLocal()
     }
 }
 

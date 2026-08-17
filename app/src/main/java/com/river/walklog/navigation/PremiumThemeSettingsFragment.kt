@@ -8,12 +8,11 @@ import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.platform.ViewCompositionStrategy
 import androidx.fragment.app.Fragment
 import androidx.navigation.fragment.findNavController
-import com.river.walklog.R
-import com.river.walklog.feature.onboarding.OnboardingRoute
+import com.river.walklog.feature.settings.PremiumThemeSettingsRoute
 import dagger.hilt.android.AndroidEntryPoint
 
 @AndroidEntryPoint
-class OnboardingFragment : Fragment() {
+class PremiumThemeSettingsFragment : Fragment() {
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -23,13 +22,8 @@ class OnboardingFragment : Fragment() {
         setViewCompositionStrategy(ViewCompositionStrategy.DisposeOnViewTreeLifecycleDestroyed)
         setContent {
             WalkLogAppTheme {
-                OnboardingRoute(
-                    onNavigateToHome = {
-                        findNavController().navigate(R.id.action_onboarding_to_home)
-                    },
-                    onExitApp = {
-                        requireActivity().finish()
-                    },
+                PremiumThemeSettingsRoute(
+                    onBack = { findNavController().popBackStack() },
                 )
             }
         }

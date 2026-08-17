@@ -8,7 +8,6 @@ import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.platform.ViewCompositionStrategy
 import androidx.fragment.app.Fragment
 import androidx.navigation.fragment.findNavController
-import com.river.walklog.core.designsystem.foundation.WalkLogTheme
 import com.river.walklog.feature.recap.RecapRoute
 import dagger.hilt.android.AndroidEntryPoint
 
@@ -22,7 +21,7 @@ class RecapFragment : Fragment() {
     ): View = ComposeView(requireActivity()).apply {
         setViewCompositionStrategy(ViewCompositionStrategy.DisposeOnViewTreeLifecycleDestroyed)
         setContent {
-            WalkLogTheme {
+            WalkLogAppTheme {
                 RecapRoute(
                     onBack = { findNavController().popBackStack() },
                 )

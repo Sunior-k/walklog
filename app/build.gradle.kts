@@ -54,7 +54,22 @@ android {
     }
 }
 
+// reward-store-rn(별도 Gradle 루트)에서 발행한 브라운필드 AAR은 com.facebook.react:hermes-android를
+// 버전 없이 요구한다. 이 module은 React Native Gradle Plugin이 아니라서 자동 버전 치환이 없으므로,
+// RN 0.86.2가 실제로 사용하는 새 Hermes 아티팩트(com.facebook.hermes:hermes-android)로 직접 치환한다.
+// (버전은 reward-store-rn 빌드 시 Gradle이 실제로 내려받은 버전을 확인해 고정한 값)
+configurations.all {
+    resolutionStrategy.dependencySubstitution {
+        substitute(module("com.facebook.react:hermes-android"))
+            .using(module("com.facebook.hermes:hermes-android:250829098.0.16"))
+    }
+}
+
 dependencies {
+    // React Native 브라운필드 — 리워드 스토어 (reward-store-rn/android/reactnativeapp에서 패키징)
+    implementation("com.river.walklog:reactnativeapp:0.0.1-local")
+    implementation("com.facebook.react:react-android:0.86.2")
+
     // Sync modules
     implementation(projects.sync.work)
 
@@ -84,6 +99,8 @@ dependencies {
     implementation(projects.core.auth)
     implementation(projects.core.data)
     implementation(projects.core.designsystem)
+    implementation(projects.core.domain) // RewardBridgeModule에서 UseCase 직접 사용
+    implementation(projects.core.ui) // ThemeViewModel (테마 팩 전체 적용)
 
     // Material (BottomNavigationView)
     implementation(libs.material)
@@ -99,6 +116,9 @@ dependencies {
     // Activity / Fragment / AppCompat
     implementation(libs.androidx.activity.compose)
     implementation(libs.androidx.appcompat)
+
+    // ThemeViewModel(core:ui)을 각 Fragment에서 hiltViewModel()로 직접 사용하기 위함
+    implementation(libs.hilt.navigation.compose)
 
     // Baseline Profile
     implementation(libs.androidx.profileinstaller)

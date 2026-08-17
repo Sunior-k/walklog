@@ -1,11 +1,14 @@
 package com.river.walklog
 
+import android.content.res.ColorStateList
 import android.content.res.Configuration
+import android.graphics.drawable.ColorDrawable
 import android.os.Bundle
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.app.AppCompatDelegate
+import androidx.core.content.ContextCompat
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowCompat
@@ -26,10 +29,13 @@ import com.google.android.material.bottomnavigation.BottomNavigationView
 import com.google.android.material.navigation.NavigationBarView
 import com.google.android.material.navigationrail.NavigationRailView
 import com.river.walklog.core.analytics.CrashReporter
+import com.river.walklog.core.designsystem.foundation.PremiumNavPalette
+import com.river.walklog.core.model.PremiumVisualMode
 import com.river.walklog.core.model.ThemeMode
 import com.river.walklog.core.model.UserSettings
 import com.river.walklog.feature.widget.TodayMissionWidgetWorker
 import dagger.hilt.android.AndroidEntryPoint
+import com.river.walklog.core.designsystem.R as DesignR
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.map
@@ -126,6 +132,7 @@ class MainActivity : AppCompatActivity() {
             is BottomNavigationView -> applyBottomNavigationInsets(navView)
             is NavigationRailView -> applyNavigationRailInsets(navView)
         }
+        observePremiumNavTheme(navView)
         syncNavigationWithDestination(navView, navController)
         restoreVisibleDestinationAfterRecreation(
             navView = navView,
@@ -138,6 +145,10 @@ class MainActivity : AppCompatActivity() {
         val navHost = supportFragmentManager
             .findFragmentById(R.id.nav_host_fragment) as NavHostFragment
         return navHost.navController
+    }
+
+    fun navigateToLogin() {
+        findNavController().navigate(R.id.loginFragment)
     }
 
     // BottomNav popUpTo 기준이 흔들리지 않도록 그래프 시작점과 복원 탭을 분리.
@@ -312,6 +323,42 @@ class MainActivity : AppCompatActivity() {
 
     private fun findNavigationView(): NavigationBarView =
         (findViewById(R.id.nav_rail) ?: findViewById(R.id.bottom_navigation))!!
+
+    private fun observePremiumNavTheme(navView: NavigationBarView) {
+        val defaultBackgroundColor = (navView.background as? ColorDrawable)?.color
+            ?: ContextCompat.getColor(this, DesignR.color.walklog_surface)
+        val defaultTintList = navView.itemIconTintList
+
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                viewModel.premiumNavMode.collect { mode ->
+                    applyPremiumNavTint(navView, mode, defaultBackgroundColor, defaultTintList)
+                }
+            }
+        }
+    }
+
+    private fun applyPremiumNavTint(
+        navView: NavigationBarView,
+        mode: PremiumVisualMode?,
+        defaultBackgroundColor: Int,
+        defaultTintList: ColorStateList?,
+    ) {
+        if (mode == null) {
+            navView.setBackgroundColor(defaultBackgroundColor)
+            navView.itemIconTintList = defaultTintList
+            navView.itemTextColor = defaultTintList
+            return
+        }
+        val palette = PremiumNavPalette.forMode(mode)
+        navView.setBackgroundColor(palette.surfaceColor)
+        val tintList = ColorStateList(
+            arrayOf(intArrayOf(android.R.attr.state_checked), intArrayOf()),
+            intArrayOf(palette.selectedColor, palette.unselectedColor),
+        )
+        navView.itemIconTintList = tintList
+        navView.itemTextColor = tintList
+    }
 
     private fun applySystemBarAppearance() {
         val currentNightMode = resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK
