@@ -42,6 +42,20 @@ jobs:
           echo '${{ secrets.GOOGLE_SERVICES_JSON_DEBUG }}' | base64 --decode > app/src/debug/google-services.json
           echo '${{ secrets.GOOGLE_SERVICES_JSON_RELEASE }}' | base64 --decode > app/google-services.json
 
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: reward-store-rn/.nvmrc
+          cache: npm
+          cache-dependency-path: reward-store-rn/package-lock.json
+
+      - name: Publish React Native brownfield AAR
+        working-directory: reward-store-rn
+        run: |
+          npm ci
+          npx brownfield package:android
+          npx brownfield publish:android
+
       - name: Check build logic
         run: ./gradlew :build-logic:convention:check
 
@@ -162,6 +176,20 @@ jobs:
         run: |
           echo '${{ secrets.GOOGLE_SERVICES_JSON_DEBUG }}' | base64 --decode > app/src/debug/google-services.json
           echo '${{ secrets.GOOGLE_SERVICES_JSON_RELEASE }}' | base64 --decode > app/google-services.json
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: reward-store-rn/.nvmrc
+          cache: npm
+          cache-dependency-path: reward-store-rn/package-lock.json
+
+      - name: Publish React Native brownfield AAR
+        working-directory: reward-store-rn
+        run: |
+          npm ci
+          npx brownfield package:android
+          npx brownfield publish:android
 
       - name: Run instrumented tests
         uses: reactivecircus/android-emulator-runner@v2
