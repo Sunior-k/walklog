@@ -64,8 +64,8 @@ Deep Dive Docs are currently maintained in **Korean**. English versions will be 
 | **Weekly Report** | Recent 12-week archive, detailed charts, and `FileProvider`-based image sharing |
 | **Monthly Recap** | Eight story-style slides for monthly step data with auto-play and pause support |
 | **Step History** | Calendar-based daily steps plus detailed activity data such as calories and distance |
-| **Settings** | Profile, target steps, recovery steps, notifications, light/dark/system theme settings, and Google sign-in / sign-out with signed-in account display |
-| **Reward** | Locked teaser screen for future point redemption features |
+| **Settings** | Profile, target steps, recovery steps, notifications, light/dark/system theme settings, a premium theme toggle (unlocked after redeeming the theme pack), and Google sign-in / sign-out with signed-in account display |
+| **Reward** | Points history, an achievement-gallery-style badge collection (with a home-screen badge indicator), a React Native-based reward store with a Firestore-managed catalog for redeeming points into a badge, a Firestore-issued coupon, a donation, or the premium theme, and standalone promo-code redemption for externally-issued event codes; the level system card remains a locked teaser |
 | **App Widget** | Jetpack Glance widget with WorkManager-based automatic updates every 15 minutes |
 
 ## Screenshots
@@ -159,6 +159,25 @@ WalkLog **grants points when missions are completed** and prevents duplicate rew
 
 When the ViewModel detects mission completion from the real-time step count, the use case checks whether points have already been granted for today's mission type. If not, the Repository stores the points and last rewarded date in DataStore.
 
+### Redeeming points
+
+`feature:reward` spends points through `RedeemRewardUseCase`, which returns a `sealed interface RedeemResult` (`Success` / `InsufficientBalance` / `SignInRequired`) instead of a plain `Boolean` so callers can react differently to "not enough points" versus "not signed in." Each catalog item has a distinct side effect handled in the same use case:
+
+| Item | Side effect |
+|---|---|
+| Gold Worker badge | Recorded in Room; drives both the badge collection screen and a home-header badge chip |
+| Coffee coupon | Issued in **Firestore** (`couponRedemptions/{code}`, doc ID = coupon code) — no Cloud Functions, so Security Rules alone enforce owner-only creation, no duplicate codes, and a one-way `ISSUED -> USED` transition |
+| Donation | Summed from redemption records as total donated points |
+| Theme pack | Immediately activates the premium theme; can be toggled on/off afterward from Settings |
+
+Guests are blocked before any Firestore call — `RedeemRewardUseCase` checks `AuthRepository.currentUserIdOrNull` first and short-circuits to `SignInRequired`.
+
+Both the badge/donation redemption records and the points ledger are additionally backed up to Firestore (dual-write on record, push/pull `Syncable.sync()` on app start) so reinstalling the app or switching devices no longer loses reward history — see [ADR-21](docs/architecture-decisions.md#adr-21-리워드-적립보유-내역의-firestore-백업--재설치-시-데이터-유실-방지).
+
+### Reward Store — React Native Brownfield
+
+The reward store screen itself is a **React Native** screen embedded via `@callstack/react-native-brownfield` (brownfield pattern from Toss's SLASH23 talk), developed in an independent Node/Gradle root (`reward-store-rn/`) and consumed by `app` as a local AAR. `RewardBridgeModule` exposes `core:domain` use cases to RN through a Hilt `@EntryPoint`, and the RN screen mirrors WalkLog's design tokens (`walklogColors.ts`) so it renders in the same light/dark/premium palette as the native app. Catalog pricing itself is Firestore-managed ([ADR-22](docs/architecture-decisions.md#adr-22-firestore-기반-동적-리워드-카탈로그--앱-업데이트-없는-가격-관리)), and a separate promo-code entry point lets users redeem externally-issued event codes ([ADR-23](docs/architecture-decisions.md#adr-23-이벤트프로모션-코드-등록--외부-코드-입력과-리워드-스토어-교환의-분리)). See [ADR-18](docs/architecture-decisions.md#adr-18-react-native-brownfield--리워드-스토어) and [ADR-19](docs/architecture-decisions.md#adr-19-firestore-기반-쿠폰-발급사용--서버-없는-환경의-위조-방지) for the base design, and [Security Design §7](docs/security.md#7-firestore-security-rules--쿠폰-위조중복-등록-방지)/[§8](docs/security.md#8-firestore-security-rules--프로모션-코드-위조중복-등록-방지) for the anti-fraud rules.
+
 ---
 
 # Crash Reporting
@@ -200,9 +219,12 @@ object CrashKeys {
         const val MISSION_DETAIL = "mission_detail"
         const val RECAP = "recap"
         const val ONBOARDING = "onboarding"
+        const val LOGIN = "login"
         const val SETTINGS = "settings"
         const val HISTORY = "history"
         const val REWARD = "reward"
+        const val POINTS_HISTORY = "points_history"
+        const val BADGE_COLLECTION = "badge_collection"
     }
 
     object SensorValues {
@@ -318,18 +340,24 @@ ViewModel tests use Fake repositories from `core:testing` with real UseCases by 
 - `GetWeeklyStepSummaryUseCaseTest`, `GetWeeklyReportArchiveUseCaseTest`, `GetWeeklyReportDetailUseCaseTest`, `GetWeeklyBestHourUseCaseTest` - weekly aggregation, archive/detail, and best-hour logic
 - `GetMonthlyRecapUseCaseTest`, `GetCurrentStreakUseCaseTest`, `GetWeeklyHomeStatsUseCaseTest` - recap, streak, and home summary logic
 - `GetWalkingInsightsUseCaseTest`, `ObserveActivityStateUseCaseTest`, `AwardMissionPointsUseCaseTest` - native analysis boundary, activity state, and mission reward rules
+- `RedeemRewardUseCaseTest` - `RedeemResult` branches (`Success` / `InsufficientBalance` / `SignInRequired`) and per-item side effects (coupon issuance, badge/donation records, theme activation)
+- `IssueCouponUseCaseTest`, `GetIssuedCouponsUseCaseTest`, `MarkCouponUsedUseCaseTest` - Firestore coupon lifecycle against a `FakeCouponRepository`
+- `RedeemPromoCodeUseCaseTest` - `PromoCodeRedeemResult` branches (`Success` / `AlreadyRedeemed` / `InvalidCode` / `SignInRequired` / `UnknownError`) against a `FakePromoCodeRepository`
+- `GetRewardCatalogUseCaseTest` - active-item filtering against a `FakeRewardCatalogRepository`
+- `RoomRewardRedemptionRepositoryTest`, `RoomPointsLedgerRepositoryTest` - Room-always-writes-locally + conditional Firestore dual-write + push/pull `sync()` behavior
 - `OfflineFirstStepRepositoryTest`, `DefaultWeatherRepositoryTest`, `DataStoreUserSettingsRepositoryTest`, `DefaultActivityStateRepositoryTest` - repository implementations with mocked internal DataSources
 - `NetworkWeatherSummaryMappingTest`, `LocaleWeatherLocationProviderTest` - data mapping and locale fallback behavior
 
 **Feature ViewModel layer**
-- `HomeViewModelTest`, `MissionDetailViewModelTest` - Fake repositories + real UseCases
+- `HomeViewModelTest`, `MissionDetailViewModelTest` - Fake repositories + real UseCases; `HomeViewModelTest` also covers the gold-badge-ownership signal shown as a home header chip
 - `HistoryViewModelTest` - calendar item structure, month navigation, statistics formatting
 - `OnboardingViewModelTest` - four-step page transition state machine and repository call on completion
 - `RecapViewModelTest`, `WeeklyReportArchiveViewModelTest`, `WeeklyReportDetailViewModelTest` - report and recap UI state mapping
-- `SettingsViewModelTest` - nickname observation, point observation, and Intent-to-repository mapping
+- `SettingsViewModelTest` - nickname observation, point observation, Intent-to-repository mapping, and premium theme ownership/toggle gating
+- `BadgeCollectionViewModelTest` - gold badge ownership from `GetRewardRedemptionsUseCase`
 
 **Compose UI tests (androidTest)**
-- `HomeScreenTest` - UI for each sensor status: loading, no permission, unavailable, normal
+- `HomeScreenTest` - UI for each sensor status: loading, no permission, unavailable, normal; gold badge chip visibility and tap navigation
 - `WeeklyReportScreenTest` - archive/detail rendering and share button state
 - `MissionDetailScreenTest` - before/after achievement states and back callback
 - `RecapScreenTest` - slide transition and pause/play
@@ -359,7 +387,8 @@ ViewModel tests use Fake repositories from `core:testing` with real UseCases by 
 | Network | OkHttp (KMA / Open-Meteo — location-based provider selection), in-memory weather cache |
 | On-device AI | LiteRT 1.4.2 (Activity Classifier), NDK/JNI (Walking Insights Engine) |
 | Auth | Firebase Auth, Credential Manager (Google Sign-In) |
-| Cloud Sync | Firebase Firestore (cross-device settings sync via `sync:work` WorkManager) |
+| Cloud Sync | Firebase Firestore (cross-device settings/points-ledger/reward-redemption sync via `sync:work` WorkManager; reward coupon and promo-code issuance guarded by Security Rules) |
+| Cross-platform | React Native 0.86 brownfield (`@callstack/react-native-brownfield`) — Reward Store screen only |
 | Widget | Jetpack Glance 1.1.1, WorkManager |
 | Analytics | Firebase Crashlytics, Firebase Analytics |
 | Performance | Baseline Profile, R8 Full Mode |
@@ -446,6 +475,9 @@ When adding a new feature module, declaring only `id("river.android.feature")` a
 ---
 
 ## Next expansion points:
-- Reward store, badge collection, and level system — `feature:reward` exists as a teaser screen; point redemption UI is the next step
+- Level system rewards — the reward hub's fourth card remains a locked teaser
+- Publish the `reward-store-rn` AAR outside `mavenLocal()` (repository artifact or a private Maven registry) so CI and fresh clones can build `app` without running the RN packaging step first
+- Move coupon issuance from client + Security Rules to Cloud Functions for server-signed anti-fraud guarantees
+- Automate promo-code document creation — currently an admin creates each code manually in the Firebase console
 - Place `activity_classifier.tflite` under `core/native/src/main/assets/`, then validate HAR classification on a physical device
 - Social / leaderboard features using the existing Firestore `users` collection

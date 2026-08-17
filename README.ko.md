@@ -65,8 +65,8 @@ WalkLog는 **Google Health Connect**를 통해 오늘의 걸음 수를 읽고, �
 | **Weekly Report** | 최근 12주 리포트와 상세 차트 제공, `FileProvider` 기반 이미지 공유 지원 |
 | **Monthly Recap** | 월간 걸음 데이터를 8장 스토리형 슬라이드로 제공하고 자동 진행과 일시정지 지원 |
 | **Step History** | 캘린더 기반 일별 걸음 수와 칼로리, 거리 등 상세 활동 정보 제공 |
-| **Settings** | 프로필, 목표 걸음 수, 회복 걸음 수, 알림, 라이트/다크/시스템 테마 설정, Google 로그인/로그아웃 및 계정 이메일 표시 지원 |
-| **Reward** | 포인트 사용처 확장을 위한 잠금 상태 티저 화면 제공 |
+| **Settings** | 프로필, 목표 걸음 수, 회복 걸음 수, 알림, 라이트/다크/시스템 테마 설정, 프리미엄 테마 토글(테마 팩 교환 후 해금), Google 로그인/로그아웃 및 계정 이메일 표시 지원 |
+| **Reward** | 포인트 적립 내역, 성취 갤러리 스타일 뱃지 컬렉션(홈 화면 뱃지 노출 포함), Firestore 기반 동적 카탈로그를 갖춘 React Native 리워드 스토어(뱃지·쿠폰·기부·프리미엄 테마 교환), 외부 이벤트 코드를 등록하는 프로모션 코드 입력 제공 — 레벨 보상 카드만 잠금 상태 티저 |
 | **App Widget** | Jetpack Glance 기반 위젯과 WorkManager 15분 자동 업데이트 지원 |
 
 ## Screenshots
@@ -162,6 +162,25 @@ WalkLog는 **미션 달성 시 포인트를 적립**하고, 날짜 기반 지급
 
 ViewModel이 실시간 걸음 수로 미션 달성을 감지하면 useCase가 오늘 해당 미션 타입의 지급 이력을 확인하고, 아직 지급되지 않은 경우 Repository를 통해 포인트와 마지막 지급 날짜를 DataStore에 저장합니다.
 
+### 포인트 교환
+
+`feature:reward`는 `RedeemRewardUseCase`로 포인트를 사용합니다. 단순 `Boolean` 대신 `sealed interface RedeemResult`(`Success` / `InsufficientBalance` / `SignInRequired`)를 반환해, "포인트 부족"과 "로그인 필요"를 호출부가 서로 다르게 처리할 수 있습니다. 상품별 부수 효과는 같은 UseCase 안에서 분기합니다:
+
+| 상품 | 부수 효과 |
+|---|---|
+| 골드 워커 뱃지 | Room에 기록 — 뱃지 컬렉션 화면과 홈 헤더 뱃지 칩에 반영 |
+| 아메리카노 쿠폰 | **Firestore**(`couponRedemptions/{code}`, 문서 ID = 쿠폰 코드)에 발급 — Cloud Functions 없이 Security Rules만으로 본인 소유 생성·코드 중복 방지·`ISSUED → USED` 단방향 전이를 강제 |
+| 기부 | 교환 기록의 포인트 합산이 총 기부액 |
+| 테마 팩 | 프리미엄 테마 즉시 활성화, 이후 설정에서 껐다 켰다 가능 |
+
+게스트는 Firestore를 호출하기 전에 걸러집니다 — `RedeemRewardUseCase`가 `AuthRepository.currentUserIdOrNull`을 먼저 확인해 비어있으면 `SignInRequired`를 즉시 반환합니다.
+
+뱃지·기부 교환 기록과 포인트 적립 내역은 Firestore에도 백업됩니다(기록 시 Room+Firestore 동시 쓰기, 앱 시작 시 `Syncable.sync()`로 양방향 push/pull) — 앱 재설치나 기기 변경 후에도 보상 이력이 유지됩니다. 자세한 내용은 [ADR-21](docs/architecture-decisions.md#adr-21-리워드-적립보유-내역의-firestore-백업--재설치-시-데이터-유실-방지)을 참고하세요.
+
+### 리워드 스토어 — React Native Brownfield
+
+리워드 스토어 화면은 Toss SLASH23 발표의 브라운필드 패턴을 참고해 `@callstack/react-native-brownfield`로 통합한 **React Native** 화면입니다. 독립 Node/Gradle 루트(`reward-store-rn/`)에서 개발되고 `app` 모듈이 로컬 AAR로 소비합니다. `RewardBridgeModule`이 Hilt `@EntryPoint`로 `core:domain` UseCase를 RN에 노출하고, RN 화면은 WalkLog 디자인 토큰(`walklogColors.ts`)을 미러링해 네이티브 앱과 동일한 라이트/다크/프리미엄 팔레트로 렌더링됩니다. 카탈로그 가격 자체도 Firestore로 관리되며([ADR-22](docs/architecture-decisions.md#adr-22-firestore-기반-동적-리워드-카탈로그--앱-업데이트-없는-가격-관리)), 별도 프로모션 코드 입력으로 외부에서 발급된 이벤트 코드를 등록할 수 있습니다([ADR-23](docs/architecture-decisions.md#adr-23-이벤트프로모션-코드-등록--외부-코드-입력과-리워드-스토어-교환의-분리)). 기본 설계는 [ADR-18](docs/architecture-decisions.md#adr-18-react-native-brownfield--리워드-스토어)·[ADR-19](docs/architecture-decisions.md#adr-19-firestore-기반-쿠폰-발급사용--서버-없는-환경의-위조-방지), 위조 방지 규칙은 [보안 설계 문서 7장](docs/security.md#7-firestore-security-rules--쿠폰-위조중복-등록-방지)·[8장](docs/security.md#8-firestore-security-rules--프로모션-코드-위조중복-등록-방지)에서 다룹니다.
+
 ---
 
 # Crash Reporting
@@ -203,9 +222,12 @@ object CrashKeys {
         const val MISSION_DETAIL = "mission_detail"
         const val RECAP = "recap"
         const val ONBOARDING = "onboarding"
+        const val LOGIN = "login"
         const val SETTINGS = "settings"
         const val HISTORY = "history"
         const val REWARD = "reward"
+        const val POINTS_HISTORY = "points_history"
+        const val BADGE_COLLECTION = "badge_collection"
     }
 
     object SensorValues {
@@ -323,18 +345,24 @@ ViewModel 테스트는 `core:testing`의 Fake repository와 실제 UseCase 조�
 - `GetWeeklyStepSummaryUseCaseTest` · `GetWeeklyReportArchiveUseCaseTest` · `GetWeeklyReportDetailUseCaseTest` · `GetWeeklyBestHourUseCaseTest` — 주간 집계, 아카이브/상세, 베스트아워 로직
 - `GetMonthlyRecapUseCaseTest` · `GetCurrentStreakUseCaseTest` · `GetWeeklyHomeStatsUseCaseTest` — 리캡, 스트릭, 홈 요약 로직
 - `GetWalkingInsightsUseCaseTest` · `ObserveActivityStateUseCaseTest` · `AwardMissionPointsUseCaseTest` — native 분석 경계, 활동 상태, 미션 보상 규칙
+- `RedeemRewardUseCaseTest` — `RedeemResult` 분기(`Success`/`InsufficientBalance`/`SignInRequired`)와 상품별 부수 효과(쿠폰 발급, 뱃지/기부 기록, 테마 활성화)
+- `IssueCouponUseCaseTest` · `GetIssuedCouponsUseCaseTest` · `MarkCouponUsedUseCaseTest` — `FakeCouponRepository` 기반 쿠폰 발급/조회/사용 처리 테스트
+- `RedeemPromoCodeUseCaseTest` — `PromoCodeRedeemResult` 분기(`Success`/`AlreadyRedeemed`/`InvalidCode`/`SignInRequired`/`UnknownError`)를 `FakePromoCodeRepository`로 검증
+- `GetRewardCatalogUseCaseTest` — `FakeRewardCatalogRepository` 기반 `isActive` 필터링
+- `RoomRewardRedemptionRepositoryTest` · `RoomPointsLedgerRepositoryTest` — Room 항상 로컬 기록 + 로그인 시 조건부 Firestore 동시 쓰기 + push/pull `sync()` 동작
 - `OfflineFirstStepRepositoryTest` · `DefaultWeatherRepositoryTest` · `DataStoreUserSettingsRepositoryTest` · `DefaultActivityStateRepositoryTest` — 내부 DataSource를 mock 처리한 repository 구현체 테스트
 - `NetworkWeatherSummaryMappingTest` · `LocaleWeatherLocationProviderTest` — 데이터 매핑과 locale fallback 동작
 
 **Feature ViewModel 계층**
-- `HomeViewModelTest` · `MissionDetailViewModelTest` — Fake repository + 실제 UseCase
+- `HomeViewModelTest` · `MissionDetailViewModelTest` — Fake repository + 실제 UseCase; `HomeViewModelTest`는 골드 뱃지 보유 신호(홈 헤더 칩)도 검증
 - `HistoryViewModelTest` — 달력 아이템 구조, 월 이동, 통계 포맷
 - `OnboardingViewModelTest` — 4단계 페이지 전환 상태 머신, 완료 시 repository 호출
 - `RecapViewModelTest` · `WeeklyReportArchiveViewModelTest` · `WeeklyReportDetailViewModelTest` — 리포트/리캡 UI state mapping
-- `SettingsViewModelTest` — 닉네임 관찰, 포인트 관찰, 각 Intent → repository 매핑
+- `SettingsViewModelTest` — 닉네임 관찰, 포인트 관찰, 각 Intent → repository 매핑, 프리미엄 테마 소유/토글 게이팅
+- `BadgeCollectionViewModelTest` — `GetRewardRedemptionsUseCase` 기반 골드 뱃지 보유 여부
 
 **Compose UI 테스트 (androidTest)**
-- `HomeScreenTest` — 센서 상태별 UI (로딩/권한 없음/사용 불가/정상)
+- `HomeScreenTest` — 센서 상태별 UI (로딩/권한 없음/사용 불가/정상), 골드 뱃지 칩 노출·탭 네비게이션
 - `WeeklyReportScreenTest` — 아카이브·상세 렌더링, 공유 버튼 상태
 - `MissionDetailScreenTest` — 달성 전/후 상태, 뒤로가기 콜백
 - `RecapScreenTest` — 슬라이드 전환, 일시정지/재생
@@ -364,7 +392,8 @@ ViewModel 테스트는 `core:testing`의 Fake repository와 실제 UseCase 조�
 | Network | OkHttp (KMA / Open-Meteo), in-memory weather cache              |
 | On-device AI | LiteRT 1.4.2 (Activity Classifier), NDK/JNI (Walking Insights Engine)             |
 | Auth | Firebase Auth, Credential Manager (Google 로그인)                                    |
-| Cloud Sync | Firebase Firestore (cross-device 설정 동기화, `sync:work` WorkManager 기반)            |
+| Cloud Sync | Firebase Firestore (cross-device 설정/포인트 적립 내역/리워드 교환 기록 동기화, `sync:work` WorkManager 기반; 리워드 쿠폰·프로모션 코드 발급은 Security Rules로 위조 방지) |
+| Cross-platform | React Native 0.86 brownfield (`@callstack/react-native-brownfield`) — 리워드 스토어 화면 전용 |
 | Widget | Jetpack Glance 1.1.1, WorkManager                                                 |
 | Analytics | Firebase Crashlytics, Firebase Analytics                                          |
 | Performance | Baseline Profile, R8 Full Mode                       |
@@ -473,7 +502,15 @@ ViewModel 테스트는 `core:testing`의 Fake repository와 실제 UseCase 조�
 | 설정 화면                              | 완성 (프로필 섹션, 닉네임 수정, 포인트 표시, 로그인/로그아웃)                    |
 | DataStore                          | 완성 (닉네임·포인트·목표·알림·테마·온보딩 완료·userId)                       |
 | 포인트 적립 시스템                         | 완성 (미션 달성 시 지급, 날짜 중복 방지, 설정 화면 실시간 표시)                  |
-| 리워드 화면                             | 완성 (티져 화면 — 포인트 사용처는 추후 업데이트 예정)                         |
+| 리워드 화면                             | 완성 (포인트 적립 내역·뱃지 컬렉션·리워드 스토어 3종 — 레벨 보상만 티저)              |
+| 뱃지 컬렉션 리디자인                        | 완성 (트로피 캐비닛 스타일 — 진행률 헤더 + 골드 메달리온 + 미스터리 플레이스홀더)          |
+| 리워드 스토어 (React Native Brownfield) | 완성 (`reward-store-rn` + `RewardBridgeModule`, 뱃지·쿠폰·기부·테마 팩 교환)  |
+| 리워드 스토어 디자인시스템/아키텍처 정리            | 완성 (`App.tsx` → `hooks`/`components`/`styles` 분리, back-button 누수 수정) |
+| 쿠폰 발급/사용 (Firestore)              | 완성 (`couponRedemptions/{code}`, Security Rules 배포 완료 — 위조·중복 방지) |
+| 동적 리워드 카탈로그 (Firestore)           | 완성 (`rewardCatalog/{itemId}`, 앱 업데이트 없이 가격/판매 여부 변경)          |
+| 이벤트/프로모션 코드 등록                     | 완성 (`promoCodes/{code}` 트랜잭션, Security Rules 배포 완료)             |
+| 리워드/포인트 내역 Firestore 백업            | 완성 (Room+Firestore 동시 쓰기 + `Syncable.sync()` push/pull, 재설치 데이터 유실 방지) |
+| 프리미엄 테마                            | 완성 (테마 팩 소유 시 설정에서 온/오프, 홈 화면 샤이머/글로우 애니메이션)               |
 | 피크타임 알림                            | 완성 (AlarmManager 기반, peakHour 연동)                        |
 | 미션 데이터 연결                          | 완성 (WalkingInsightsEngine + 실시간 걸음 수 + 포인트 지급)           |
 | on-device AI (Walking Insights)    | 완성 (C++ JNI 엔진)                                          |
@@ -481,6 +518,9 @@ ViewModel 테스트는 `core:testing`의 Fake repository와 실제 UseCase 조�
 | 닉네임                                | 완성 (온보딩 입력 → DataStore → 홈 인사 + 설정 수정)                   |
 
 다음 단계 확장 포인트:
-- 리워드 스토어 / 뱃지 컬렉션 / 레벨 시스템 — `feature:reward`는 티저 화면으로 구현됨, 포인트 사용처 UI가 다음 단계
+- 레벨 시스템 보상 — 리워드 허브 4번째 카드는 아직 잠금 상태 티저
+- `reward-store-rn` AAR을 `mavenLocal()` 밖으로 배포(저장소 아티팩트 또는 사내 Maven) — CI/새 클론 환경이 RN 패키징 단계 없이 `app`을 빌드할 수 있도록
+- 쿠폰 발급을 클라이언트+Security Rules 조합에서 Cloud Functions 기반 서버 서명 발급으로 전환
+- 프로모션 코드 발급(문서 생성) 자동화 — 현재는 관리자가 Firebase 콘솔에서 코드마다 수동 생성
 - `activity_classifier.tflite` 파일을 `core/native/src/main/assets/` 에 배치한 뒤 실기기 HAR 분류 검증
 - Firestore `users` 컬렉션 활용한 소셜 / 리더보드 기능

@@ -15,6 +15,8 @@
 | `android:exported` 명시 | M8 — Security Misconfiguration | ✅ |
 | Room Parameterized Query | M4 — Insufficient Input/Output Validation | ✅ (Room 기본) |
 | Crashlytics 디버그 비활성화 | M8 — Security Misconfiguration | ✅ |
+| Firestore Security Rules (쿠폰 위조·중복 등록 방지) | M3 — Insecure Authentication/Authorization | ✅ |
+| Firestore Security Rules (프로모션 코드 위조·중복 등록 방지) | M3 — Insecure Authentication/Authorization | ✅ |
 
 ---
 
@@ -249,3 +251,94 @@ WalkLog가 선언한 권한:
 
 네트워크 권한(`INTERNET`)은 Firebase SDK가 `merge` 방식으로 자동 추가합니다.<br>
 앱 코드에서는 직접 선언하지 않아, 서비스가 직접 요구하는 권한 범위를 분리해서 볼 수 있습니다. <br>
+
+---
+
+## 7. Firestore Security Rules — 쿠폰 위조·중복 등록 방지
+
+리워드 스토어(아메리카노 쿠폰 교환)는 Cloud Functions 없이 클라이언트가 직접 Firestore에 쿠폰을 발급합니다. 서버 서명 발급이 아니므로 완전한 위조 방지는 아니지만, Security Rules만으로 확보 가능한 현실적인 방어선을 둡니다.
+
+### 위협 모델
+
+| 위협 | 대응 |
+|---|---|
+| 같은 코드로 쿠폰 중복 생성 | 문서 ID = 쿠폰 코드 → Firestore가 동일 ID `create`를 자체적으로 거부 |
+| 타인이 발급한 쿠폰을 자기 것으로 가로채기 | `create`/`update` 모두 `request.auth.uid == 문서의 userId` 강제 |
+| 이미 사용된 쿠폰을 다시 `ISSUED`로 되돌리기 | `update`는 `status: ISSUED → USED` 단방향 전이만 허용 |
+| 발급 시 금액·상품 위조 (예: 클라이언트에서 `pointsCost`를 0으로 조작) | `create` 시 필드 존재·타입 검증(`hasAll`, `is number`) |
+
+### Rules
+
+```javascript
+// firestore.rules
+match /couponRedemptions/{code} {
+  allow read: if request.auth != null && resource.data.userId == request.auth.uid;
+
+  allow create: if request.auth != null
+    && request.resource.data.userId == request.auth.uid
+    && request.resource.data.status == 'ISSUED'
+    && request.resource.data.keys().hasAll(['userId', 'rewardId', 'pointsCost', 'status', 'createdAt'])
+    && request.resource.data.rewardId is string
+    && request.resource.data.pointsCost is number;
+
+  allow update: if request.auth != null
+    && resource.data.userId == request.auth.uid
+    && request.resource.data.userId == resource.data.userId
+    && request.resource.data.rewardId == resource.data.rewardId
+    && request.resource.data.pointsCost == resource.data.pointsCost
+    && request.resource.data.createdAt == resource.data.createdAt
+    && resource.data.status == 'ISSUED'
+    && request.resource.data.status == 'USED';
+
+  allow delete: if false;
+}
+```
+
+## 8. Firestore Security Rules — 프로모션 코드 위조·중복 등록 방지
+
+이벤트/마케팅에서 외부로 배포한 코드를 사용자가 앱에 직접 입력해 포인트를 받는 기능입니다. 코드 문서(`promoCodes/{code}`)는 관리자가 Firebase 콘솔에서만 생성하고, 클라이언트는 `redemptionCount` 증가만 가능합니다.
+
+### 위협 모델
+
+| 위협 | 대응 |
+|---|---|
+| 같은 코드를 같은 사용자가 여러 번 등록해 포인트 중복 획득 | 등록 여부를 `users/{uid}/data/promoCodeRedemptions/entries/{code}` 문서 존재로 판단 — 이미 `users/{userId}/data/{document=**}` 규칙으로 본인 소유만 쓰기 가능 |
+| 클라이언트가 `redemptionCount`를 조작해 한도(`maxRedemptions`)를 무시 | `update`는 `redemptionCount == 이전 값 + 1`만 허용 |
+| 클라이언트가 `pointsReward`/`isActive`/`maxRedemptions`/`expiresAtEpochMillis`를 함께 변경 | 나머지 필드는 `update` 시 이전 값과 동일해야 함을 강제 |
+| 비활성화·만료·한도 초과 코드 등록 | `update` 조건에 `isActive == true`, `expiresAtEpochMillis` 만료 비교, `redemptionCount < maxRedemptions`를 모두 포함 |
+| 코드 문서 자체를 클라이언트가 생성/삭제 | `create`, `delete` 전부 차단 |
+
+### Rules
+
+```javascript
+// firestore.rules
+match /promoCodes/{code} {
+  allow read: if request.auth != null;
+
+  allow update: if request.auth != null
+    && resource.data.isActive == true
+    && request.resource.data.redemptionCount == resource.data.redemptionCount + 1
+    && request.resource.data.pointsReward == resource.data.pointsReward
+    && request.resource.data.isActive == resource.data.isActive
+    && request.resource.data.maxRedemptions == resource.data.maxRedemptions
+    && request.resource.data.expiresAtEpochMillis == resource.data.expiresAtEpochMillis
+    && (resource.data.maxRedemptions <= 0 || resource.data.redemptionCount < resource.data.maxRedemptions)
+    && (resource.data.expiresAtEpochMillis <= 0
+      || request.time.toMillis() < resource.data.expiresAtEpochMillis);
+
+  allow create, delete: if false;
+}
+```
+
+### 한계
+
+- 서버 트랜잭션(Cloud Functions)이 없어, "이미 등록했는지 확인 → 코드 유효성 확인 → 두 문서 갱신"의 원자성은 클라이언트의 `firestore.runTransaction`에 의존합니다. Security Rules는 그 트랜잭션이 잘못된 결과를 쓰는 것을 막는 마지막 방어선입니다.
+- 코드 발급(문서 생성) 자체는 관리자의 콘솔 접근 권한에 전적으로 의존합니다.
+
+### 한계
+
+Cloud Functions가 없어 포인트 차감과 쿠폰 발급이 하나의 서버 트랜잭션으로 원자적으로 묶여있지 않습니다 — 클라이언트가 `RedeemRewardUseCase`에서 순서대로 호출합니다. 악의적인 클라이언트가 포인트 차감 없이 쿠폰 발급 요청만 별도로 보내는 것은 위 Rules로 막을 수 없습니다(발급 자체의 인증·소유권·상태 전이만 보장). 완전한 방어를 위해서는 Cloud Functions 기반 서버 서명 발급으로 전환해야 합니다.
+
+### 게스트(비로그인) 차단
+
+`RedeemRewardUseCase`는 `AuthRepository.currentUserIdOrNull`이 비어있으면 Firestore 호출 자체를 시도하지 않고 `RedeemResult.SignInRequired`를 반환합니다. Rules가 `request.auth != null`을 요구하는 것과 별개로, 클라이언트 단에서도 먼저 걸러 불필요한 거부 요청을 만들지 않습니다.
