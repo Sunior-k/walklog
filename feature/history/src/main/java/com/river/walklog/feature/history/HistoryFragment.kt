@@ -16,10 +16,16 @@ import androidx.fragment.app.viewModels
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.recyclerview.widget.GridLayoutManager
+import com.river.walklog.core.designsystem.foundation.PremiumFlatColors
+import com.river.walklog.core.designsystem.foundation.PremiumFlatPalette
+import com.river.walklog.core.designsystem.foundation.setPremiumCardColor
+import com.river.walklog.core.model.PremiumVisualMode
+import com.river.walklog.core.ui.ThemeViewModel
 import com.river.walklog.core.ui.withComma
 import com.river.walklog.feature.history.databinding.FragmentHistoryBinding
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
 import java.text.NumberFormat
 import java.time.LocalDate
@@ -36,9 +42,15 @@ class HistoryFragment : Fragment() {
     private val isExpanded get() = resources.configuration.screenWidthDp >= 600
 
     private val viewModel: HistoryViewModel by viewModels()
+    private val themeViewModel: ThemeViewModel by viewModels()
     private val calendarAdapter = CalendarAdapter { day ->
         viewModel.onDaySelected(day.dateEpochDay)
     }
+
+    /** 프리미엄이 비활성이면 null — [applyChipStyle] 등 데이터 변경으로 트리거되는 렌더링에서도 참조한다. */
+    private var premiumMode: PremiumVisualMode? = null
+    private val premiumPalette: PremiumFlatColors?
+        get() = premiumMode?.let { PremiumFlatPalette.forMode(it) }
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -55,6 +67,7 @@ class HistoryFragment : Fragment() {
         setupRecyclerView()
         setupClickListeners()
         observeState()
+        observePremiumTheme()
     }
 
     private fun applyStatusBarInsets() {
@@ -154,22 +167,135 @@ class HistoryFragment : Fragment() {
         }
     }
 
+    private fun observePremiumTheme() {
+        viewLifecycleOwner.lifecycleScope.launch {
+            viewLifecycleOwner.repeatOnLifecycle(androidx.lifecycle.Lifecycle.State.STARTED) {
+                combine(themeViewModel.isPremiumTheme, themeViewModel.premiumVisualMode) { active, mode ->
+                    if (active) mode else null
+                }.collectLatest { mode -> applyPremiumTheme(mode) }
+            }
+        }
+    }
+
+    private fun applyPremiumTheme(mode: PremiumVisualMode?) = with(binding) {
+        val ctx = requireContext()
+        val defaultBackground = ContextCompat.getColor(ctx, DesignR.color.walklog_background)
+        val defaultStatsContainer = ContextCompat.getColor(ctx, DesignR.color.walklog_surface_variant)
+        val defaultSelectedDayPanel = ContextCompat.getColor(ctx, DesignR.color.walklog_surface)
+        val defaultInsightCard = ContextCompat.getColor(ctx, DesignR.color.walklog_surface_variant)
+        val defaultInsightMetricCard = ContextCompat.getColor(ctx, DesignR.color.walklog_surface)
+        val defaultEmptyIconCircle = ContextCompat.getColor(ctx, DesignR.color.walklog_gray_100)
+        val defaultOnBackground = ContextCompat.getColor(ctx, DesignR.color.walklog_text_primary)
+        val defaultOnBackgroundMuted = ContextCompat.getColor(ctx, DesignR.color.walklog_gray_400)
+        val defaultOnCard = ContextCompat.getColor(ctx, DesignR.color.walklog_text_primary)
+        val defaultCardOutline = ContextCompat.getColor(ctx, DesignR.color.walklog_gray_200)
+        premiumMode = mode
+        val palette = premiumPalette
+        val cardColor = palette?.cardBackground
+
+        root.setBackgroundColor(palette?.background ?: defaultBackground)
+        statsContainer.setPremiumCardColor(cardColor ?: defaultStatsContainer)
+        selectedDayContainer.setPremiumCardColor(cardColor ?: defaultSelectedDayPanel)
+        groupSelectedInsight?.setPremiumCardColor(cardColor ?: defaultInsightCard)
+        groupSelectedTimeline?.setPremiumCardColor(cardColor ?: defaultSelectedDayPanel)
+        insightMetricStepsCard?.setPremiumCardColor(cardColor ?: defaultInsightMetricCard)
+        insightMetricGoalCard?.setPremiumCardColor(cardColor ?: defaultInsightMetricCard)
+        emptyIconCircle?.setPremiumCardColor(cardColor ?: defaultEmptyIconCircle)
+
+        // 캘린더 그리드·월 헤더·빈 상태 텍스트는 카드로 감싸이지 않고 배경 위에 바로 놓여 있어,
+        // 배경이 프리미엄 모드에 따라 밝고 어두움이 바뀌면 시스템 라이트/다크 기준의 고정 텍스트
+        // 색으로는 안 보이는 경우가 생긴다 — 팔레트 색으로 직접 덮어써야 한다.
+        val onBackground = palette?.onBackground ?: defaultOnBackground
+        val onBackgroundMuted = palette?.onBackgroundMuted ?: defaultOnBackgroundMuted
+        tvMonthLabel.setTextColor(onBackground)
+        btnPrevMonth.setColorFilter(onBackgroundMuted)
+        btnNextMonth.setColorFilter(onBackgroundMuted)
+        tvEmptyTitle.setTextColor(onBackground)
+        tvEmptyDescription.setTextColor(onBackgroundMuted)
+
+        // 카드 위 주요 숫자/텍스트 — NIGHT는 카드 자체가 어두워지므로 밝은 색으로 뒤집혀야 한다.
+        val onCard = palette?.onCard ?: defaultOnCard
+        val cardOutline = palette?.cardOutline ?: defaultCardOutline
+        tvTotalSteps.setTextColor(onCard)
+        statsDivider.setBackgroundColor(cardOutline)
+        tvSelectedSteps.setTextColor(onCard)
+        tvSelectedInsight?.setTextColor(onCard)
+        tvSelectedInsightSteps?.setTextColor(onCard)
+        tvTimelineTitle?.setTextColor(onCard)
+        tvTimelineMorningLabel.setTextColor(onCard)
+        tvTimelineAfternoonLabel.setTextColor(onCard)
+        tvTimelineEveningLabel.setTextColor(onCard)
+        tvNoDataMessage.setTextColor(onCard)
+
+        applyMetricCardPremiumStyle(palette)
+        calendarAdapter.setPremiumPalette(palette)
+    }
+
+    /**
+     * 칼로리/거리 강조 카드는 원래 옅은 파스텔 배경 + 어두운 텍스트라, NIGHT의 어두운 카드 위에서는
+     * 그대로 두면 밝은 상자가 튀어 보인다. NIGHT에서는 반투명 색조 배경 + 밝은 텍스트로 뒤집는다.
+     */
+    private fun applyMetricCardPremiumStyle(palette: PremiumFlatColors?) = with(binding) {
+        val ctx = requireContext()
+        if (palette != null && premiumMode == PremiumVisualMode.NIGHT) {
+            val primary = ContextCompat.getColor(ctx, DesignR.color.walklog_primary)
+            val secondary = ContextCompat.getColor(ctx, DesignR.color.walklog_secondary)
+            cardMetricCalories.setPremiumCardColor(withAlpha(primary, 46))
+            cardMetricDistance.setPremiumCardColor(withAlpha(secondary, 70))
+            ivMetricCaloriesIcon.setColorFilter(palette.onCard)
+            tvMetricCaloriesLabel.setTextColor(palette.onCard)
+            ivMetricDistanceIcon.setColorFilter(palette.onCard)
+            tvMetricDistanceLabel.setTextColor(palette.onCard)
+        } else {
+            val warmColor = ContextCompat.getColor(ctx, DesignR.color.walklog_primary_dark)
+            val coolColor = ContextCompat.getColor(ctx, DesignR.color.walklog_secondary)
+            cardMetricCalories.setPremiumCardColor(ContextCompat.getColor(ctx, DesignR.color.walklog_primary_container))
+            cardMetricDistance.setPremiumCardColor(ContextCompat.getColor(ctx, DesignR.color.walklog_secondary_container))
+            ivMetricCaloriesIcon.setColorFilter(warmColor)
+            tvMetricCaloriesLabel.setTextColor(warmColor)
+            ivMetricDistanceIcon.setColorFilter(coolColor)
+            tvMetricDistanceLabel.setTextColor(coolColor)
+        }
+        val valueColor = palette?.onCard ?: ContextCompat.getColor(ctx, DesignR.color.walklog_text_primary)
+        tvSelectedCalories.setTextColor(valueColor)
+        tvSelectedDistance.setTextColor(valueColor)
+    }
+
     private fun applyChipStyle(summary: SelectedDaySummary) = with(binding) {
         val ctx = requireContext()
+        val palette = premiumPalette
+        val isNight = premiumMode == PremiumVisualMode.NIGHT
+
         val (bgColor, textColor, text) = when {
             summary.isAchieved -> Triple(
-                ContextCompat.getColor(ctx, DesignR.color.walklog_success_container),
-                ContextCompat.getColor(ctx, DesignR.color.walklog_success_dark),
+                if (isNight) {
+                    withAlpha(ContextCompat.getColor(ctx, DesignR.color.walklog_success), 56)
+                } else {
+                    ContextCompat.getColor(ctx, DesignR.color.walklog_success_container)
+                },
+                if (isNight) {
+                    palette?.onCard ?: ContextCompat.getColor(ctx, DesignR.color.walklog_success_dark)
+                } else {
+                    ContextCompat.getColor(ctx, DesignR.color.walklog_success_dark)
+                },
                 getString(R.string.chip_achieved),
             )
             summary.hasData -> Triple(
-                ContextCompat.getColor(ctx, DesignR.color.walklog_primary_container),
-                ContextCompat.getColor(ctx, DesignR.color.walklog_primary_dark),
+                if (isNight) {
+                    withAlpha(ContextCompat.getColor(ctx, DesignR.color.walklog_primary), 56)
+                } else {
+                    ContextCompat.getColor(ctx, DesignR.color.walklog_primary_container)
+                },
+                if (isNight) {
+                    palette?.onCard ?: ContextCompat.getColor(ctx, DesignR.color.walklog_primary_dark)
+                } else {
+                    ContextCompat.getColor(ctx, DesignR.color.walklog_primary_dark)
+                },
                 summary.targetStatusText(),
             )
             else -> Triple(
-                ContextCompat.getColor(ctx, DesignR.color.walklog_gray_100),
-                ContextCompat.getColor(ctx, DesignR.color.walklog_gray_400),
+                palette?.cardOutline ?: ContextCompat.getColor(ctx, DesignR.color.walklog_gray_100),
+                palette?.onCardMuted ?: ContextCompat.getColor(ctx, DesignR.color.walklog_gray_400),
                 getString(R.string.chip_no_record),
             )
         }
@@ -191,7 +317,7 @@ class HistoryFragment : Fragment() {
         val (color, prefix) = when (summary.comparisonSign) {
             1 -> ContextCompat.getColor(ctx, DesignR.color.walklog_success) to "↑ "
             -1 -> ContextCompat.getColor(ctx, DesignR.color.walklog_error) to "↓ "
-            else -> ContextCompat.getColor(ctx, DesignR.color.walklog_gray_400) to ""
+            else -> (premiumPalette?.onCardMuted ?: ContextCompat.getColor(ctx, DesignR.color.walklog_gray_400)) to ""
         }
         tvSelectedComparison.setTextColor(color)
         tvSelectedComparison.text = "$prefix${summary.comparisonText()}"
@@ -205,9 +331,7 @@ class HistoryFragment : Fragment() {
             ContextCompat.getColor(ctx, DesignR.color.walklog_primary)
         }
         pbGoalProgress.progressTintList = ColorStateList.valueOf(fillColor)
-        pbGoalProgress.progressBackgroundTintList = ColorStateList.valueOf(
-            ContextCompat.getColor(ctx, DesignR.color.walklog_gray_100),
-        )
+        pbGoalProgress.progressBackgroundTintList = ColorStateList.valueOf(progressTrackColor())
     }
 
     private fun applyInsightStyle(summary: SelectedDaySummary) = with(binding) {
@@ -229,7 +353,7 @@ class HistoryFragment : Fragment() {
 
         val ctx = requireContext()
         val progressTint = ColorStateList.valueOf(ContextCompat.getColor(ctx, DesignR.color.walklog_primary))
-        val trackTint = ColorStateList.valueOf(ContextCompat.getColor(ctx, DesignR.color.walklog_gray_100))
+        val trackTint = ColorStateList.valueOf(progressTrackColor())
 
         listOf(
             Triple(tvTimelineMorningLabel, tvTimelineMorningSteps, pbTimelineMorning),
@@ -246,6 +370,18 @@ class HistoryFragment : Fragment() {
             }
         }
     }
+
+    /** 프로그레스 트랙(미달성 구간) 색 — NIGHT의 어두운 카드 위에서는 옅은 흰색 반투명으로 보여야 한다. */
+    private fun progressTrackColor(): Int {
+        val palette = premiumPalette
+        return if (premiumMode == PremiumVisualMode.NIGHT && palette != null) {
+            withAlpha(palette.onCard, 40)
+        } else {
+            ContextCompat.getColor(requireContext(), DesignR.color.walklog_gray_100)
+        }
+    }
+
+    private fun withAlpha(color: Int, alpha: Int): Int = (color and 0x00FFFFFF) or (alpha shl 24)
 
     private fun TemporalAccessor.formatWithPattern(patternResId: Int): String =
         DateTimeFormatter.ofPattern(getString(patternResId), resources.configuration.locales[0]).format(this)

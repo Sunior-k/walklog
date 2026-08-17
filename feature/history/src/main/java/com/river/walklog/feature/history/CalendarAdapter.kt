@@ -5,6 +5,7 @@ import android.view.ViewGroup
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
+import com.river.walklog.core.designsystem.foundation.PremiumFlatColors
 import com.river.walklog.feature.history.databinding.ItemCalendarDayBinding
 import com.river.walklog.feature.history.databinding.ItemCalendarEmptyBinding
 import com.river.walklog.feature.history.databinding.ItemCalendarHeaderBinding
@@ -14,6 +15,15 @@ import java.time.format.TextStyle
 class CalendarAdapter(
     private val onDayClick: (CalendarItem.Day) -> Unit,
 ) : ListAdapter<CalendarItem, RecyclerView.ViewHolder>(DIFF_CALLBACK) {
+
+    private var premiumPalette: PremiumFlatColors? = null
+
+    /** 프리미엄 모드가 바뀔 때 이미 바인딩된 날짜 셀도 즉시 새 팔레트로 다시 칠하도록 강제 재바인딩한다. */
+    fun setPremiumPalette(palette: PremiumFlatColors?) {
+        if (premiumPalette == palette) return
+        premiumPalette = palette
+        notifyItemRangeChanged(0, itemCount)
+    }
 
     override fun getItemViewType(position: Int): Int = when (getItem(position)) {
         is CalendarItem.DayLabel -> TYPE_LABEL
@@ -38,7 +48,7 @@ class CalendarAdapter(
         when (val item = getItem(position)) {
             is CalendarItem.DayLabel -> (holder as LabelViewHolder).bind(item)
             is CalendarItem.Empty -> Unit
-            is CalendarItem.Day -> (holder as CalendarDayViewHolder).bind(item)
+            is CalendarItem.Day -> (holder as CalendarDayViewHolder).bind(item, premiumPalette)
         }
     }
 

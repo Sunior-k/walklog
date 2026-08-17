@@ -203,6 +203,31 @@ class HomeScreenTest {
             .assertIsDisplayed()
     }
 
+    @Test
+    fun goldBadgeChip_isHidden_whenNotOwned() {
+        setContent(state = HomeState(hasGoldBadge = false))
+
+        composeTestRule
+            .onNodeWithText(activity.getString(R.string.home_gold_badge_chip))
+            .assertDoesNotExist()
+    }
+
+    @Test
+    fun goldBadgeChip_isVisible_andNavigatesOnClick_whenOwned() {
+        var clicked = false
+        setContent(
+            state = HomeState(hasGoldBadge = true),
+            onClickBadge = { clicked = true },
+        )
+
+        composeTestRule
+            .onNodeWithText(activity.getString(R.string.home_gold_badge_chip))
+            .assertIsDisplayed()
+            .performClick()
+
+        assertTrue(clicked)
+    }
+
     // 리캡 카드
 
     @Test
@@ -241,6 +266,7 @@ class HomeScreenTest {
         onRefresh: () -> Unit = {},
         onRequestPermission: () -> Unit = {},
         onClickRecap: () -> Unit = {},
+        onClickBadge: () -> Unit = {},
     ) {
         composeTestRule.setContent {
             WalkLogTheme {
@@ -253,6 +279,7 @@ class HomeScreenTest {
                     onRefresh = onRefresh,
                     onRequestPermission = onRequestPermission,
                     onClickRecap = onClickRecap,
+                    onClickBadge = onClickBadge,
                 )
             }
         }

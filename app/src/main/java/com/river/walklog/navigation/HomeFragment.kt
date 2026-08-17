@@ -40,6 +40,9 @@ class HomeFragment : Fragment() {
                     onNavigateToRecap = {
                         findNavController().navigate(R.id.action_home_to_recap)
                     },
+                    onNavigateToBadgeCollection = {
+                        findNavController().navigate(R.id.action_home_to_badges)
+                    },
                 )
             }
         }

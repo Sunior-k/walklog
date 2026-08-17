@@ -28,4 +28,41 @@ class RewardViewModelTest {
         RewardViewModel(crashReporter)
         verify { crashReporter.setKey(CrashKeys.SCREEN, CrashKeys.Screens.REWARD) }
     }
+
+    @Test
+    fun `onStoreCardClicked sets navigationDestination to Store`() {
+        val viewModel = RewardViewModel(crashReporter)
+
+        viewModel.onStoreCardClicked()
+
+        assertEquals(RewardDest.Store, viewModel.state.value.navigationDestination)
+    }
+
+    @Test
+    fun `clearNavigationDestination resets navigationDestination to null`() {
+        val viewModel = RewardViewModel(crashReporter)
+        viewModel.onStoreCardClicked()
+
+        viewModel.clearNavigationDestination()
+
+        assertEquals(null, viewModel.state.value.navigationDestination)
+    }
+
+    @Test
+    fun `onPointsHistoryCardClicked sets navigationDestination to PointsHistory`() {
+        val viewModel = RewardViewModel(crashReporter)
+
+        viewModel.onPointsHistoryCardClicked()
+
+        assertEquals(RewardDest.PointsHistory, viewModel.state.value.navigationDestination)
+    }
+
+    @Test
+    fun `onBadgeCollectionCardClicked sets navigationDestination to BadgeCollection`() {
+        val viewModel = RewardViewModel(crashReporter)
+
+        viewModel.onBadgeCollectionCardClicked()
+
+        assertEquals(RewardDest.BadgeCollection, viewModel.state.value.navigationDestination)
+    }
 }

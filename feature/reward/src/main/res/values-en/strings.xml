@@ -1,5 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <string name="reward_title">REWARD</string>
+    <string name="reward_crown_icon_cd">Crown icon</string>
     <string name="reward_coming_soon">✦  Coming soon  ✦</string>
     <string name="reward_tagline">Walk more, earn more</string>
     <string name="reward_preview_section">Preview</string>

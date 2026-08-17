@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.sizeIn
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -41,6 +42,8 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.vectorResource
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import android.app.Activity
@@ -54,6 +57,12 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.window.core.layout.WindowSizeClass
 import com.river.walklog.core.designsystem.R
+import com.river.walklog.core.designsystem.component.BadgeColor
+import com.river.walklog.core.designsystem.component.BadgeSize
+import com.river.walklog.core.designsystem.component.BadgeVariant
+import com.river.walklog.core.designsystem.component.BaseBadge
+import com.river.walklog.core.designsystem.component.PremiumBackgroundEffect
+import com.river.walklog.core.designsystem.component.PremiumChip
 import com.river.walklog.core.designsystem.component.WeatherSummaryCard
 import com.river.walklog.core.designsystem.foundation.RecapColors
 import com.river.walklog.core.designsystem.foundation.WalkLogColor
@@ -79,6 +88,7 @@ fun HomeRoute(
     onNavigateToWeeklyReport: () -> Unit,
     onNavigateToMission: () -> Unit,
     onNavigateToRecap: () -> Unit,
+    onNavigateToBadgeCollection: () -> Unit,
     viewModel: HomeViewModel = hiltViewModel(),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
@@ -144,6 +154,7 @@ fun HomeRoute(
         onRefresh = viewModel::refresh,
         onRefreshWeather = viewModel::refreshWeather,
         onClickRecap = onNavigateToRecap,
+        onClickBadge = onNavigateToBadgeCollection,
         onRequestPermission = {
             if (HealthConnectClient.getSdkStatus(context) == HealthConnectClient.SDK_AVAILABLE) {
                 healthPermissionsLauncher.launch(
@@ -178,6 +189,7 @@ internal fun HomeScreen(
     onRefreshWeather: () -> Unit = {},
     onRequestPermission: () -> Unit,
     onClickRecap: () -> Unit,
+    onClickBadge: () -> Unit = {},
     isExpanded: Boolean = false,
     modifier: Modifier = Modifier,
 ) {
@@ -186,6 +198,13 @@ internal fun HomeScreen(
             .fillMaxSize()
             .background(WalkLogTheme.colors.background),
     ) {
+        if (WalkLogTheme.isPremium) {
+            PremiumBackgroundEffect(
+                mode = WalkLogTheme.premiumVisualMode,
+                modifier = Modifier.fillMaxSize(),
+            )
+        }
+
         if (isExpanded) {
             HomeExpandedContent(
                 state = state,
@@ -195,6 +214,7 @@ internal fun HomeScreen(
                 onRefreshWeather = onRefreshWeather,
                 onRequestPermission = onRequestPermission,
                 onClickRecap = onClickRecap,
+                onClickBadge = onClickBadge,
             )
         } else {
             HomeCompactContent(
@@ -205,6 +225,7 @@ internal fun HomeScreen(
                 onRefreshWeather = onRefreshWeather,
                 onRequestPermission = onRequestPermission,
                 onClickRecap = onClickRecap,
+                onClickBadge = onClickBadge,
             )
         }
 
@@ -233,6 +254,7 @@ private fun HomeCompactContent(
     onRefreshWeather: () -> Unit,
     onRequestPermission: () -> Unit,
     onClickRecap: () -> Unit,
+    onClickBadge: () -> Unit = {},
 ) {
     Column(
         modifier = Modifier
@@ -243,7 +265,12 @@ private fun HomeCompactContent(
             .padding(horizontal = 20.dp, vertical = 16.dp),
         verticalArrangement = Arrangement.spacedBy(20.dp),
     ) {
-        HomeHeader(userName = state.userName, todayDateText = state.todayDate.formatAsHomeDate())
+        HomeHeader(
+            userName = state.userName,
+            todayDateText = state.todayDate.formatAsHomeDate(),
+            hasGoldBadge = state.hasGoldBadge,
+            onClickBadge = onClickBadge,
+        )
 
         StreakBadge(streakDays = state.streakDays)
 
@@ -327,6 +354,7 @@ private fun HomeExpandedContent(
     onRefreshWeather: () -> Unit,
     onRequestPermission: () -> Unit,
     onClickRecap: () -> Unit,
+    onClickBadge: () -> Unit = {},
 ) {
     Column(
         modifier = Modifier
@@ -341,7 +369,12 @@ private fun HomeExpandedContent(
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            HomeHeader(userName = state.userName, todayDateText = state.todayDate.formatAsHomeDate())
+            HomeHeader(
+                userName = state.userName,
+                todayDateText = state.todayDate.formatAsHomeDate(),
+                hasGoldBadge = state.hasGoldBadge,
+                onClickBadge = onClickBadge,
+            )
             StreakBadge(streakDays = state.streakDays)
         }
 
@@ -692,19 +725,44 @@ private fun FoldHomeAccentCard(
 private const val IndicatorTrackAlpha = 0.18f
 
 @Composable
-private fun HomeHeader(userName: String, todayDateText: String) {
+private fun HomeHeader(
+    userName: String,
+    todayDateText: String,
+    hasGoldBadge: Boolean = false,
+    onClickBadge: () -> Unit = {},
+) {
     val displayName = userName.ifBlank { stringResource(HomeR.string.anonymous) }
+    val goldBadgeChipCd = stringResource(HomeR.string.home_gold_badge_chip_cd)
     Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-        Text(
-            text = stringResource(HomeR.string.home_greeting, displayName),
-            style = WalkLogTheme.typography.typography3B,
-            color = WalkLogTheme.colors.onBackground,
-        )
-        Text(
-            text = todayDateText,
-            style = WalkLogTheme.typography.typography6M,
-            color = WalkLogTheme.colors.onSurfaceVariant,
-        )
+        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            Text(
+                text = stringResource(HomeR.string.home_greeting, displayName),
+                style = WalkLogTheme.typography.typography3B,
+                color = WalkLogTheme.colors.onBackground,
+            )
+            if (hasGoldBadge) {
+                BaseBadge(
+                    modifier = Modifier
+                        .sizeIn(minWidth = 48.dp, minHeight = 48.dp)
+                        .clickable(onClick = onClickBadge)
+                        .semantics { contentDescription = goldBadgeChipCd },
+                    text = stringResource(HomeR.string.home_gold_badge_chip),
+                    size = BadgeSize.Small,
+                    variant = BadgeVariant.Fill,
+                    color = BadgeColor.Yellow,
+                )
+            }
+        }
+        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            Text(
+                text = todayDateText,
+                style = WalkLogTheme.typography.typography6M,
+                color = WalkLogTheme.colors.onSurfaceVariant,
+            )
+            if (WalkLogTheme.isPremium) {
+                PremiumChip(text = stringResource(HomeR.string.home_premium_chip_label))
+            }
+        }
     }
 }
 
@@ -713,27 +771,42 @@ private fun ProgressSection(currentSteps: Int, targetSteps: Int, isWalking: Bool
     val remainingSteps = (targetSteps - currentSteps).coerceAtLeast(0)
     val progressPercent =
         if (targetSteps <= 0) 0 else ((currentSteps * 100) / targetSteps).coerceIn(0, 100)
+    val isPremium = WalkLogTheme.isPremium
 
-    Column(
+    Box(
         modifier = Modifier
             .fillMaxWidth()
-            .background(WalkLogTheme.colors.background, RoundedCornerShape(28.dp))
-            .padding(vertical = 24.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
+            .clip(RoundedCornerShape(28.dp))
+            .then(
+                if (isPremium) {
+                    // 프리미엄일 때는 채우지 않는다 — 홈 화면 전체에 깔린 배경 효과(유성우/태양/빗줄기)가
+                    // 이 카드 안까지 그대로 이어져 보이도록 비워둔다.
+                    Modifier
+                } else {
+                    Modifier.background(WalkLogTheme.colors.background)
+                },
+            ),
     ) {
-        WalkProgressRing(currentSteps = currentSteps, targetSteps = targetSteps, isWalking = isWalking)
-        Spacer(modifier = Modifier.height(24.dp))
-        Text(
-            text = "$progressPercent%",
-            style = WalkLogTheme.typography.typography4B,
-            color = WalkLogTheme.colors.primary,
-        )
-        Spacer(modifier = Modifier.height(4.dp))
-        Text(
-            text = stringResource(HomeR.string.home_goal_steps, targetSteps),
-            style = WalkLogTheme.typography.typography7M,
-            color = WalkLogTheme.colors.onSurfaceVariant,
-        )
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = 24.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+        ) {
+            WalkProgressRing(currentSteps = currentSteps, targetSteps = targetSteps, isWalking = isWalking)
+            Spacer(modifier = Modifier.height(24.dp))
+            Text(
+                text = "$progressPercent%",
+                style = WalkLogTheme.typography.typography4B,
+                color = WalkLogTheme.colors.primary,
+            )
+            Spacer(modifier = Modifier.height(4.dp))
+            Text(
+                text = stringResource(HomeR.string.home_goal_steps, targetSteps),
+                style = WalkLogTheme.typography.typography7M,
+                color = WalkLogTheme.colors.onSurfaceVariant,
+            )
+        }
     }
 }
 

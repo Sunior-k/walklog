@@ -33,6 +33,7 @@ data class HomeState(
     val recapTotalSteps: Int = 0,
     val streakRiskLevel: StreakRiskLevel = StreakRiskLevel.LOW,
     val activityState: ActivityState = ActivityState.UNKNOWN,
+    val hasGoldBadge: Boolean = false,
 ) {
     companion object {
         const val DEFAULT_FORECAST_PEAK_HOUR = 15

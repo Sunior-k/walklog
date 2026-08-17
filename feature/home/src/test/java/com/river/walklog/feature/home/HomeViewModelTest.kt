@@ -4,16 +4,19 @@ import com.river.walklog.core.analytics.CrashReporter
 import com.river.walklog.core.domain.usecase.AwardMissionPointsUseCase
 import com.river.walklog.core.domain.usecase.GetCurrentStreakUseCase
 import com.river.walklog.core.domain.usecase.GetMonthlyRecapUseCase
+import com.river.walklog.core.domain.usecase.GetRewardRedemptionsUseCase
 import com.river.walklog.core.domain.usecase.GetWalkingInsightsUseCase
 import com.river.walklog.core.domain.usecase.GetWeeklyHomeStatsUseCase
 import com.river.walklog.core.domain.usecase.GetWeeklyStepSummaryUseCase
 import com.river.walklog.core.domain.usecase.ObserveActivityStateUseCase
 import com.river.walklog.core.model.ActivityState
 import com.river.walklog.core.model.DailyStepCount
+import com.river.walklog.core.model.RewardCatalogIds
 import com.river.walklog.core.model.WeatherSummary
 import com.river.walklog.core.testing.MainDispatcherRule
 import com.river.walklog.core.testing.repository.FakeActivityStateRepository
 import com.river.walklog.core.testing.repository.FakePointsLedgerRepository
+import com.river.walklog.core.testing.repository.FakeRewardRedemptionRepository
 import com.river.walklog.core.testing.repository.FakeStepRepository
 import com.river.walklog.core.testing.repository.FakeUserSettingsRepository
 import com.river.walklog.core.testing.repository.FakeWalkingInsightsRepository
@@ -22,6 +25,7 @@ import com.river.walklog.core.testing.repository.defaultUserSettings
 import com.river.walklog.feature.home.notification.WalkingReminderScheduler
 import io.mockk.mockk
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.runBlocking
 import org.junit.After
 import org.junit.Before
 import org.junit.Rule
@@ -53,6 +57,8 @@ class HomeViewModelTest {
     private lateinit var getWalkingInsights: GetWalkingInsightsUseCase
     private lateinit var observeActivityState: ObserveActivityStateUseCase
     private lateinit var awardMissionPoints: AwardMissionPointsUseCase
+    private lateinit var rewardRedemptionRepository: FakeRewardRedemptionRepository
+    private lateinit var getRewardRedemptionsUseCase: GetRewardRedemptionsUseCase
     private lateinit var crashReporter: CrashReporter
     private lateinit var walkingReminderScheduler: WalkingReminderScheduler
 
@@ -76,6 +82,8 @@ class HomeViewModelTest {
         getWalkingInsights = GetWalkingInsightsUseCase(stepRepository, walkingInsightsRepository)
         observeActivityState = ObserveActivityStateUseCase(activityStateRepository)
         awardMissionPoints = AwardMissionPointsUseCase(userSettingsRepository, FakePointsLedgerRepository())
+        rewardRedemptionRepository = FakeRewardRedemptionRepository()
+        getRewardRedemptionsUseCase = GetRewardRedemptionsUseCase(rewardRedemptionRepository)
         crashReporter = mockk(relaxed = true)
         walkingReminderScheduler = mockk(relaxed = true)
         defaultSetup()
@@ -134,6 +142,25 @@ class HomeViewModelTest {
         viewModel.updatePermissionResult(granted = true)
 
         assertEquals(SensorStatus.Unavailable, viewModel.state.value.sensorStatus)
+    }
+
+    @Test
+    fun `hasGoldBadge is false when never redeemed`() {
+        assertFalse(createViewModel().state.value.hasGoldBadge)
+    }
+
+    @Test
+    fun `hasGoldBadge is true after gold badge redeemed`() = runBlocking {
+        rewardRedemptionRepository.recordRedemption(RewardCatalogIds.BADGE_GOLD, 200, null)
+
+        assertTrue(createViewModel().state.value.hasGoldBadge)
+    }
+
+    @Test
+    fun `hasGoldBadge is false when a different reward redeemed`() = runBlocking {
+        rewardRedemptionRepository.recordRedemption(RewardCatalogIds.DONATION, 500, null)
+
+        assertFalse(createViewModel().state.value.hasGoldBadge)
     }
 
     // settings 관찰
@@ -324,6 +351,7 @@ class HomeViewModelTest {
         getWalkingInsights = getWalkingInsights,
         observeActivityState = observeActivityState,
         awardMissionPoints = awardMissionPoints,
+        getRewardRedemptionsUseCase = getRewardRedemptionsUseCase,
         crashReporter = crashReporter,
         walkingReminderScheduler = walkingReminderScheduler,
     ).also { createdViewModels.add(it) }

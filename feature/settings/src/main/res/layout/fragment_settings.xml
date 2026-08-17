@@ -402,13 +402,115 @@
         </androidx.constraintlayout.widget.ConstraintLayout>
 
         <TextView
+            android:id="@+id/tv_premium_theme_section"
+            style="@style/WalkLogSettingsSectionLabel"
+            android:layout_marginTop="20dp"
+            android:text="@string/settings_section_premium_theme"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/theme_card" />
+
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:id="@+id/premium_theme_card"
+            style="@style/WalkLogSettingsCard"
+            android:paddingVertical="14dp"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/tv_premium_theme_section">
+
+            <TextView
+                android:id="@+id/tv_premium_theme_title"
+                style="@style/WalkLogSettingsPrimaryText"
+                android:layout_width="wrap_content"
+                android:text="@string/settings_premium_theme_title"
+                app:layout_constraintBottom_toTopOf="@id/tv_premium_theme_description"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintVertical_chainStyle="packed" />
+
+            <TextView
+                android:id="@+id/tv_premium_theme_chip"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="6dp"
+                android:background="@drawable/bg_premium_chip"
+                android:paddingHorizontal="8dp"
+                android:paddingVertical="2dp"
+                android:text="@string/settings_premium_chip_label"
+                android:textColor="@android:color/black"
+                android:textSize="10sp"
+                android:textStyle="bold"
+                android:visibility="gone"
+                app:layout_constraintBottom_toBottomOf="@id/tv_premium_theme_title"
+                app:layout_constraintStart_toEndOf="@id/tv_premium_theme_title"
+                app:layout_constraintTop_toTopOf="@id/tv_premium_theme_title" />
+
+            <TextView
+                android:id="@+id/tv_premium_theme_description"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="2dp"
+                android:text="@string/settings_premium_theme_description_locked"
+                android:textColor="@color/walklog_text_secondary"
+                android:textSize="13sp"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toStartOf="@id/switch_premium_theme"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@id/tv_premium_theme_title" />
+
+            <Switch
+                android:id="@+id/switch_premium_theme"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:showText="false"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintTop_toTopOf="parent" />
+
+        </androidx.constraintlayout.widget.ConstraintLayout>
+
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:id="@+id/premium_theme_customize_row"
+            style="@style/WalkLogSettingsCard"
+            android:layout_marginTop="12dp"
+            android:clickable="true"
+            android:focusable="true"
+            android:foreground="?attr/selectableItemBackground"
+            android:paddingVertical="14dp"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/premium_theme_card">
+
+            <TextView
+                android:id="@+id/tv_premium_theme_customize_title"
+                style="@style/WalkLogSettingsPrimaryText"
+                android:layout_width="0dp"
+                android:text="@string/settings_premium_theme_customize"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toStartOf="@id/iv_premium_theme_customize_arrow"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent" />
+
+            <ImageView
+                android:id="@+id/iv_premium_theme_customize_arrow"
+                android:layout_width="20dp"
+                android:layout_height="20dp"
+                android:src="@drawable/ic_chevron_right"
+                app:tint="@color/walklog_text_secondary"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintTop_toTopOf="parent" />
+
+        </androidx.constraintlayout.widget.ConstraintLayout>
+
+        <TextView
             android:id="@+id/tv_app_info_section"
             style="@style/WalkLogSettingsSectionLabel"
             android:layout_marginTop="20dp"
             android:text="@string/settings_section_app_info"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/theme_card" />
+            app:layout_constraintTop_toBottomOf="@id/premium_theme_customize_row" />
 
         <androidx.constraintlayout.widget.ConstraintLayout
             android:id="@+id/layout_oss_licenses"

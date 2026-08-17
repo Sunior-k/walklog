@@ -1,5 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <string name="reward_title">REWARD</string>
+    <string name="reward_crown_icon_cd">왕관 아이콘</string>
     <string name="reward_coming_soon">✦  추후 업데이트 예정  ✦</string>
     <string name="reward_tagline">걷는 만큼, 쌓이는 보상</string>
     <string name="reward_preview_section">미리보기</string>
@@ -15,4 +17,31 @@
     <string name="reward_feature3_subtitle">포인트로 교환</string>
     <string name="reward_feature4_title">레벨 보상</string>
     <string name="reward_feature4_subtitle">레벨업 선물</string>
+
+    <string name="back_button_cd">뒤로가기</string>
+
+    <!-- 포인트 적립(내역) -->
+    <string name="points_history_empty_title">아직 포인트 내역이 없어요</string>
+    <string name="points_history_empty_subtitle">걸음을 채우면 여기에 적립 내역이 쌓여요</string>
+    <string name="points_history_summary_title">누적 포인트 변동</string>
+    <string name="points_history_delta_format">%1$s%2$dP</string>
+    <string name="points_history_today">오늘</string>
+    <string name="points_history_yesterday">어제</string>
+    <string name="points_history_reason_daily">일일 미션 적립</string>
+    <string name="points_history_reason_recovery">회복 미션 적립</string>
+    <string name="points_history_reason_redeem_coffee_coupon">아메리카노 쿠폰 교환</string>
+    <string name="points_history_reason_redeem_badge_gold">골드 워커 뱃지 교환</string>
+    <string name="points_history_reason_redeem_donation">기부 교환</string>
+    <string name="points_history_reason_redeem_theme_pack">테마 팩 교환</string>
+    <string name="points_history_reason_unknown">포인트 변동</string>
+
+    <!-- 뱃지 컬렉션 -->
+    <string name="badge_collection_gold_badge_title">골드 워커 뱃지</string>
+    <string name="badge_collection_gold_badge_subtitle">프로필에 표시되는 스페셜 뱃지</string>
+    <string name="badge_collection_owned">보유 중</string>
+    <string name="badge_collection_locked">리워드 스토어에서 교환해보세요</string>
+    <string name="badge_collection_progress_format">보유 뱃지 %1$d / %2$d</string>
+    <string name="badge_collection_progress_subtitle">걷는 걸음마다 새로운 업적이 쌓여요</string>
+    <string name="badge_collection_mystery_title">\?\?\?</string>
+    <string name="badge_collection_mystery_subtitle">다음 업데이트에서 만나요</string>
 </resources>

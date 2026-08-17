@@ -1,5 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <string name="reward_title">REWARD</string>
+    <string name="reward_crown_icon_cd">王冠アイコン</string>
     <string name="reward_coming_soon">✦  近日公開予定  ✦</string>
     <string name="reward_tagline">歩くほど、増える報酬</string>
     <string name="reward_preview_section">プレビュー</string>

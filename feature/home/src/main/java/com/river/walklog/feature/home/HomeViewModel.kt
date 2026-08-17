@@ -10,10 +10,12 @@ import com.river.walklog.core.data.repository.WeatherRepository
 import com.river.walklog.core.domain.usecase.AwardMissionPointsUseCase
 import com.river.walklog.core.domain.usecase.GetCurrentStreakUseCase
 import com.river.walklog.core.domain.usecase.GetMonthlyRecapUseCase
+import com.river.walklog.core.domain.usecase.GetRewardRedemptionsUseCase
 import com.river.walklog.core.domain.usecase.GetWalkingInsightsUseCase
 import com.river.walklog.core.domain.usecase.GetWeeklyHomeStatsUseCase
 import com.river.walklog.core.domain.usecase.ObserveActivityStateUseCase
 import com.river.walklog.core.model.MissionType
+import com.river.walklog.core.model.RewardCatalogIds
 import com.river.walklog.core.model.WeatherSummary
 import com.river.walklog.feature.home.notification.WalkingReminderScheduler
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -45,6 +47,7 @@ class HomeViewModel @Inject constructor(
     private val getWalkingInsights: GetWalkingInsightsUseCase,
     private val observeActivityState: ObserveActivityStateUseCase,
     private val awardMissionPoints: AwardMissionPointsUseCase,
+    private val getRewardRedemptionsUseCase: GetRewardRedemptionsUseCase,
     private val crashReporter: CrashReporter,
     private val walkingReminderScheduler: WalkingReminderScheduler,
 ) : ViewModel() {
@@ -70,6 +73,7 @@ class HomeViewModel @Inject constructor(
         loadWalkingInsights()
         loadWeather()
         scheduleMidnightRefresh()
+        observeGoldBadgeOwnership()
     }
 
     private fun initDateText() {
@@ -142,6 +146,18 @@ class HomeViewModel @Inject constructor(
                     )
                 }
                 if (justAchieved) awardDailyMission()
+            }
+            .launchIn(viewModelScope)
+    }
+
+    private fun observeGoldBadgeOwnership() {
+        getRewardRedemptionsUseCase(RewardCatalogIds.BADGE_GOLD)
+            .catch { throwable ->
+                crashReporter.log("Gold badge ownership query failed: ${throwable.message}")
+                crashReporter.recordException(throwable)
+            }
+            .onEach { redemptions ->
+                _state.update { it.copy(hasGoldBadge = redemptions.isNotEmpty()) }
             }
             .launchIn(viewModelScope)
     }
