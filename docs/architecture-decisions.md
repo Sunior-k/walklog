@@ -766,7 +766,7 @@ DataStore는 기기 로컬 저장소이므로 재설치 시 데이터가 소실�
 
 ### 결정
 
-리워드 스토어 화면 하나를 위해 앱 전체를 React Native로 전환하지 않고, [Toss SLASH23 발표](https://toss.tech)의 브라운필드 패턴을 참고해 **기존 네이티브 앱에 React Native 화면 한 개를 임베드**했습니다. RN 프로젝트는 별도 Gradle/Node 루트(`reward-store-rn/`)에서 독립적으로 개발하고, `@callstack/react-native-brownfield`로 패키징한 Fat AAR을 `app` 모듈이 소비합니다.
+리워드 스토어 화면 하나를 위해 앱 전체를 React Native로 전환하지 않고, [토스 SLASH 23 — 달리는 토스 앱에 React Native 엔진 더하기](https://toss.im/slash-23/session-detail/A1-4)에서 소개된 브라운필드 패턴을 참고해 **기존 네이티브 앱에 React Native 화면 한 개를 임베드**했습니다. RN 프로젝트는 별도 Gradle/Node 루트(`reward-store-rn/`)에서 독립적으로 개발하고, `@callstack/react-native-brownfield`로 패키징한 Fat AAR을 `app` 모듈이 소비합니다.
 
 ```
 reward-store-rn/  (독립 Node/Gradle 루트, RN 0.86.2)
