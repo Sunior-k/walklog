@@ -180,6 +180,7 @@ fabric.properties
 ### AndroidStudio Patch ###
 
 !/gradle/wrapper/gradle-wrapper.jar
+!/reward-store-rn/android/gradle/wrapper/gradle-wrapper.jar
 
 # macOS 시스템 파일
 .DS_Store
