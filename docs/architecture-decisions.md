@@ -830,9 +830,18 @@ reward-store-rn/
 
 초기에는 `App.tsx` 한 파일에 상태·이펙트·5개 하위 컴포넌트·스타일이 모두 들어 있었습니다. 기능이 늘어날수록(코드 등록, 동적 카탈로그 등) 한 파일에서 관련 없는 변경들이 서로 충돌하기 쉬워져, 상태/이펙트를 `useRewardStore` 훅으로, 각 UI 조각을 개별 컴포넌트 파일로, 스타일을 별도 모듈로 분리했습니다.
 
+### Android 쪽 통합 과정에서 겪은 문제
+
+RN 화면 자체는 독립 프로젝트로 완성됐지만, `app` 모듈이 그 산출물(AAR)을 **빌드 타임에 직접 의존**한다는 사실이 리뷰 편의를 위해 변경분을 여러 PR로 쪼개는 과정에서 두 가지 형태로 드러났습니다.
+
+1. **CI에 AAR 게시 단계가 아예 없었다.** 로컬 개발 환경에는 이미 `npx brownfield package:android && publish:android`로 한 번 게시해둔 AAR이 `~/.m2`에 남아있어 `:app` 빌드가 항상 성공했지만, GitHub Actions 러너는 매번 새로 뜨는 환경이라 `Could not find com.river.walklog:reactnativeapp:0.0.1-local`로 `:app` 관련 태스크(`kspDebugKotlin`, `checkDebugAarMetadata` 등)가 전부 실패했습니다. 로컬에서만 통과하고 CI에서만 재현되는 전형적인 "환경 의존 성공"이었습니다. `Build.yaml`의 두 job(로컬 체크, 인스트루먼트 테스트) 각각에 Node 설치 → `npm ci` → `npx brownfield package:android && publish:android` 단계를 Gradle 빌드 이전에 추가해 CI 러너에서도 AAR이 매번 새로 게시되도록 고쳤습니다.
+2. **RN 프로젝트를 "독립적으로 병렬 리뷰 가능한 PR"로 설계했지만, 실제로는 순서 의존이 있었다.** 리뷰어가 RN 코드와 Android 코드를 따로 볼 수 있도록 `reward-store-rn/`을 `main` 기준의 독립 PR로 분리했는데, `app` 모듈이 그 AAR을 직접 소비하는 이상 `app` 쪽 PR은 RN 쪽 PR의 산출물 없이는 애초에 빌드될 수 없다는 게 CI 실패로 드러났습니다. 두 PR을 "병렬"이 아니라 "RN 프로젝트 → app 배선" 순서의 스택으로 재배치하고, GitHub PR의 base 브랜치를 그에 맞게 옮겨 각 PR이 정확히 자신이 실제로 필요로 하는 산출물 위에서 빌드되도록 정정했습니다.
+
+두 문제 모두 로컬 빌드만으로는 드러나지 않고, PR을 쪼개 **매 PR마다 전체 저장소를 처음부터 빌드하는 CI**를 통과시키는 과정에서만 드러났습니다.
+
 ### 트레이드오프
 
-- **AAR이 `mavenLocal()`에만 게시됨** — CI나 새로 클론한 환경에서는 `reward-store-rn/`에서 `npx brownfield package:android && publish:android`를 먼저 실행해야 `app` 모듈이 빌드됨. 저장소에 AAR을 커밋하거나 사내 Maven 레포로 옮기는 작업이 남아있음
+- **AAR 게시가 CI에 자동화됐지만, 로컬 개발 환경은 여전히 수동** — CI는 위 수정으로 매번 자동 게시하지만, 로컬에서 처음 이 리포지토리를 클론한 개발자는 `reward-store-rn/`에서 `npx brownfield package:android && publish:android`를 최소 한 번은 직접 실행해야 `:app`이 빌드됨. 저장소에 AAR을 커밋하거나 사내 Maven 레포로 옮기는 근본적인 개선은 아직 남아있음
 - **AAR을 항상 Release variant로 패키징** — JS 번들이 AAR 안에 내장되므로 `app` 모듈의 debug/release 빌드 타입과 무관하게 Metro 없이 동작함. `app/src/debug/res/xml/network_security_config.xml`의 Metro cleartext 허용 설정은 Debug variant로 다시 패키징해 핫 리로드로 개발할 때만 쓰는 예비용이며, 기본 워크플로우에서는 사용하지 않음
 - **디자인 토큰 수동 동기화** — Kotlin 쪽 색상이 바뀌면 `walklogColors.ts`도 사람이 직접 맞춰야 함(공유 스키마 수단 없음)
 - Hermes 버전은 하드코딩하지 않고 `com.facebook.react:hermes-android` 좌표를 RNGP가 자동 치환하도록 두고, `app` 모듈(비-RNGP 프로젝트)에서는 `resolutionStrategy.dependencySubstitution`으로 명시적 버전을 매핑
