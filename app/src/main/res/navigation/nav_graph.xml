@@ -19,6 +19,9 @@
         <action
             android:id="@+id/action_home_to_recap"
             app:destination="@id/recapFragment" />
+        <action
+            android:id="@+id/action_home_to_badges"
+            app:destination="@id/badgeCollectionFragment" />
     </fragment>
 
     <!-- XML 기반 월간 캘린더 화면 — Fragment가 feature:history 모듈에 직접 정의됨 -->
@@ -30,12 +33,47 @@
     <fragment
         android:id="@+id/rewardFragment"
         android:name="com.river.walklog.navigation.RewardFragment"
-        android:label="리워드" />
+        android:label="리워드">
+        <action
+            android:id="@+id/action_reward_to_store"
+            app:destination="@id/rewardStoreFragment" />
+        <action
+            android:id="@+id/action_reward_to_points_history"
+            app:destination="@id/pointsHistoryFragment" />
+        <action
+            android:id="@+id/action_reward_to_badges"
+            app:destination="@id/badgeCollectionFragment" />
+    </fragment>
+
+    <!-- React Native 브라운필드 화면 (reward-store-rn) -->
+    <fragment
+        android:id="@+id/rewardStoreFragment"
+        android:name="com.river.walklog.navigation.RewardStoreFragment"
+        android:label="RewardStore" />
+
+    <fragment
+        android:id="@+id/pointsHistoryFragment"
+        android:name="com.river.walklog.navigation.PointsHistoryFragment"
+        android:label="PointsHistory" />
+
+    <fragment
+        android:id="@+id/badgeCollectionFragment"
+        android:name="com.river.walklog.navigation.BadgeCollectionFragment"
+        android:label="BadgeCollection" />
 
     <fragment
         android:id="@+id/settingsFragment"
         android:name="com.river.walklog.feature.settings.SettingsFragment"
-        android:label="설정" />
+        android:label="설정">
+        <action
+            android:id="@+id/action_settings_to_premiumThemeSettings"
+            app:destination="@id/premiumThemeSettingsFragment" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/premiumThemeSettingsFragment"
+        android:name="com.river.walklog.navigation.PremiumThemeSettingsFragment"
+        android:label="PremiumThemeSettings" />
 
     <!-- ===================== 디테일 화면 (바텀 내비 없음) ===================== -->
 

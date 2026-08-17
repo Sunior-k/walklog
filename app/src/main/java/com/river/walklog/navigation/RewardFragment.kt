@@ -7,6 +7,8 @@ import android.view.ViewGroup
 import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.platform.ViewCompositionStrategy
 import androidx.fragment.app.Fragment
+import androidx.navigation.fragment.findNavController
+import com.river.walklog.R
 import com.river.walklog.core.designsystem.foundation.WalkLogTheme
 import com.river.walklog.feature.reward.RewardRoute
 import dagger.hilt.android.AndroidEntryPoint
@@ -22,7 +24,17 @@ class RewardFragment : Fragment() {
         setViewCompositionStrategy(ViewCompositionStrategy.DisposeOnViewTreeLifecycleDestroyed)
         setContent {
             WalkLogTheme {
-                RewardRoute()
+                RewardRoute(
+                    onNavigateToStore = {
+                        findNavController().navigate(R.id.action_reward_to_store)
+                    },
+                    onNavigateToPointsHistory = {
+                        findNavController().navigate(R.id.action_reward_to_points_history)
+                    },
+                    onNavigateToBadgeCollection = {
+                        findNavController().navigate(R.id.action_reward_to_badges)
+                    },
+                )
             }
         }
     }
